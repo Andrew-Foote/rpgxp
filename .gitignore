@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.mypy_cache/
+
+env/
+dist/
+dist/
+
+scratch/
+
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
