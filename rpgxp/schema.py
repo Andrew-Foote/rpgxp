@@ -32,21 +32,33 @@ are used:
 
   - An attribute of type `np.ndarray` may be annotated with an `int`,
     indicating that the array must have the specified number of dimensions.
+
+  - An attribute of type `str` may be annotated with an instance of
+    `ZlibCompressed`. This is a dataclass with one field, which is the string's
+    encoding. This annotation indicates that the value parsed from the Marshal
+    data will be compressed via zlib, and should be decompressed, and decoded
+    using the specified encoding, in order to turn it into a string.
 """
 
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
+import re
 import numpy as np
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
+
+class SchemaError(Exception):
+    pass
 
 Hue = Annotated[int, range(361)]
 
+@dataclass
 class RPGListItem:
     pass
 
+@dataclass
 class RPG:
-    pass
+    id_0_is_null: ClassVar[bool]=False
 
 class EventCommand(RPG):
     code: int
@@ -57,24 +69,33 @@ class MoveCommand(RPG):
     code: int
     parameters: list
 
+@dataclass
 class Element(RPGListItem):
     id_: int
     name: str
 
+@dataclass
 class Switch(RPGListItem):
+    id_0_is_null = True
+
     id_: int
     name: str
 
+@dataclass
 class Variable(RPGListItem):
+    id_0_is_null = True
+
     id_: int
     name: str
 
+@dataclass
 class Color(RPG):
     red: Annotated[int, range(256)]
     green: Annotated[int, range(256)]
     blue: Annotated[int, range(256)]
     alpha: Annotated[int, range(256)]
 
+@dataclass
 class AudioFile(RPG):
     name: str
     volume: int
@@ -82,6 +103,8 @@ class AudioFile(RPG):
 
 @dataclass
 class Tileset(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     tileset_name: str
@@ -106,11 +129,12 @@ class AnimationPosition(Enum):
     BOTTOM = 2
     SCREEN = 3
 
+@dataclass
 class AnimationFrame(RPG):
     cell_max: int
     cell_data: Annotated[np.ndarray, 2]
 
-class AnimationTimingFlashScope:
+class AnimationTimingFlashScope(Enum):
     NONE = 0
     TARGET = 1
     SCREEN = 2
@@ -121,6 +145,7 @@ class AnimationTimingCondition(Enum):
     HIT = 1
     MISS = 2
 
+@dataclass
 class AnimationTiming(RPG):
     frame: int
     se: AudioFile
@@ -129,7 +154,10 @@ class AnimationTiming(RPG):
     flash_duration: int
     condition: AnimationTimingCondition
 
+@dataclass
 class Animation(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     animation_name: str
@@ -144,7 +172,10 @@ class CommonEventTrigger(Enum):
     AUTORUN = 1
     PARALLEL = 2
 
+@dataclass
 class CommonEvent(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     trigger: CommonEventTrigger
@@ -158,7 +189,10 @@ class StateRestriction(Enum):
     ALWAYS_ATTACK_ALLIES = 3
     CANT_MOVE = 4
 
+@dataclass
 class State(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     animation1_id: Annotated[int, Animation]
@@ -205,7 +239,10 @@ class Occasion(Enum):
     ONLY_FROM_THE_MENU = 2
     NEVER = 3
 
+@dataclass
 class Skill(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     icon_name: str
@@ -237,7 +274,10 @@ class ClassPosition(Enum):
     MIDDLE = 1
     REAR = 2
 
+@dataclass
 class Weapon(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     icon_name: str
@@ -262,7 +302,10 @@ class ArmorKind(Enum):
     BODY_ARMOR = 2
     ACCESSORY = 3
 
+@dataclass
 class Armor(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     icon_name: str
@@ -280,21 +323,28 @@ class Armor(RPG):
     guard_element_set: set[Annotated[int, Element]]
     guard_state_set: set[Annotated[int, State]]
 
+@dataclass
 class ClassLearning(RPG):
     level: int
     skill_id: Annotated[int, Skill]
 
+@dataclass
 class Class(RPG):
+    id_0_is_null = True
+
     id: int
     name: str
     position: ClassPosition
-    weapon_set: set[Weapon]
-    armor_set: set[Armor]
+    weapon_set: set[Annotated[int, Weapon]]
+    armor_set: set[Annotated[int, Armor]]
     element_ranks: Annotated[np.ndarray, 1]
     state_ranks: Annotated[np.ndarray, 1]
     learnings: list[ClassLearning]
 
+@dataclass
 class Actor(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     class_id: Annotated[int, Class]
@@ -327,7 +377,10 @@ class ParameterType(Enum):
     AGILITY = 5
     INTELLIGENCE = 6
 
+@dataclass
 class Item(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     icon_name: str
@@ -364,6 +417,7 @@ class EnemyBasicAction(Enum):
     ESCAPE = 2
     DO_NOTHING = 3
 
+@dataclass
 class EnemyAction(RPG):
     kind: EnemyActionKind
     basic: EnemyBasicAction
@@ -375,7 +429,10 @@ class EnemyAction(RPG):
     condition_switch_id: Annotated[int, Switch]
     rating: Annotated[int, range(1, 11)]
 
+@dataclass
 class Enemy(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     battler_name: str
@@ -402,6 +459,7 @@ class Enemy(RPG):
     armor_id: Annotated[int, Armor]
     treasure_prob: int
 
+@dataclass
 class TroopMember(RPG):
     enemy_id: Annotated[int, Enemy]
     x: int
@@ -409,6 +467,7 @@ class TroopMember(RPG):
     hidden: bool
     immortal: bool
 
+@dataclass
 class TroopPageCondition(RPG):
     turn_valid: bool
     enemy_valid: bool
@@ -427,17 +486,22 @@ class TroopPageSpan(Enum):
     TURN = 1
     MOMENT = 2
 
+@dataclass
 class TroopPage(RPG):
     condition: TroopPageCondition
     span: TroopPageSpan
     list_: list[EventCommand]
 
+@dataclass
 class Troop(RPG):
+    id_0_is_null = True
+
     id_: int
     name: str
     members: list[TroopMember]
     pages: list[TroopPage]
 
+@dataclass
 class EventPageCondition(RPG):
     switch1_valid: bool
     switch2_valid: bool
@@ -455,6 +519,7 @@ class Direction(Enum):
     RIGHT = 6
     UP = 8
 
+@dataclass
 class EventPageGraphic(RPG):
     tile_id: int
     character_name: str
@@ -486,6 +551,7 @@ class EventPageMoveFrequency(Enum):
     HIGHER = 5
     HIGHEST = 6
 
+@dataclass
 class MoveRoute(RPG):
     repeat: bool
     skippable: bool
@@ -498,6 +564,7 @@ class EventPageTrigger(Enum):
     AUTORUN = 3
     PARALLEL_PROCESSING = 4
 
+@dataclass
 class EventPage(RPG):
     condition: EventPageCondition
     graphic: EventPageGraphic
@@ -513,6 +580,7 @@ class EventPage(RPG):
     trigger: EventPageTrigger
     list_: list[EventCommand]
 
+@dataclass
 class Event(RPG):
     id: int
     name: str
@@ -520,7 +588,10 @@ class Event(RPG):
     y: int
     pages: list[EventPage]
 
+@dataclass
 class Map(RPG):
+    id_0_is_null = True
+
     tileset_id: Annotated[int, Tileset]
     width: int
     height: int
@@ -528,20 +599,31 @@ class Map(RPG):
     bgm: AudioFile
     autoplay_bgs: bool
     bgs: AudioFile
-    encounter_list: list[Annotated[int, Troop]]
+
+    # correspponds to table "map_encounter"
+    # maybe dataclass metadata would be good for this
+    # we should redo the whole thing as based on dataclass metadata
+    encounter_list: Ref[Troop, ]
+
+    list[Annotated[int, Troop]]
+    
+
     encounter_step: int
     data: Annotated[np.ndarray, 3]
     events: dict[Annotated[int, Event], Event]
 
 @dataclass
 class MapInfo(RPG):
+    id_0_is_null = True
+
     name: str
-    parent_id: Annotated[int, Map]
+    parent_id: Annotated[int, MapInfo]
     order: int
     expanded: bool
     scroll_x: int
     scroll_y: int
 
+@dataclass
 class SystemWords(RPG):
     gold: str
     hp: str
@@ -564,6 +646,7 @@ class SystemWords(RPG):
     item: str
     equip: str
 
+@dataclass
 class SystemTestBattler(RPG):
     actor_id: Annotated[int, Actor]
     level: int
@@ -573,6 +656,7 @@ class SystemTestBattler(RPG):
     armor3_id: Annotated[int, Armor]
     armor4_id: Annotated[int, Armor]
 
+@dataclass
 class System(RPG):
     magic_number: int
     party_members: list[Annotated[int, Actor]]
@@ -610,7 +694,24 @@ class System(RPG):
     battler_hue: Hue
     edit_map_id: Annotated[int, Map]
 
-type ListWithFirstItemNull[T] = Annotated[list[T | None], (None,), T]
+@dataclass
+class TupleLike(ABC):
+    pass
+
+@dataclass
+class ZlibCompressed:
+    encoding: str
+
+@dataclass
+class Script(TupleLike):
+    id_: int # not sure if this actually is an ID
+    name: str
+    content: Annotated[str, ZlibCompressed('utf-8')]
+
+
+FIRST_ITEM_NULL = object()
+
+type ListWithFirstItemNull[T] = Annotated[list[T], FIRST_ITEM_NULL]
 
 FILES = {
     'Actors.rxdata': ListWithFirstItemNull[Actor],
@@ -622,11 +723,11 @@ FILES = {
     'Items.rxdata': ListWithFirstItemNull[Item],
     re.compile(r'Map(\d\d\d).rxdata'): Map,
     'MapInfos.rxdata': dict[Annotated[int, MapInfo], MapInfo],
-    'Scripts.rxdata': list[tuple[int, str, str]],
+    'Scripts.rxdata': list[Script],
     'Skills.rxdata': ListWithFirstItemNull[Skill],
     'States.rxdata': ListWithFirstItemNull[State],
     'System.rxdata': System,
     'Tilesets.rxdata': ListWithFirstItemNull[Tileset],
-    'Troops.rxdata': ListWithFirstItemNull[Tropp],
+    'Troops.rxdata': ListWithFirstItemNull[Troop],
     'Weapons.rxdata': ListWithFirstItemNull[Weapon],
 }

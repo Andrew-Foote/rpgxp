@@ -1,73 +1,131 @@
+import dataclasses
 from enum import Enum
 import inspect
+import itertools as it
 from typing import Annotated, Any, cast, get_args, get_origin
+import zlib
 import numpy as np
 import ruby_marshal_parser as marshal
-from rpgxp.schema import RPG, RPGListItem
+from rpgxp.schema import RPG, RPGListItem, SchemaError, TupleLike, ZlibCompressed
 
-
-class SchemaError(Exception):
-	pass
 
 class ParseError(Exception):
 	pass
 
 
-def parse_bool(node: marshal.Node, constraint: Any=None) -> bool:
+def parse_bool(node: marshal.Node, constraints: tuple=()) -> bool:
 	content = node.body_content
 
 	match content:
 		case marshal.True_():
-			return True
+			result = True
 		case marshal.False_():
-			return False
+			result = False
 		case _:
 			raise ParseError(
 				'expected node of type True_ or False_, got '
 				f'{type(content).__name__}'
 			)
 
+	match constraints:
+		case []:
+			return result
+		case _:
+			raise ParseError(
+				f"invalid constraint {constraints} for type 'bool'"
+			)
 
-def parse_int(node: marshal.Node, constraint: Any=None) -> int:
+
+def parse_int(node: marshal.Node, constraints: tuple=()) -> int:
 	if not isinstance(node.body_content, marshal.Fixnum):
 		raise ParseError(f'expected a fixnum')
 
 	result = node.body_content.value
 
-	if constraint is not None:
-		if isinstance(constraint, range):
-			if not result in constraint:
-				raise ParseError(f'expected fixnum in range {constraint}, got {result}')
-		elif issubclass(constraint, (RPG, RPGListItem)):
+	match constraints:
+		case []:
 			pass
-		else:
-			raise SchemaError(f"invalid constraint {constraint} for type 'int'")
+		case [v] if isinstance(v, type) and issubclass(v, (RPG, RPGListItem)):
+			pass
+		case [v] if isinstance(v, range):
+			if not result in v:
+				raise ParseError(f'expected fixnum in range {v}, got {result}')
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'int'"
+			)
 
 	return result		
 
 
-def parse_str(node: marshal.Node, constraint: Any=None) -> str:
+def parse_str(node: marshal.Node, constraints: tuple=()) -> str:
 	if not isinstance(node.body_content, marshal.String):
 		raise ParseError(f'expected a string')
 
-	return node.decoded_text
+	match constraints:
+		case []:
+			return node.decoded_text
+		case [ZlibCompressed(encoding)]:
+			return zlib.decompress(node.body_content.text).decode(encoding)
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'str'"
+			)
 
 
-def parse_list[T](item_type: type[T], node: marshal.Node, constraint: Any=None) -> list[T]:
+def parse_list[T](
+	item_type: type[T], node: marshal.Node, constraints: tuple=()
+) -> list[T]:
+
 	if not isinstance(node.body_content, marshal.Array):
 		raise ParseError(f'expected an array')
 
 	items = node.body_content.items
 	result = [parse(item_type, item) for item in items]
 
-	if constraint is not None:
-		if isinstance(constraint, int):
+	match constraints:
+		case []:
+			pass
+		case [v] if isinstance(v, int):
 			length = len(result)
 
-			if length != constraint:
-				raise ParseError(f'expected array of length {constraint}, got {length} items')
-		else:
-			raise SchemaError(f"invalid constraint {constraint} for type 'list'")
+			if length != v:
+				raise ParseError(
+					f'expected array of length {v}, got {length} items'
+				)
+		case [first, rest] if (
+			isinstance(first, tuple)
+			and all(isinstance(v, type) for v in first)
+			and isinstance(rest, type)
+		):
+			min_length = len(first)
+			length = len(result)
+
+			if length < min_length:
+				raise ParseError(
+					f'expected array of length at least {min_length}, got '
+					f'{length} items'
+				)
+
+			for i, item, expected_type in zip(it.count(), result, first):
+				if not isinstance(item, expected_type):
+					raise ParseError(
+						f'expected {i}th item of array to be a '
+						f'{expected_type.__name__}, got {type(item).__name__}'
+					)
+
+			i = len(first)
+
+			for j, item in enumerate(result[i:], start=i):
+				if not isinstance(item, rest):
+					raise ParseError(
+						f'expected {j}th item of array to be a '
+						f'{rest.__name__}, got {type(item).__name__}'
+					)
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'list'"
+			)
 
 	return result
 
@@ -92,8 +150,15 @@ def parse_array_from_table_data(
     dimensions = []
 
     for i in range(3):
-        size = int.from_bytes(data[4 * (i + 1):4 * (i + 2)], 'little', signed=True)
-        if i >= dimcount: assert size == 1
+        size = int.from_bytes(
+        	data[4 * (i + 1):4 * (i + 2)],
+        	'little',
+        	signed=True
+        )
+
+        if i >= dimcount:
+        	assert size == 1
+
         dimensions.append(size)
 
    	# If the table represents tiles on a map, these dimensions are width,
@@ -121,7 +186,7 @@ def parse_array_from_table_data(
     # next to each other.
     return np.ndarray(shape=dimensions, dtype='h', buffer=tiledata, order='F')
 
-def parse_array(node: marshal.Node, constraint: Any=None) -> np.ndarray:
+def parse_array(node: marshal.Node, constraints: tuple=()) -> np.ndarray:
 	node_content = node.body_content
 
 	if not (
@@ -130,26 +195,42 @@ def parse_array(node: marshal.Node, constraint: Any=None) -> np.ndarray:
 	):
 		raise ParseError(f"expected a user data object of type 'Table'")
 
-	if constraint is None:
-		expected_dimcount = None
-	else:
-		if isinstance(constraint, int):
-			expected_dimcount = constraint
-		else:
-			raise SchemaError(f"invalid constraint {constraint} for type 'np.ndarray'")
+	match constraints:
+		case []:
+			expected_dimcount = None
+		case [v] if isinstance(v, int):
+			expected_dimcount = v
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'np.ndarray'"
+			)
 
 	result = parse_array_from_table_data(node_content.data, expected_dimcount)
 	return result		
 
 
-def parse_enum[T: Enum](enum_type: type[T], node: marshal.Node, constraint: Any=None) -> T:
-	return enum_type(parse_int(node))
+def parse_enum[T: Enum](
+	enum_type: type[T], node: marshal.Node, constraints: tuple=()
+) -> T:
+
+	result = enum_type(parse_int(node))
+
+	match constraints:
+		case []:
+			return result
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'Enum'"
+			)
 
 
 def as_ivar_name(attr_name: str) -> str:
 	return '@' + attr_name.rstrip('_')
 
-def parse_rpg_object[T: RPG](cls: type[T], node: marshal.Node, constraint: Any=None) -> T:
+def parse_rpg_object[T: RPG](
+	cls: type[T], node: marshal.Node, constraints: tuple=()
+) -> T:
+
 	if not isinstance(node.body_content, marshal.Object):
 		raise ParseError(f'expected an object')
 
@@ -163,7 +244,10 @@ def parse_rpg_object[T: RPG](cls: type[T], node: marshal.Node, constraint: Any=N
 	actual_ivars = set(node.inst_vars.keys())
 
 	if expected_ivars != actual_ivars:
-		raise ParseError(f'expected set of instance variables ({expected_ivars}) different from actual ({actual_ivars})')
+		raise ParseError(
+			f'expected set of instance variables ({expected_ivars}) different '
+			f'from actual ({actual_ivars})'
+		)
 
 	attr_values = {}
 
@@ -173,31 +257,74 @@ def parse_rpg_object[T: RPG](cls: type[T], node: marshal.Node, constraint: Any=N
 		attr_value = parse(attr_type, ivar_value)
 		attr_values[attr_name] = attr_value 
 
-	return cls(**attr_values)
+	result = cls(**attr_values)
+
+	match constraints:
+		case []:
+			return result
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'RPG'"
+			)
+
+
+def parse_tuple_like[T: TupleLike](
+	cls: type[T], node: marshal.Node, constraints: tuple=()
+) -> T:
+
+	content = node.body_content
+
+	if not isinstance(content, marshal.Array):
+		raise ParseError(f'expected an array')
+
+	attrs = dataclasses.fields(cls)
+
+	if len(attrs) != len(content.items):
+		raise ParseError(
+			f'expected an array of length {len(attrs)}, got '
+			f'{len(content.items)}'
+		)
+
+	attr_values = {}
+
+	for attr, item in zip(attrs, content.items):
+		attr_values[attr.name] = parse(attr.type, item)
+
+	result = cls(**attr_values)
+
+	match constraints:
+		case []:
+			return result
+		case _:
+			raise SchemaError(
+				f"invalid constraint {constraints} for type 'TupleLike'"
+			)
 
 
 # mypy can't handle this function unfortunately
 def parse[T](type_: type[T], node: marshal.Node) -> T: 
 	if get_origin(type_) is Annotated: 
-		constraint, = type_.__metadata__ # type: ignore
+		constraints = type_.__metadata__ # type: ignore
 		type_ = type_.__origin__ # type: ignore
 	else:
-		constraint = None
+		constraints = ()
 
 	if type_ is bool:
-		return parse_bool(node, constraint) # type: ignore
+		return parse_bool(node, constraints) # type: ignore
 	elif type_ is int:
-		return parse_int(node, constraint) # type: ignore
+		return parse_int(node, constraints) # type: ignore
 	elif type_ is str:
-		return parse_str(node, constraint) # type: ignore
+		return parse_str(node, constraints) # type: ignore
 	elif get_origin(type_) in (list, set):
 		item_type, = get_args(type_)
-		return parse_list(item_type, node, constraint) # type: ignore
+		return parse_list(item_type, node, constraints) # type: ignore
 	elif type_ is np.ndarray:
-		return parse_array(node, constraint) # type: ignore
+		return parse_array(node, constraints) # type: ignore
 	elif issubclass(type_, Enum):
-		return parse_enum(type_, node, constraint) # type: ignore
+		return parse_enum(type_, node, constraints) # type: ignore
 	elif issubclass(type_, RPG):
-		return parse_rpg_object(type_, node, constraint) # type: ignore
+		return parse_rpg_object(type_, node, constraints) # type: ignore
+	elif issubclass(type_, TupleLike):
+		return parse_tuple_like(type_, node, constraints) # type: ignore
 	else:
 		raise SchemaError(f'invalid type {type_}')

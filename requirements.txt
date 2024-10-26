@@ -1,0 +1,6 @@
+apsw==3.46.1.0
+mypy==1.13.0
+mypy-extensions==1.0.0
+numpy==2.1.2
+ruby_marshal_parser @ file:///home/andrew/myspace/code/rpgmaker-stuff/ruby-marshal-parser
+typing_extensions==4.12.2
