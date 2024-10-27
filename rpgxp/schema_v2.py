@@ -205,7 +205,7 @@ AUDIO_FILE_SCHEMA = RPGObjSchema('AudioFile', 'RPG::AudioFile', [
 ])
 
 ACTOR_SCHEMA = RPGObjSchema('Actor', 'RPG::Actor', [
-	RPGField('id_', IntSchema(), rpg_name='id'),
+	RPGField('id_', IntSchema(), db_name='id', rpg_name='id'),
 	RPGField('name', StrSchema()),
 	RPGField('class_id', FKSchema(lambda: CLASSES_SCHEMA, nullable=False)),
 	RPGField('initial_level', IntSchema()),
