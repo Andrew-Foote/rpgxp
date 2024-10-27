@@ -8,6 +8,19 @@ from rpgxp import schema
 def camel_case_to_snake(s: str) -> str:
 	return re.sub(r'(?<=.)(?=[A-Z])', '_', s).lower()
 
+def foreign_key_decls(
+	col_name: str, foreign_table_name: str, foreign_column_name: str, nullable: bool
+) -> str:
+
+	col_decl = f'"{column_name} INTEGER'
+
+	if not nullable:
+		col_decl += ' NOT NULL'
+
+	fk_decl = f'FOREIGN KEY ("{column_name}")'
+	fk_decl += f' REFERENCES "{foreign_table_name}" ("{foreign_column_name}")'
+	return col_decl, fk_decl
+
 @dataclass
 class DBSchema:
 	tables: dict[str, list[str]]=field(default_factory=lambda: {})
@@ -58,45 +71,51 @@ class DBSchema:
 		self.seeders.append(f'''INSERT INTO "{table_name}" ("id", "desc") VALUES
 {",\n".join(values)};''')
 
-	def ensure_list_item_table_exists(self, item_type: type, parent_type: type) -> None:
-		table_name = camel_case_to_snake(item_type.__name__)
+	def create_item_table(
+		self, fld: Field, parent_type: type, key_col_name: str
+	) -> None:
+	
+		table_name = fld.metadata['table_name']
 
 		if table_name in self.tables:
-			return
+			raise schema.SchemaError(
+				f'table name "{table_name}" is used for two different tables'
+			)
 
 		parent_table_name = camel_case_to_snake(parent_type.__name__)
 
 		table_schema = [
 			f'"{parent_table_name}_id" INTEGER',
-			f'"index" INTEGER CHECK ("index" >= 0)',
+			f'"{key_col_name}" INTEGER CHECK ("index" >= 0)',
 			f'PRIMARY KEY ("{parent_table_name}_id", "index")',
 			f'FOREIGN KEY ("{parent_table_name}_id") REFERENCES "{parent_table_name}" ("id")',
 		]
 
 		self.tables[table_name] = table_schema
 
-		for col_field in fields(item_type):
-			self.process_field(item_type, col_field, col_field.name)
+		item_type = get_args(fld.type)[0]
+		origin = get_origin(item_type)
+		args = get_args(item_type)
 
-	def ensure_dict_item_table_exists(self, item_type: type, parent_type: type) -> None:
-		table_name = camel_case_to_snake(item_type.__name__)
+		if (
+			origin is None and isinstance(item_type, type)
+			and is_dataclass(item_type)
+		):
+			for subfield in fields(item_type):
+				self.process_field(item_type, subfield, subfield.name)
+		elif (
+			origin is Annotated and args[0] is int
+			and isinstance(args[1], schema.RPGBase)
+		):
+			foreign_type = args[1]
+			foreign_name = camel_case_to_snake(foreign_type.__name__)
 
-		if table_name in self.tables:
-			return
-
-		parent_table_name = camel_case_to_snake(parent_type.__name__)
-
-		table_schema = [
-			f'"{parent_table_name}_id" INTEGER',
-			f'"key" INTEGER',
-			f'PRIMARY KEY ("{parent_table_name}_id", "index")',
-			f'FOREIGN KEY ("{parent_table_name}_id") REFERENCES "{parent_table_name}" ("id")',
-		]
-
-		self.tables[table_name] = table_schema
-
-		for col_field in fields(item_type):
-			self.process_field(item_type, col_field, col_field.name)
+			table_schema.extend(foreign_key_decls(
+				column_name=f'{foreign_name}_id',
+				foreign_table_name=f'{foreign_name}',
+				foreign_column_name='id',
+				nullable=foreign_type.id_0_is_null
+			))
 
 	def process_field(
 		self, row_type: type, col_field: Field, field_name: str
@@ -125,25 +144,14 @@ class DBSchema:
 				self.process_field(row_type, subfield, combined_name)
 		elif origin is list:
 			item_type, = args
-			item_origin = get_origin(item_type)
-			item_args = get_args(item_type)
-
-			if isinstance(item_type, type) and is_dataclass(item_type):
-				self.ensure_list_item_table_exists(item_type, row_type, field_name)
-			elif (
-				item_origin is Annotated and item_args[0] is int
-				and isinstance(item_args[1], type) and is_dataclass(item_args[1])
-			):
-
-			else:
-				raise schema.SchemaError(f'invalid field type {field_type}')
+			self.create_item_table(col_field, row_type, 'index')
 		elif (
 			origin is dict and is_dataclass(args[1])
 			and get_origin(args[0]) is Annotated and get_args(args[0])[0] is int
 			and get_args(args[0])[1] == args[1]
 		):
 			_, item_type = args
-			self.ensure_dict_item_table_exists(item_type, row_type)
+			self.create_item_table(col_field, row_type, 'key')
 		elif (
 			origin is set and get_origin(args[0]) is Annotated
 			and get_args(args[0])[0] is int and is_dataclass(get_args(args[0])[1])

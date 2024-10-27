@@ -41,7 +41,7 @@ are used:
 """
 
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import re
 import numpy as np
@@ -50,15 +50,28 @@ from typing import Annotated, ClassVar, Self
 class SchemaError(Exception):
     pass
 
+@dataclass
+class ListA:
+    table_name: str
+    first_item_null: bool=False
+
+@dataclass
+class DictA:
+    table_name: str
+
 Hue = Annotated[int, range(361)]
 
 @dataclass
-class RPGListItem:
+class RPGBase(ABC):
+    id_0_is_null: ClassVar[bool]=False
+
+@dataclass
+class RPGListItem(RPGBase, ABC):
     pass
 
 @dataclass
-class RPG:
-    id_0_is_null: ClassVar[bool]=False
+class RPG(RPGBase, ABC):
+    pass
 
 class EventCommand(RPG):
     code: int
@@ -71,6 +84,8 @@ class MoveCommand(RPG):
 
 @dataclass
 class Element(RPGListItem):
+    id_0_is_null = True
+
     id_: int
     name: str
 
@@ -108,7 +123,11 @@ class Tileset(RPG):
     id_: int
     name: str
     tileset_name: str
-    autotile_names: Annotated[list[str], 7]
+    
+    autotile_names: Annotated[list[str], 7] = field(metadata={
+        'table_name': 'tileset_autotile'
+    })
+
     panorama_name: str
     panorama_hue: Hue
     fog_name: str
@@ -164,8 +183,14 @@ class Animation(RPG):
     animation_hue: Hue
     position: AnimationPosition
     frame_max: int
-    frames: list[AnimationFrame]
-    timings: list[AnimationTiming]
+    
+    frames: list[AnimationFrame] = field(metadata={
+        'table_name': 'animation_frame'
+    })
+    
+    timings: list[AnimationTiming] = field(metadata={
+        'table_name': 'animation_timing'
+    })
 
 class CommonEventTrigger(Enum):
     NONE = 0
@@ -180,7 +205,10 @@ class CommonEvent(RPG):
     name: str
     trigger: CommonEventTrigger
     switch_id: Annotated[int, Switch]
-    list_: list[EventCommand]
+    
+    list_: list[EventCommand] = field(metadata={
+        'table_name': 'common_event_command'
+    })
 
 class StateRestriction(Enum):
     NONE = 0
@@ -219,9 +247,18 @@ class State(RPG):
     hold_turn: int
     auto_release_prob: int
     shock_release_prob: int
-    guard_element_set: set[Annotated[int, Element]]
-    plus_state_set: set[Annotated[int, 'State']]
-    minus_state_set: set[Annotated[int, 'State']]
+
+    guard_element_set: set[Annotated[int, Element]] = field(metadata={
+        'table_name': 'state_guard_element'
+    })
+
+    plus_state_set: set[Annotated[int, 'State']] = field(metadata={
+        'table_name': 'state_plus_state'
+    })
+
+    minus_state_set: set[Annotated[int, 'State']] = field(metadata={
+        'table_name': 'state_minus_state'
+    })
 
 class Scope(Enum):
     NONE = 0
@@ -265,9 +302,18 @@ class Skill(RPG):
     pdef_f: int
     mdef_f: int
     variance: int
-    element_set: set[Annotated[int, Element]]
-    plus_state_set: set[Annotated[int, State]]
-    minus_state_set: set[Annotated[int, State]]
+    
+    element_set: set[Annotated[int, Element]] = field(metadata={
+        'table_name': 'skill_element'
+    })
+    
+    plus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'skill_plus_state'
+    })
+
+    minus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'skill_minus_state'
+    })
 
 class ClassPosition(Enum):
     FRONT = 0
@@ -292,9 +338,18 @@ class Weapon(RPG):
     dex_plus: int
     agi_plus: int
     int_plus: int
-    element_set: set[Annotated[int, Element]]
-    plus_state_set: set[Annotated[int, Element]]
-    minus_state_set: set[Annotated[int, Element]]
+    
+    element_set: set[Annotated[int, Element]] = field(metadata={
+        'table_name': 'weapon_element'
+    })
+    
+    plus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'weapon_plus_state'
+    })
+
+    minus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'weapon_minus_state'
+    })
 
 class ArmorKind(Enum):
     SHIELD = 0
@@ -320,8 +375,14 @@ class Armor(RPG):
     dex_plus: int
     agi_plus: int
     int_plus: int
-    guard_element_set: set[Annotated[int, Element]]
-    guard_state_set: set[Annotated[int, State]]
+
+    guard_element_set: set[Annotated[int, Element]] = field(metadata={
+        'table_name': 'armor_guard_element'
+    })
+
+    guard_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'armor_guard_state'
+    })
 
 @dataclass
 class ClassLearning(RPG):
@@ -335,11 +396,21 @@ class Class(RPG):
     id: int
     name: str
     position: ClassPosition
-    weapon_set: set[Annotated[int, Weapon]]
-    armor_set: set[Annotated[int, Armor]]
+
+    weapon_set: set[Annotated[int, Weapon]] = field(metadata={
+        'table_name': 'class_weapon'
+    })
+
+    armor_set: set[Annotated[int, Armor]] = field(metadata={
+        'table_name': 'class_armor'
+    })
+
     element_ranks: Annotated[np.ndarray, 1]
     state_ranks: Annotated[np.ndarray, 1]
-    learnings: list[ClassLearning]
+
+    learnings: list[ClassLearning] = field(metadata={
+        'table_name': 'class_learning'
+    })
 
 @dataclass
 class Actor(RPG):
@@ -403,9 +474,18 @@ class Item(RPG):
     pdef_f: int
     mdef_f: int
     variance: int
-    element_set: set[Annotated[int, Element]]
-    plus_state_set: set[Annotated[int, State]]
-    minus_state_set: set[Annotated[int, State]]
+
+    element_set: set[Annotated[int, Element]] = field(metadata={
+        'table_name': 'item_element'
+    })
+
+    plus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'item_plus_state'
+    })
+
+    minus_state_set: set[Annotated[int, State]] = field(metadata={
+        'table_name': 'item_minus_state'
+    })
 
 class EnemyActionKind(Enum):
     BASIC = 0
@@ -451,7 +531,7 @@ class Enemy(RPG):
     animation2_id: Annotated[int, Animation]
     element_ranks: Annotated[np.ndarray, 1]
     state_ranks: Annotated[np.ndarray, 1]
-    actions: list[EnemyAction]
+    actions: list[EnemyAction] = field(metadata={'table_name': 'enemy_action'})
     exp: int
     gold: int
     item_id: Annotated[int, Item]
@@ -490,7 +570,10 @@ class TroopPageSpan(Enum):
 class TroopPage(RPG):
     condition: TroopPageCondition
     span: TroopPageSpan
-    list_: list[EventCommand]
+    
+    list_: list[EventCommand] = field(metadata={
+        'table_name': 'troop_page_command'
+    })
 
 @dataclass
 class Troop(RPG):
@@ -498,8 +581,8 @@ class Troop(RPG):
 
     id_: int
     name: str
-    members: list[TroopMember]
-    pages: list[TroopPage]
+    members: list[TroopMember] = field(metadata={'table_name': 'troop_member'})
+    pages: list[TroopPage] = field(metadata={'table_name': 'troop_page'})
 
 @dataclass
 class EventPageCondition(RPG):
@@ -555,7 +638,10 @@ class EventPageMoveFrequency(Enum):
 class MoveRoute(RPG):
     repeat: bool
     skippable: bool
-    list_: list[MoveCommand]
+    
+    list_: list[MoveCommand] = field(metadata={
+        'table_name': 'move_route_command'
+    })
 
 class EventPageTrigger(Enum):
     ACTION_BUTTON = 0
@@ -578,15 +664,18 @@ class EventPage(RPG):
     through: bool
     always_on_top: bool
     trigger: EventPageTrigger
-    list_: list[EventCommand]
+    
+    list_: list[EventCommand] = field(metadata={
+        'table_name': 'event_page_command'
+    })
 
 @dataclass
 class Event(RPG):
-    id: int
+    id_: int
     name: str
     x: int
     y: int
-    pages: list[EventPage]
+    pages: list[EventPage] = field(metadata={'table_name': 'event_page'})
 
 @dataclass
 class Map(RPG):
@@ -599,25 +688,20 @@ class Map(RPG):
     bgm: AudioFile
     autoplay_bgs: bool
     bgs: AudioFile
-
-    # correspponds to table "map_encounter"
-    # maybe dataclass metadata would be good for this
-    # we should redo the whole thing as based on dataclass metadata
-    encounter_list: Ref[Troop, ]
-
-    list[Annotated[int, Troop]]
-    
-
+    encounter_list: list[Annotated[int, Troop]] = field(metadata={'table_name': 'encounter'})
     encounter_step: int
     data: Annotated[np.ndarray, 3]
-    events: dict[Annotated[int, Event], Event]
+    
+    events: dict[Annotated[int, Event], Event] = field(metadata={
+        'table_name': 'map_event'
+    })
 
 @dataclass
 class MapInfo(RPG):
     id_0_is_null = True
 
     name: str
-    parent_id: Annotated[int, MapInfo]
+    parent_id: int = field(metadata={'references': lambda: MapInfo})
     order: int
     expanded: bool
     scroll_x: int
@@ -659,10 +743,20 @@ class SystemTestBattler(RPG):
 @dataclass
 class System(RPG):
     magic_number: int
-    party_members: list[Annotated[int, Actor]]
-    elements: list[Annotated[int, Element]]
-    switches: list[Annotated[int, Switch]]
-    variables: list[Annotated[int, Variable]]
+    
+    party_members: Annotated[
+        list[Annotated[int, Actor]],
+        List('party_member', first_item_null=True)
+    ]
+    
+    elements: Annotated[list[Element], List('element', first_item_null=True)]
+    switches: Annotated[list[Switch], List('switch', first_item_null=True)]
+    
+    variables: Annotated[
+        list[Variable],
+        List('variable', first_item_null: True)
+    ]    
+    
     windowskin_name: str
     title_name: str
     gameover_name: str
@@ -687,7 +781,7 @@ class System(RPG):
     start_map_id: Annotated[int, Map]
     start_x: int
     start_y: int
-    test_battlers: list[SystemTestBattler]
+    test_battlers: Annotated[list[SystemTestBattler], List('test_battler')]
     test_troop_id: Annotated[int, Troop]
     battleback_name: str
     battler_name: str
@@ -704,30 +798,75 @@ class ZlibCompressed:
 
 @dataclass
 class Script(TupleLike):
-    id_: int # not sure if this actually is an ID
+    id_: int
     name: str
     content: Annotated[str, ZlibCompressed('utf-8')]
 
-
-FIRST_ITEM_NULL = object()
-
-type ListWithFirstItemNull[T] = Annotated[list[T], FIRST_ITEM_NULL]
-
 FILES = {
-    'Actors.rxdata': ListWithFirstItemNull[Actor],
-    'Animations.rxdata': ListWithFirstItemNull[Animation],
-    'Armors.rxdata': ListWithFirstItemNull[Armor],
-    'Classes.rxdata': ListWithFirstItemNull[Class],
-    'CommonEvents.rxdata': ListWithFirstItemNull[CommonEvent],
-    'Enemies.rxdata': ListWithFirstItemNull[Enemy],
-    'Items.rxdata': ListWithFirstItemNull[Item],
+    'Actors.rxdata': Annotated[
+        list[Actor],
+        ListA('actor', first_item_null=True)
+    ]
+
+    'Animations.rxdata': Annotated[
+        list[Animation],
+        ListA('animation', first_item_null=True)
+    ],
+
+    'Armors.rxdata': Annotated[
+        list[Armor],
+        ListA('armor', first_item_null=True)
+    ],
+
+    'Classes.rxdata': Annotated[
+        list[Class],
+        ListA('class', first_item_null=True)
+    ],
+
+    'CommonEvents.rxdata': Annotated[
+        list[CommonEvent],
+        ListA('common_event', first_item_null=True)
+    ],
+
+    'Enemies.rxdata': Annotated[
+        list[Enemy],
+        ListA('enemy', first_item_null=True)
+    ],
+
+    'Items.rxdata': Annotated[
+        list[Item],
+        ListA('item', first_item_null=True)
+    ],
+
     re.compile(r'Map(\d\d\d).rxdata'): Map,
-    'MapInfos.rxdata': dict[Annotated[int, MapInfo], MapInfo],
-    'Scripts.rxdata': list[Script],
-    'Skills.rxdata': ListWithFirstItemNull[Skill],
-    'States.rxdata': ListWithFirstItemNull[State],
+
+    'MapInfos.rxdata': Annotated[dict[int, MapInfo], DictA('map_info')]
+    'Scripts.rxdata': Annotated[list[Script], ListA('script')]
+
+    'Skills.rxdata': Annotated[
+        list[Skill],
+        ListA('skill', first_item_null=True)
+    ]
+
+    'States.rxdata': Annotated[
+        list[State],
+        ListA('state', first_item_null=True)
+    ],
+
     'System.rxdata': System,
-    'Tilesets.rxdata': ListWithFirstItemNull[Tileset],
-    'Troops.rxdata': ListWithFirstItemNull[Troop],
-    'Weapons.rxdata': ListWithFirstItemNull[Weapon],
+
+    'Tilesets.rxdata': Annotated[
+        list[Tileset], 
+        ListA('tileset', first_item_null=True)
+    ],
+
+    'Troops.rxdata': Annotated[
+        list[Troop],
+        ListA('troop', first_item_null=True)
+    ],
+
+    'Weapons.rxdata': Annotated[
+        list[Weapon],
+        ListA('weapon', first_item_null=True)
+    ],
 }
