@@ -1,8 +1,8 @@
+DROP TABLE IF EXISTS "actor";
 CREATE TABLE "actor" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "class_id" INTEGER NOT NULL REFERENCES "class" ("index"),
+    "class_id" INTEGER NOT NULL REFERENCES "class" ("id"),
     "initial_level" INTEGER NOT NULL,
     "final_level" INTEGER NOT NULL,
     "exp_basis" INTEGER NOT NULL CHECK ("exp_basis" BETWEEN 10 AND 50),
@@ -12,11 +12,11 @@ CREATE TABLE "actor" (
     "battler_name" TEXT NOT NULL,
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "parameters" BLOB NOT NULL,
-    "weapon_id" INTEGER REFERENCES "weapon" ("index"),
-    "armor1_id" INTEGER REFERENCES "armor" ("index"),
-    "armor2_id" INTEGER REFERENCES "armor" ("index"),
-    "armor3_id" INTEGER REFERENCES "armor" ("index"),
-    "armor4_id" INTEGER REFERENCES "armor" ("index"),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "armor1_id" INTEGER REFERENCES "armor" ("id"),
+    "armor2_id" INTEGER REFERENCES "armor" ("id"),
+    "armor3_id" INTEGER REFERENCES "armor" ("id"),
+    "armor4_id" INTEGER REFERENCES "armor" ("id"),
     "weapon_fix" INTEGER NOT NULL CHECK ("weapon_fix" in (0, 1)),
     "armor1_fix" INTEGER NOT NULL CHECK ("armor1_fix" in (0, 1)),
     "armor2_fix" INTEGER NOT NULL CHECK ("armor2_fix" in (0, 1)),
@@ -24,9 +24,9 @@ CREATE TABLE "actor" (
     "armor4_fix" INTEGER NOT NULL CHECK ("armor4_fix" in (0, 1))
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "animation";
 CREATE TABLE "animation" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "animation_name" TEXT NOT NULL,
     "animation_hue" INTEGER NOT NULL CHECK ("animation_hue" BETWEEN 0 AND 360),
@@ -34,6 +34,7 @@ CREATE TABLE "animation" (
     "frame_max" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "animation_position";
 CREATE TABLE "animation_position" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -45,16 +46,18 @@ INSERT INTO "animation_position" ("id", "name") VALUES
     (2, 'BOTTOM'),
     (3, 'SCREEN');
 
+DROP TABLE IF EXISTS "animation_frame";
 CREATE TABLE "animation_frame" (
-    "animation_index" INTEGER NOT NULL REFERENCES "animation" ("index"),
+    "animation_id" INTEGER NOT NULL REFERENCES "animation" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "cell_max" INTEGER NOT NULL,
     "cell_data" BLOB NOT NULL,
-    PRIMARY KEY ("animation_index", "index")
+    PRIMARY KEY ("animation_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "animation_timing";
 CREATE TABLE "animation_timing" (
-    "animation_index" INTEGER NOT NULL REFERENCES "animation" ("index"),
+    "animation_id" INTEGER NOT NULL REFERENCES "animation" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "frame" INTEGER NOT NULL,
     "se_name" TEXT NOT NULL,
@@ -67,9 +70,10 @@ CREATE TABLE "animation_timing" (
     "flash_color_alpha" INTEGER NOT NULL CHECK ("flash_color_alpha" BETWEEN 0 AND 255),
     "flash_duration" INTEGER NOT NULL,
     "condition" INTEGER NOT NULL REFERENCES "animation_timing_condition" ("id"),
-    PRIMARY KEY ("animation_index", "index")
+    PRIMARY KEY ("animation_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "animation_timing_flash_scope";
 CREATE TABLE "animation_timing_flash_scope" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -81,6 +85,7 @@ INSERT INTO "animation_timing_flash_scope" ("id", "name") VALUES
     (2, 'SCREEN'),
     (3, 'DELETE_TARGET');
 
+DROP TABLE IF EXISTS "animation_timing_condition";
 CREATE TABLE "animation_timing_condition" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -91,14 +96,14 @@ INSERT INTO "animation_timing_condition" ("id", "name") VALUES
     (1, 'HIT'),
     (2, 'MISS');
 
+DROP TABLE IF EXISTS "armor";
 CREATE TABLE "armor" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "icon_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "kind" INTEGER NOT NULL REFERENCES "armor_kind" ("id"),
-    "auto_state_id" INTEGER REFERENCES "state" ("index"),
+    "auto_state_id" INTEGER REFERENCES "state" ("id"),
     "price" INTEGER NOT NULL,
     "pdef" INTEGER NOT NULL,
     "mdef" INTEGER NOT NULL,
@@ -109,6 +114,7 @@ CREATE TABLE "armor" (
     "int_plus" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "armor_kind";
 CREATE TABLE "armor_kind" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -120,27 +126,30 @@ INSERT INTO "armor_kind" ("id", "name") VALUES
     (2, 'BODY_ARMOR'),
     (3, 'ACCESSORY');
 
+DROP TABLE IF EXISTS "armor_guard_element";
 CREATE TABLE "armor_guard_element" (
-    "armor_index" INTEGER NOT NULL REFERENCES "armor" ("index"),
+    "armor_id" INTEGER NOT NULL REFERENCES "armor" ("id"),
     "element_id" INTEGER NOT NULL,
-    PRIMARY KEY ("armor_index", "element_id")
+    PRIMARY KEY ("armor_id", "element_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "armor_guard_state";
 CREATE TABLE "armor_guard_state" (
-    "armor_index" INTEGER NOT NULL REFERENCES "armor" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("armor_index", "state_id")
+    "armor_id" INTEGER NOT NULL REFERENCES "armor" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("armor_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "class";
 CREATE TABLE "class" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "position" INTEGER NOT NULL REFERENCES "class_position" ("id"),
     "element_ranks" BLOB NOT NULL,
     "state_ranks" BLOB NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "class_position";
 CREATE TABLE "class_position" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -151,34 +160,38 @@ INSERT INTO "class_position" ("id", "name") VALUES
     (1, 'MIDDLE'),
     (2, 'REAR');
 
+DROP TABLE IF EXISTS "class_weapon";
 CREATE TABLE "class_weapon" (
-    "class_index" INTEGER NOT NULL REFERENCES "class" ("index"),
-    "weapon_id" INTEGER REFERENCES "weapon" ("index"),
-    PRIMARY KEY ("class_index", "weapon_id")
+    "class_id" INTEGER NOT NULL REFERENCES "class" ("id"),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    PRIMARY KEY ("class_id", "weapon_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "class_armor";
 CREATE TABLE "class_armor" (
-    "class_index" INTEGER NOT NULL REFERENCES "class" ("index"),
-    "armor_id" INTEGER REFERENCES "armor" ("index"),
-    PRIMARY KEY ("class_index", "armor_id")
+    "class_id" INTEGER NOT NULL REFERENCES "class" ("id"),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    PRIMARY KEY ("class_id", "armor_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "class_learning";
 CREATE TABLE "class_learning" (
-    "class_index" INTEGER NOT NULL REFERENCES "class" ("index"),
+    "class_id" INTEGER NOT NULL REFERENCES "class" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "level" INTEGER NOT NULL,
-    "skill_id" INTEGER NOT NULL REFERENCES "skill" ("index"),
-    PRIMARY KEY ("class_index", "index")
+    "skill_id" INTEGER NOT NULL REFERENCES "skill" ("id"),
+    PRIMARY KEY ("class_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "common_event";
 CREATE TABLE "common_event" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "trigger" INTEGER NOT NULL REFERENCES "common_event_trigger" ("id"),
     "switch_id" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "common_event_trigger";
 CREATE TABLE "common_event_trigger" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -189,9 +202,9 @@ INSERT INTO "common_event_trigger" ("id", "name") VALUES
     (1, 'AUTORUN'),
     (2, 'PARALLEL');
 
+DROP TABLE IF EXISTS "enemy";
 CREATE TABLE "enemy" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "battler_name" TEXT NOT NULL,
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
@@ -205,33 +218,35 @@ CREATE TABLE "enemy" (
     "pdef" INTEGER NOT NULL,
     "mdef" INTEGER NOT NULL,
     "eva" INTEGER NOT NULL,
-    "animation1_id" INTEGER REFERENCES "animation" ("index"),
-    "animation2_id" INTEGER REFERENCES "animation" ("index"),
+    "animation1_id" INTEGER REFERENCES "animation" ("id"),
+    "animation2_id" INTEGER REFERENCES "animation" ("id"),
     "element_ranks" BLOB NOT NULL,
     "state_ranks" BLOB NOT NULL,
     "exp" INTEGER NOT NULL,
     "gold" INTEGER NOT NULL,
-    "item_id" INTEGER REFERENCES "item" ("index"),
-    "weapon_id" INTEGER REFERENCES "weapon" ("index"),
-    "armor_id" INTEGER REFERENCES "armor" ("index"),
+    "item_id" INTEGER REFERENCES "item" ("id"),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
     "treasure_prob" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "enemy_action";
 CREATE TABLE "enemy_action" (
-    "enemy_index" INTEGER NOT NULL REFERENCES "enemy" ("index"),
+    "enemy_id" INTEGER NOT NULL REFERENCES "enemy" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "kind" INTEGER NOT NULL REFERENCES "enemy_action_kind" ("id"),
     "basic" INTEGER NOT NULL REFERENCES "enemy_basic_action" ("id"),
-    "skill_id" INTEGER REFERENCES "skill" ("index"),
+    "skill_id" INTEGER REFERENCES "skill" ("id"),
     "condition_turn_a" INTEGER NOT NULL,
     "condition_turn_b" INTEGER NOT NULL,
     "condition_hp" INTEGER NOT NULL,
     "condition_level" INTEGER NOT NULL,
     "condition_switch_id" INTEGER NOT NULL,
     "rating" INTEGER NOT NULL CHECK ("rating" BETWEEN 1 AND 10),
-    PRIMARY KEY ("enemy_index", "index")
+    PRIMARY KEY ("enemy_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "enemy_action_kind";
 CREATE TABLE "enemy_action_kind" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -241,6 +256,7 @@ INSERT INTO "enemy_action_kind" ("id", "name") VALUES
     (0, 'BASIC'),
     (1, 'SKILL');
 
+DROP TABLE IF EXISTS "enemy_basic_action";
 CREATE TABLE "enemy_basic_action" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -252,20 +268,20 @@ INSERT INTO "enemy_basic_action" ("id", "name") VALUES
     (2, 'ESCAPE'),
     (3, 'DO_NOTHING');
 
+DROP TABLE IF EXISTS "item";
 CREATE TABLE "item" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "icon_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "scope" INTEGER NOT NULL REFERENCES "scope" ("id"),
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
-    "animation1_id" INTEGER REFERENCES "animation" ("index"),
-    "animation2_id" INTEGER REFERENCES "animation" ("index"),
+    "animation1_id" INTEGER REFERENCES "animation" ("id"),
+    "animation2_id" INTEGER REFERENCES "animation" ("id"),
     "menu_se_name" TEXT NOT NULL,
     "menu_se_volume" INTEGER NOT NULL,
     "menu_se_pitch" INTEGER NOT NULL,
-    "common_event_id" INTEGER REFERENCES "common_event" ("index"),
+    "common_event_id" INTEGER REFERENCES "common_event" ("id"),
     "price" INTEGER NOT NULL,
     "consumable" INTEGER NOT NULL CHECK ("consumable" in (0, 1)),
     "parameter_type" INTEGER NOT NULL REFERENCES "parameter_type" ("id"),
@@ -280,6 +296,7 @@ CREATE TABLE "item" (
     "variance" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "scope";
 CREATE TABLE "scope" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -295,6 +312,7 @@ INSERT INTO "scope" ("id", "name") VALUES
     (6, 'ALL_ALLIES_HP_0'),
     (7, 'USER');
 
+DROP TABLE IF EXISTS "occasion";
 CREATE TABLE "occasion" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -306,6 +324,7 @@ INSERT INTO "occasion" ("id", "name") VALUES
     (2, 'ONLY_FROM_THE_MENU'),
     (3, 'NEVER');
 
+DROP TABLE IF EXISTS "parameter_type";
 CREATE TABLE "parameter_type" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -320,44 +339,49 @@ INSERT INTO "parameter_type" ("id", "name") VALUES
     (5, 'AGILITY'),
     (6, 'INTELLIGENCE');
 
+DROP TABLE IF EXISTS "item_element";
 CREATE TABLE "item_element" (
-    "item_index" INTEGER NOT NULL REFERENCES "item" ("index"),
+    "item_id" INTEGER NOT NULL REFERENCES "item" ("id"),
     "element_id" INTEGER NOT NULL,
-    PRIMARY KEY ("item_index", "element_id")
+    PRIMARY KEY ("item_id", "element_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "item_plus_state";
 CREATE TABLE "item_plus_state" (
-    "item_index" INTEGER NOT NULL REFERENCES "item" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("item_index", "state_id")
+    "item_id" INTEGER NOT NULL REFERENCES "item" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("item_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "item_minus_state";
 CREATE TABLE "item_minus_state" (
-    "item_index" INTEGER NOT NULL REFERENCES "item" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("item_index", "state_id")
+    "item_id" INTEGER NOT NULL REFERENCES "item" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("item_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "encounter";
 CREATE TABLE "encounter" (
     "map_id" TEXT NOT NULL REFERENCES "map" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "content" INTEGER NOT NULL REFERENCES "troop" ("index"),
+    "content" INTEGER NOT NULL REFERENCES "troop" ("id"),
     PRIMARY KEY ("map_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "event";
 CREATE TABLE "event" (
     "map_id" TEXT NOT NULL REFERENCES "map" ("id"),
-    "key" INTEGER NOT NULL,
     "id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "x" INTEGER NOT NULL,
     "y" INTEGER NOT NULL,
-    PRIMARY KEY ("map_id", "key")
+    PRIMARY KEY ("map_id", "id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "event_page";
 CREATE TABLE "event_page" (
     "map_id" TEXT NOT NULL,
-    "event_key" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "condition_switch1_valid" INTEGER NOT NULL CHECK ("condition_switch1_valid" in (0, 1)),
     "condition_switch2_valid" INTEGER NOT NULL CHECK ("condition_switch2_valid" in (0, 1)),
@@ -386,10 +410,11 @@ CREATE TABLE "event_page" (
     "through" INTEGER NOT NULL CHECK ("through" in (0, 1)),
     "always_on_top" INTEGER NOT NULL CHECK ("always_on_top" in (0, 1)),
     "trigger" INTEGER NOT NULL REFERENCES "event_page_trigger" ("id"),
-    PRIMARY KEY ("map_id", "event_key", "index"),
-    FOREIGN KEY ("map_id", "event_key")  REFERENCES "event" ("map_id", "key")
+    PRIMARY KEY ("map_id", "event_id", "index"),
+    FOREIGN KEY ("map_id", "event_id")  REFERENCES "event" ("map_id", "id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "direction";
 CREATE TABLE "direction" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -401,6 +426,7 @@ INSERT INTO "direction" ("id", "name") VALUES
     (6, 'RIGHT'),
     (8, 'UP');
 
+DROP TABLE IF EXISTS "move_type";
 CREATE TABLE "move_type" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -412,6 +438,7 @@ INSERT INTO "move_type" ("id", "name") VALUES
     (2, 'APPROACH'),
     (3, 'CUSTOM');
 
+DROP TABLE IF EXISTS "move_frequency";
 CREATE TABLE "move_frequency" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -425,6 +452,7 @@ INSERT INTO "move_frequency" ("id", "name") VALUES
     (5, 'HIGHER'),
     (6, 'HIGHEST');
 
+DROP TABLE IF EXISTS "move_speed";
 CREATE TABLE "move_speed" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -438,6 +466,7 @@ INSERT INTO "move_speed" ("id", "name") VALUES
     (5, 'FASTER'),
     (6, 'FASTEST');
 
+DROP TABLE IF EXISTS "event_page_trigger";
 CREATE TABLE "event_page_trigger" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -450,9 +479,10 @@ INSERT INTO "event_page_trigger" ("id", "name") VALUES
     (3, 'AUTORUN'),
     (4, 'PARALLEL_PROCESSING');
 
+DROP TABLE IF EXISTS "map";
 CREATE TABLE "map" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("index"),
+    "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("id"),
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
     "autoplay_bgm" INTEGER NOT NULL CHECK ("autoplay_bgm" in (0, 1)),
@@ -467,6 +497,7 @@ CREATE TABLE "map" (
     "data" BLOB NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "map_info";
 CREATE TABLE "map_info" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -477,6 +508,7 @@ CREATE TABLE "map_info" (
     "scroll_y" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "script";
 CREATE TABLE "script" (
     "index" INTEGER NOT NULL CHECK ("index" >= 0) PRIMARY KEY,
     "id" INTEGER NOT NULL,
@@ -484,20 +516,20 @@ CREATE TABLE "script" (
     "content" BLOB NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "skill";
 CREATE TABLE "skill" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "icon_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "scope" INTEGER NOT NULL REFERENCES "scope" ("id"),
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
-    "animation1_id" INTEGER REFERENCES "animation" ("index"),
-    "animation2_id" INTEGER REFERENCES "animation" ("index"),
+    "animation1_id" INTEGER REFERENCES "animation" ("id"),
+    "animation2_id" INTEGER REFERENCES "animation" ("id"),
     "menu_se_name" TEXT NOT NULL,
     "menu_se_volume" INTEGER NOT NULL,
     "menu_se_pitch" INTEGER NOT NULL,
-    "common_event_id" INTEGER REFERENCES "common_event" ("index"),
+    "common_event_id" INTEGER REFERENCES "common_event" ("id"),
     "sp_cost" INTEGER NOT NULL,
     "power" INTEGER NOT NULL,
     "atk_f" INTEGER NOT NULL,
@@ -512,30 +544,33 @@ CREATE TABLE "skill" (
     "variance" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "skill_element";
 CREATE TABLE "skill_element" (
-    "skill_index" INTEGER NOT NULL REFERENCES "skill" ("index"),
+    "skill_id" INTEGER NOT NULL REFERENCES "skill" ("id"),
     "element_id" INTEGER NOT NULL,
-    PRIMARY KEY ("skill_index", "element_id")
+    PRIMARY KEY ("skill_id", "element_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "skill_plus_state";
 CREATE TABLE "skill_plus_state" (
-    "skill_index" INTEGER NOT NULL REFERENCES "skill" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("skill_index", "state_id")
+    "skill_id" INTEGER NOT NULL REFERENCES "skill" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("skill_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "skill_minus_state";
 CREATE TABLE "skill_minus_state" (
-    "skill_index" INTEGER NOT NULL REFERENCES "skill" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("skill_index", "state_id")
+    "skill_id" INTEGER NOT NULL REFERENCES "skill" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("skill_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "state";
 CREATE TABLE "state" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "animation1_id" INTEGER REFERENCES "animation" ("index"),
-    "animation2_id" INTEGER REFERENCES "animation" ("index"),
+    "animation1_id" INTEGER REFERENCES "animation" ("id"),
+    "animation2_id" INTEGER REFERENCES "animation" ("id"),
     "restriction" INTEGER NOT NULL REFERENCES "state_restriction" ("id"),
     "nonresistance" INTEGER NOT NULL CHECK ("nonresistance" in (0, 1)),
     "zero_hp" INTEGER NOT NULL CHECK ("zero_hp" in (0, 1)),
@@ -560,6 +595,7 @@ CREATE TABLE "state" (
     "shock_release_prob" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "state_restriction";
 CREATE TABLE "state_restriction" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -572,24 +608,28 @@ INSERT INTO "state_restriction" ("id", "name") VALUES
     (3, 'ALWAYS_ATTACK_ALLIES'),
     (4, 'CANT_MOVE');
 
+DROP TABLE IF EXISTS "state_guard_element";
 CREATE TABLE "state_guard_element" (
-    "state_index" INTEGER NOT NULL REFERENCES "state" ("index"),
+    "state_id" INTEGER NOT NULL REFERENCES "state" ("id"),
     "element_id" INTEGER NOT NULL,
-    PRIMARY KEY ("state_index", "element_id")
+    PRIMARY KEY ("state_id", "element_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "state_plus_state";
 CREATE TABLE "state_plus_state" (
-    "state_index" INTEGER NOT NULL REFERENCES "state" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("state_index", "state_id")
+    "state_id" INTEGER NOT NULL REFERENCES "state" ("id"),
+    "plus_state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("state_id", "plus_state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "state_minus_state";
 CREATE TABLE "state_minus_state" (
-    "state_index" INTEGER NOT NULL REFERENCES "state" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("state_index", "state_id")
+    "state_id" INTEGER NOT NULL REFERENCES "state" ("id"),
+    "minus_state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("state_id", "minus_state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "system";
 CREATE TABLE "system" (
     "id" INTEGER NOT NULL DEFAULT 0 CHECK ("id" = 0) PRIMARY KEY,
     "magic_number" INTEGER NOT NULL,
@@ -665,47 +705,52 @@ CREATE TABLE "system" (
     "start_map_id" TEXT REFERENCES "map" ("id"),
     "start_x" INTEGER NOT NULL,
     "start_y" INTEGER NOT NULL,
-    "test_troop_id" INTEGER REFERENCES "troop" ("index"),
+    "test_troop_id" INTEGER REFERENCES "troop" ("id"),
     "battleback_name" TEXT NOT NULL,
     "battler_name" TEXT NOT NULL,
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "edit_map_id" TEXT REFERENCES "map" ("id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "party_member";
 CREATE TABLE "party_member" (
     "index" INTEGER NOT NULL CHECK ("index" >= 0) PRIMARY KEY,
-    "content" INTEGER NOT NULL REFERENCES "actor" ("index")
+    "content" INTEGER NOT NULL REFERENCES "actor" ("id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "element";
 CREATE TABLE "element" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
     "content" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "switch";
 CREATE TABLE "switch" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
     "content" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "variable";
 CREATE TABLE "variable" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
     "content" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "test_battler";
 CREATE TABLE "test_battler" (
     "index" INTEGER NOT NULL CHECK ("index" >= 0) PRIMARY KEY,
-    "actor_id" INTEGER NOT NULL REFERENCES "actor" ("index"),
+    "actor_id" INTEGER NOT NULL REFERENCES "actor" ("id"),
     "level" INTEGER NOT NULL,
-    "weapon_id" INTEGER REFERENCES "weapon" ("index"),
-    "armor1_id" INTEGER REFERENCES "armor" ("index"),
-    "armor2_id" INTEGER REFERENCES "armor" ("index"),
-    "armor3_id" INTEGER REFERENCES "armor" ("index"),
-    "armor4_id" INTEGER REFERENCES "armor" ("index")
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "armor1_id" INTEGER REFERENCES "armor" ("id"),
+    "armor2_id" INTEGER REFERENCES "armor" ("id"),
+    "armor3_id" INTEGER REFERENCES "armor" ("id"),
+    "armor4_id" INTEGER REFERENCES "armor" ("id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "tileset";
 CREATE TABLE "tileset" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "tileset_name" TEXT NOT NULL,
     "panorama_name" TEXT NOT NULL,
@@ -723,32 +768,35 @@ CREATE TABLE "tileset" (
     "terrain_tags" BLOB NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "tileset_autotile";
 CREATE TABLE "tileset_autotile" (
-    "tileset_index" INTEGER NOT NULL REFERENCES "tileset" ("index"),
+    "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "content" TEXT NOT NULL,
-    PRIMARY KEY ("tileset_index", "index")
+    PRIMARY KEY ("tileset_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "troop";
 CREATE TABLE "troop" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "troop_member";
 CREATE TABLE "troop_member" (
-    "troop_index" INTEGER NOT NULL REFERENCES "troop" ("index"),
+    "troop_id" INTEGER NOT NULL REFERENCES "troop" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "enemy_id" INTEGER NOT NULL REFERENCES "enemy" ("index"),
+    "enemy_id" INTEGER NOT NULL REFERENCES "enemy" ("id"),
     "x" INTEGER NOT NULL,
     "y" INTEGER NOT NULL,
     "hidden" INTEGER NOT NULL CHECK ("hidden" in (0, 1)),
     "immortal" INTEGER NOT NULL CHECK ("immortal" in (0, 1)),
-    PRIMARY KEY ("troop_index", "index")
+    PRIMARY KEY ("troop_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "troop_page";
 CREATE TABLE "troop_page" (
-    "troop_index" INTEGER NOT NULL REFERENCES "troop" ("index"),
+    "troop_id" INTEGER NOT NULL REFERENCES "troop" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "condition_turn_valid" INTEGER NOT NULL CHECK ("condition_turn_valid" in (0, 1)),
     "condition_enemy_valid" INTEGER NOT NULL CHECK ("condition_enemy_valid" in (0, 1)),
@@ -758,13 +806,14 @@ CREATE TABLE "troop_page" (
     "condition_turn_b" INTEGER NOT NULL,
     "condition_enemy_index" INTEGER NOT NULL CHECK ("condition_enemy_index" BETWEEN 0 AND 7),
     "condition_enemy_hp" INTEGER NOT NULL,
-    "condition_actor_id" INTEGER REFERENCES "actor" ("index"),
+    "condition_actor_id" INTEGER REFERENCES "actor" ("id"),
     "condition_actor_hp" INTEGER NOT NULL,
     "condition_switch_id" INTEGER NOT NULL,
     "span" INTEGER NOT NULL REFERENCES "troop_page_span" ("id"),
-    PRIMARY KEY ("troop_index", "index")
+    PRIMARY KEY ("troop_id", "index")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "troop_page_span";
 CREATE TABLE "troop_page_span" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL
@@ -775,14 +824,14 @@ INSERT INTO "troop_page_span" ("id", "name") VALUES
     (1, 'TURN'),
     (2, 'MOMENT');
 
+DROP TABLE IF EXISTS "weapon";
 CREATE TABLE "weapon" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "id" INTEGER NOT NULL,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "icon_name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "animation1_id" INTEGER REFERENCES "animation" ("index"),
-    "animation2_id" INTEGER REFERENCES "animation" ("index"),
+    "animation1_id" INTEGER REFERENCES "animation" ("id"),
+    "animation2_id" INTEGER REFERENCES "animation" ("id"),
     "price" INTEGER NOT NULL,
     "atk" INTEGER NOT NULL,
     "pdef" INTEGER NOT NULL,
@@ -793,20 +842,23 @@ CREATE TABLE "weapon" (
     "int_plus" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "weapon_element";
 CREATE TABLE "weapon_element" (
-    "weapon_index" INTEGER NOT NULL REFERENCES "weapon" ("index"),
+    "weapon_id" INTEGER NOT NULL REFERENCES "weapon" ("id"),
     "element_id" INTEGER NOT NULL,
-    PRIMARY KEY ("weapon_index", "element_id")
+    PRIMARY KEY ("weapon_id", "element_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "weapon_plus_state";
 CREATE TABLE "weapon_plus_state" (
-    "weapon_index" INTEGER NOT NULL REFERENCES "weapon" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("weapon_index", "state_id")
+    "weapon_id" INTEGER NOT NULL REFERENCES "weapon" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("weapon_id", "state_id")
 ) WITHOUT ROWID, STRICT;
 
+DROP TABLE IF EXISTS "weapon_minus_state";
 CREATE TABLE "weapon_minus_state" (
-    "weapon_index" INTEGER NOT NULL REFERENCES "weapon" ("index"),
-    "state_id" INTEGER REFERENCES "state" ("index"),
-    PRIMARY KEY ("weapon_index", "state_id")
+    "weapon_id" INTEGER NOT NULL REFERENCES "weapon" ("id"),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("weapon_id", "state_id")
 ) WITHOUT ROWID, STRICT;

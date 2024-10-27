@@ -95,11 +95,6 @@ class TableSchema:
 			if isinstance(member, ColumnSchema):
 				yield member
 
-	def make_all_pks(self) -> None:
-		for member in self.members:
-			if isinstance(member, (ColumnSchema, PendingFK)):
-				member.pk = True
-
 	def constraints(self) -> Iterator[TableConstraint]:
 		for member in self.members:
 			if isinstance(member, TableConstraint):
@@ -111,7 +106,39 @@ class TableSchema:
 				yield member
 
 	def pk(self) -> list[ColumnSchema | PendingFK]:
-		return [m for m in self.members if isinstance(m, (ColumnSchema, PendingFK)) and m.pk]
+		result = [
+			m for m in self.members
+			if isinstance(m, (ColumnSchema, PendingFK)) and m.pk
+		]
+
+		if not result:
+			print(self.members)
+			raise schema.SchemaError(f'table {self.name} has no PK')
+
+		return result
+
+	def make_all_pks(self) -> None:
+		for member in self.members:
+			if isinstance(member, (ColumnSchema, PendingFK)):
+				member.pk = True
+
+	def set_pk(self, pk_col_names: set[str]) -> None:
+		found_names = set()
+
+		for member in self.members:
+			if isinstance(member, ColumnSchema):
+				if member.name in pk_col_names:
+					member.pk = True
+					found_names.add(member.name)
+				else:
+					member.pk = False
+
+		if found_names != pk_col_names:
+			raise ValueError(
+				"can't set primary key to include "
+				f"{', '.join(pk_col_names - found_names)} because these columns"
+				"don't exist"
+			)
 
 	def __str__(self) -> str:
 		column_decls: list[str] = []
@@ -157,6 +184,7 @@ class TableSchema:
 		decls_csv = ',\n    '.join(column_decls + constraint_decls)
 
 		return '\n'.join([
+			f'DROP TABLE IF EXISTS "{self.name}";',
 			f'CREATE TABLE "{self.name}" (',
 		    f'    {decls_csv}',
 		    ') WITHOUT ROWID, STRICT;'
@@ -302,16 +330,42 @@ class DBSchema:
 			))
 
 		match table_schema:
-			case schema.ListSchema(_, item_schema, first_item, item_name):
-				min_index = 0 if first_item is schema.FirstItem.REGULAR else 1
+			case schema.ListSchema(
+				_, item_schema, first_item=first_item, item_name=item_name,
+				index=index_behavior
+			):
+				pk_field_name: str | None=None
 
-				db_table_schema.members.extend([
-					ColumnSchema('index', 'INTEGER', pk=True),
-					CheckConstraint(f'"index" >= {min_index}'),
-				])
+				match index_behavior:
+					case schema.AddIndexColumn(index_col_name):
+						min_index = (
+							0 if first_item is schema.FirstItem.REGULAR
+							else 1
+						)
+
+						db_table_schema.members.extend([
+							ColumnSchema(index_col_name, 'INTEGER', pk=True),
+							CheckConstraint(
+								f'"{index_col_name}" >= {min_index}'
+							),
+						])
+
+						pk_col_name = index_col_name
+					case schema.MatchIndexToField(pk_field_name):
+						assert isinstance(item_schema, schema.ObjSchema)
+						pk_field = item_schema.get_field(pk_field_name)
+						pk_field_name = pk_field.name
+
+						db_index_schema = self.process_field(
+							db_table_schema, pk_field.db_name, pk_field.schema
+						)
+
+						db_index_schema.make_all_pks()
+						db_table_schema += db_index_schema
 
 				db_table_schema += self.process_field(
-					db_table_schema, item_name, item_schema
+					db_table_schema, item_name, item_schema,
+					skip_field_name=pk_field_name
 				)
 
 			case schema.SetSchema(_, item_schema, item_name):
@@ -322,14 +376,30 @@ class DBSchema:
 				db_member_schema.make_all_pks()
 				db_table_schema += db_member_schema
 
-			case schema.DictSchema(_, key_name, key_schema, value_schema, value_name):
-				db_key_schema = self.process_field(
-					db_table_schema, key_name.db_name, key_schema
-				)
+			case schema.DictSchema(_, key_behavior, value_schema, value_name):
+				pk_field_name2: str | None=None
+
+				match key_behavior:
+					case schema.AddKeyColumn(key_col_name, key_schema):
+						db_key_schema = self.process_field(
+							db_table_schema, key_col_name, key_schema
+						)
+					case schema.MatchKeyToField(pk_field_name):
+						pk_field = value_schema.get_field(pk_field_name)
+						pk_field_name2 = pk_field.name
+
+						db_key_schema = self.process_field(
+							db_table_schema, pk_field.db_name, pk_field.schema
+						)
+					case _:
+						assert False
 
 				db_key_schema.make_all_pks()
 				db_table_schema += db_key_schema
-				db_table_schema += self.process_field(db_table_schema, value_name, value_schema)
+
+				db_table_schema += self.process_field(
+					db_table_schema, value_name, value_schema, pk_field_name2
+				)
 
 			case schema.RPGSingletonObjSchema(_, _, _, fields):
 				assert parent_table is None
@@ -355,7 +425,8 @@ class DBSchema:
 		self,
 		table_schema: TableSchema,
 		field_name: str,
-		field_schema: schema.DataSchema
+		field_schema: schema.DataSchema,
+		skip_field_name: str | None=None
 	) -> TableSchema:
 
 		result: TableSchema = TableSchema(table_schema.name)
@@ -415,11 +486,18 @@ class DBSchema:
 				result.members.append(PendingFK(field_name, field_schema))
 			case schema.ObjSchema():
 				for subfield in field_schema.fields:
+					if skip_field_name is not None and subfield.name == skip_field_name:
+						# should eb alreay added
+						continue
+
 					combined_name = field_prefix + subfield.db_name
-					
-					result += self.process_field(
-						table_schema, combined_name, subfield.schema
+						
+					field_result = self.process_field(
+						table_schema, combined_name, subfield.schema,
+						skip_field_name=skip_field_name
 					)
+
+					result += field_result
 			case schema.TableSchema():
 				self.process_table_schema(field_schema, table_schema)
 

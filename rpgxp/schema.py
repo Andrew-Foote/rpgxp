@@ -7,18 +7,22 @@ from typing import Callable, Iterator, Literal, Sequence
 from rpgxp.common import *
 
 class SchemaError(Exception):
-	pass
+	"""An error indicating that the schema built in this file is invalid."""
 
-@dataclass
+###############################################################################
+
+# Classes used to build the schema
+
+@dataclass(frozen=True)
 class DataSchema(ABC):
-	pass
+	"""A schema for a part of the RPG Maker XP data structure."""
 
-@dataclass
+@dataclass(frozen=True)
 class RowSchema(DataSchema, ABC):
 	"""A schema for an object which corresponds to an individual database row
 	(as opposed to a whole table)."""
 
-@dataclass
+@dataclass(frozen=True)
 class TableSchema(DataSchema, ABC):
 	"""A schema for an object which corresponds to a whole database table (as
 	opposed to an individual row)."""
@@ -28,11 +32,11 @@ class TableSchema(DataSchema, ABC):
 	def table_name(self) -> str:
 		"""The name of the database table corresponding to the object."""
 
-@dataclass
+@dataclass(frozen=True)
 class BoolSchema(RowSchema):
 	"""A schema for a Boolean value (true or false)."""
 
-@dataclass
+@dataclass(frozen=True)
 class IntSchema(RowSchema):
 	"""A schema for an integer value.
 
@@ -46,11 +50,11 @@ class IntSchema(RowSchema):
 	lb: int | None=None
 	ub: int | None=None
 
-@dataclass
+@dataclass(frozen=True)
 class StrSchema(RowSchema):
 	"""A schema for a string value."""
 
-@dataclass
+@dataclass(frozen=True)
 class ZlibSchema(RowSchema):
 	"""Schema for a value consisting of bytes obtained by compressing a
 	string using zlib.
@@ -61,7 +65,7 @@ class ZlibSchema(RowSchema):
 
 	encoding: str
 
-@dataclass
+@dataclass(frozen=True)
 class NDArraySchema(RowSchema):
 	"""Schema for a value which is a multi-dimensional array.
 
@@ -72,16 +76,16 @@ class NDArraySchema(RowSchema):
 
 	dims: Literal[1] | Literal[2] | Literal[3]
 
-@dataclass
+@dataclass(frozen=True)
 class EnumSchema(RowSchema):
 	enum_class: type[Enum]
 
-@dataclass
+@dataclass(frozen=True)
 class FKSchema(RowSchema):
 	foreign_schema_thunk: Callable[[], TableSchema] 
 	nullable: bool=True
 
-@dataclass
+@dataclass(frozen=True)
 class ObjSchema(RowSchema, ABC):
 	@property
 	@abstractmethod
@@ -93,7 +97,21 @@ class ObjSchema(RowSchema, ABC):
 	def fields(self) -> Sequence[FieldBase]:
 		...
 
-@dataclass
+	def has_field(self, field_name: str) -> bool:
+		for f in self.fields:
+			if f.name == field_name:
+				return True
+
+		return False
+
+	def get_field(self, field_name: str) -> FieldBase:
+		for f in self.fields:
+			if f.name == field_name:
+				return f
+
+		raise ValueError(f'field not found: {field_name}')
+
+@dataclass(frozen=True)
 class FieldBase(ABC):
 	@property
 	@abstractmethod
@@ -110,7 +128,7 @@ class FieldBase(ABC):
 	def db_name(self) -> str:
 		...
 
-@dataclass
+@dataclass(frozen=True)
 class Field(FieldBase):
 	_name: str
 	_schema: DataSchema
@@ -128,7 +146,7 @@ class Field(FieldBase):
 	def db_name(self) -> str:
 		return self._db_name or self.name
 
-@dataclass
+@dataclass(frozen=True)
 class ArrayObjSchema(ObjSchema, RowSchema):
 	_class_name: str
 	_fields: list[Field]
@@ -141,7 +159,7 @@ class ArrayObjSchema(ObjSchema, RowSchema):
 	def fields(self) -> list[Field]:
 		return self._fields
 
-@dataclass
+@dataclass(frozen=True)
 class RPGField(FieldBase):
 	_name: str
 	_schema: DataSchema
@@ -150,7 +168,7 @@ class RPGField(FieldBase):
 
 	def __post_init__(self) -> None:
 		if not self.rpg_name:
-			self.rpg_name = self.name
+			object.__setattr__(self, 'rpg_name', self.name)
 
 	@property
 	def name(self) -> str:
@@ -164,7 +182,7 @@ class RPGField(FieldBase):
 	def db_name(self) -> str:
 		return self._db_name or self.name
 
-@dataclass
+@dataclass(frozen=True)
 class RPGObjSchema(ObjSchema):
 	_class_name: str
 	rpg_class_name: str
@@ -178,7 +196,7 @@ class RPGObjSchema(ObjSchema):
 	def fields(self) -> list[RPGField]:
 		return self._fields
 
-@dataclass
+@dataclass(frozen=True)
 class RPGSingletonObjSchema(ObjSchema, TableSchema):
 	_class_name: str
 	_table_name: str
@@ -202,19 +220,71 @@ class FirstItem(Enum):
 	NULL = 1
 	BLANK = 2
 
-@dataclass
+@dataclass(frozen=True)
+class IndexBehavior(ABC):
+	pass
+
+@dataclass(frozen=True)
+class AddIndexColumn(IndexBehavior):
+	col_name: str
+
+@dataclass(frozen=True)
+class MatchIndexToField(IndexBehavior):
+	match_to: str
+
+@dataclass(frozen=True)
 class ListSchema(TableSchema):
+	"""The schema for a Marshal array.
+
+	Attributes:
+	  table_name
+	    Name of the database table corresponding to this array.
+	  item_schema
+	    Schema for the array items.
+      first_item
+        If set to FirstItem.NULL or FirstItem.BLANK (rather than
+        FirstItem.REGULAR, the default value), indicates that the first item
+        of the array will not match the given schema, and instead will either
+        be null, or an empty string, respectively.
+      item_name
+        Name of the database column corresponding to the content of each array
+        item. If the items will be represented by values spread across multiple
+        columns, or the item schema already provides a name for the column,
+        this name will be used as a prefix on all those columns. If item_name
+        is left blank, there will be no prefix in the latter case, and a
+        default name of 'content' will be used in the former case.
+      length_schema
+        Schema for the array length, which can be used to set upper and lower
+        bounds on its length.
+      index
+        This should be set to an IndexBehavior object which indicates how to
+        handle the storing of the index at which each array item is located.
+        If set to an AddIndexField object, then the database table
+        corresponding to to this array will have an extra column added to store
+        this index, with the name specified on the object. The default name is
+        'index'. If set to a MatchIndexToField object, it is expected that the
+        item_schema will also be a subclass of ObjSchema, and that the index
+        for each item will always be the same as one of its fields (so that the
+        index doesn't need to be stored separately in the database).
+	"""
+
 	_table_name: str
 	item_schema: RowSchema
 	first_item: FirstItem=FirstItem.REGULAR
 	item_name: str=''
-	maxlen: int | None=None
+	length_schema: IntSchema=IntSchema()
+	index: IndexBehavior=AddIndexColumn('index')
 
 	@property
 	def table_name(self) -> str:
 		return self._table_name
 
-@dataclass
+	def __post_init__(self) -> None:
+		if isinstance(self.index, MatchIndexToField):
+			assert isinstance(self.item_schema, ObjSchema)
+			assert self.item_schema.has_field(self.index.match_to)
+
+@dataclass(frozen=True)
 class SetSchema(TableSchema):
 	_table_name: str
 	item_schema: RowSchema
@@ -224,12 +294,20 @@ class SetSchema(TableSchema):
 	def table_name(self) -> str:
 		return self._table_name
 
-@dataclass
-class DBName:
-	app_name: str
-	db_name: str
+@dataclass(frozen=True)
+class KeyBehavior(ABC):
+	pass
 
-@dataclass
+@dataclass(frozen=True)
+class AddKeyColumn(KeyBehavior):
+	col_name: str
+	key_schema: RowSchema
+
+@dataclass(frozen=True)
+class MatchKeyToField(KeyBehavior):
+	match_to: str
+
+@dataclass(frozen=True)
 class DictSchema(TableSchema):
 	"""The schema for a Marshal hash whose values are objects.
 
@@ -246,8 +324,7 @@ class DictSchema(TableSchema):
 	# should have key_name, key_db_name
 	# or, we should have this as an enum where one of the options is MatchesField
 	_table_name: str
-	key_name: DBName
-	key_schema: RowSchema
+	key: KeyBehavior
 	value_schema: ObjSchema
 	value_name: str=''
 
@@ -255,11 +332,15 @@ class DictSchema(TableSchema):
 	def table_name(self) -> str:
 		return self._table_name
 
-@dataclass
+	def __post_init__(self) -> None:
+		if isinstance(self.key, MatchKeyToField):
+			assert self.value_schema.has_field(self.key.match_to)
+
+@dataclass(frozen=True)
 class FileSchema(ABC):
 	pass
 
-@dataclass
+@dataclass(frozen=True)
 class SingleFileSchema(FileSchema):
 	"""The schema for one of the .rxdata files in the game's Data directory.
 
@@ -274,7 +355,16 @@ class SingleFileSchema(FileSchema):
 	filename: str
 	schema: TableSchema
 
-@dataclass
+@dataclass(frozen=True)
+class DBName:
+	app_name: str
+	db_name: str=''
+
+	def __post_init__(self) -> None:
+		if not self.db_name:
+			object.__setattr__(self, 'db_name', self.app_name)
+
+@dataclass(frozen=True)
 class MultipleFilesSchema(FileSchema, TableSchema):
 	"""The schema for a set of .rxdata files in the game's Data directory which
 	all match a certain regex pattern.
@@ -305,7 +395,7 @@ class MultipleFilesSchema(FileSchema, TableSchema):
 
 ###############################################################################
 
-# utility functions for quicker typing
+# Utility functions to help with building the schema
 
 def id_field() -> RPGField:
 	return RPGField('id_', IntSchema(), _db_name='id', rpg_name='id')
@@ -344,6 +434,8 @@ def fk_field(
 	return RPGField(name, FKSchema(schema_thunk, nullable=nullable))
 
 ###############################################################################
+
+# The actual schema
 
 HUE_SCHEMA = IntSchema(0, 360)
 
@@ -576,7 +668,7 @@ MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
 	RPGField('encounter_step', IntSchema()),
 	RPGField('data', NDArraySchema(3)),
 	RPGField('events', DictSchema(
-		'event', DBName('key_', 'key'), IntSchema(), EVENT_SCHEMA
+		'event', MatchKeyToField('id_'), EVENT_SCHEMA
 	)),
 ])
 
@@ -637,10 +729,10 @@ STATE_SCHEMA = RPGObjSchema('State', 'RPG::State', [
 		'state_guard_element', IntSchema(), 'element_id'
 	)),
 	RPGField('plus_state_set', SetSchema(
-		'state_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+		'state_plus_state', FKSchema(lambda: STATES_SCHEMA), 'plus_state_id'
 	)),
 	RPGField('minus_state_set', SetSchema(
-		'state_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+		'state_minus_state', FKSchema(lambda: STATES_SCHEMA), 'minus_state_id'
 	)),
 ])
 
@@ -732,7 +824,7 @@ TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
 	id_field(),
 	*str_fields('name tileset_name'),
 	RPGField('autotile_names', ListSchema(
-		'tileset_autotile', StrSchema(), maxlen=7
+		'tileset_autotile', StrSchema(), length_schema=IntSchema(7, 7)
 	)),
 	str_field('panorama_name'),
 	hue_field('panorama_hue'),
@@ -793,17 +885,39 @@ WEAPON_SCHEMA = RPGObjSchema('Weapon', 'RPG::Weapon', [
 	)),
 ])
 
-ACTORS_SCHEMA: ListSchema = ListSchema('actor', ACTOR_SCHEMA, FirstItem.NULL)
-ANIMATIONS_SCHEMA: ListSchema = ListSchema('animation', ANIMATION_SCHEMA, FirstItem.NULL)
-ARMORS_SCHEMA: ListSchema = ListSchema('armor', ARMOR_SCHEMA, FirstItem.NULL)
-CLASSES_SCHEMA: ListSchema = ListSchema('class', CLASS_SCHEMA, FirstItem.NULL)
-
-COMMON_EVENTS_SCHEMA: ListSchema = ListSchema(
-	'common_event', COMMON_EVENT_SCHEMA, FirstItem.NULL
+ACTORS_SCHEMA: ListSchema = ListSchema(
+	'actor', ACTOR_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
 )
 
-ENEMIES_SCHEMA: ListSchema = ListSchema('enemy', ENEMY_SCHEMA, FirstItem.NULL)
-ITEMS_SCHEMA: ListSchema = ListSchema('item', ITEM_SCHEMA, FirstItem.NULL)
+ANIMATIONS_SCHEMA: ListSchema = ListSchema(
+	'animation', ANIMATION_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+ARMORS_SCHEMA: ListSchema = ListSchema(
+	'armor', ARMOR_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+CLASSES_SCHEMA: ListSchema = ListSchema(
+	'class', CLASS_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+COMMON_EVENTS_SCHEMA: ListSchema = ListSchema(
+	'common_event', COMMON_EVENT_SCHEMA,
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+ENEMIES_SCHEMA: ListSchema = ListSchema(
+	'enemy', ENEMY_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+ITEMS_SCHEMA: ListSchema = ListSchema(
+	'item', ITEM_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
 
 MAPS_SCHEMA: MultipleFilesSchema = MultipleFilesSchema(
 	re.compile(r'Map(\d{3}).rxdata'),
@@ -813,15 +927,35 @@ MAPS_SCHEMA: MultipleFilesSchema = MultipleFilesSchema(
 )
 
 MAP_INFOS_SCHEMA: DictSchema = DictSchema(
-	'map_info', DBName('id_', 'id'), IntSchema(), MAP_INFO_SCHEMA
+	'map_info', AddKeyColumn('id', IntSchema()), MAP_INFO_SCHEMA
 )
 
 SCRIPTS_SCHEMA: ListSchema = ListSchema('script', SCRIPT_SCHEMA)
-SKILLS_SCHEMA: ListSchema = ListSchema('skill', SKILL_SCHEMA, FirstItem.NULL)
-STATES_SCHEMA: ListSchema = ListSchema('state', STATE_SCHEMA, FirstItem.NULL)
-TILESETS_SCHEMA: ListSchema = ListSchema('tileset', TILESET_SCHEMA, FirstItem.NULL)
-TROOPS_SCHEMA: ListSchema = ListSchema('troop', TROOP_SCHEMA, FirstItem.NULL)
-WEAPONS_SCHEMA: ListSchema = ListSchema('weapon', WEAPON_SCHEMA, FirstItem.NULL)
+
+SKILLS_SCHEMA: ListSchema = ListSchema(
+	'skill', SKILL_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+STATES_SCHEMA: ListSchema = ListSchema(
+	'state', STATE_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+TILESETS_SCHEMA: ListSchema = ListSchema(
+	'tileset', TILESET_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+TROOPS_SCHEMA: ListSchema = ListSchema(
+	'troop', TROOP_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
+
+WEAPONS_SCHEMA: ListSchema = ListSchema(
+	'weapon', WEAPON_SCHEMA, 
+	first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+)
 
 FILES: list[FileSchema] = [
 	SingleFileSchema('Actors.rxdata', ACTORS_SCHEMA),
