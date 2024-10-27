@@ -1,9 +1,10 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 import functools as ft
 import re
-from typing import Callable, Literal
+from typing import Callable, Iterator, Literal, Sequence
+from rpgxp.common import *
 
 class SchemaError(Exception):
 	pass
@@ -21,7 +22,11 @@ class RowSchema(DataSchema, ABC):
 class TableSchema(DataSchema, ABC):
 	"""A schema for an object which corresponds to a whole database table (as
 	opposed to an individual row)."""
-	table_name: str
+
+	@property
+	@abstractmethod
+	def table_name(self) -> str:
+		"""The name of the database table corresponding to the object."""
 
 @dataclass
 class BoolSchema(RowSchema):
@@ -78,45 +83,119 @@ class FKSchema(RowSchema):
 
 @dataclass
 class ObjSchema(RowSchema, ABC):
-	class_name: str
+	@property
+	@abstractmethod
+	def class_name(self) -> str:
+		"""The name of the Python class corresponding to this schema."""
+
+	@property
+	@abstractmethod
+	def fields(self) -> Sequence[FieldBase]:
+		...
 
 @dataclass
-class Field:
-	name: str
-	schema: DataSchema
-	db_name: str=''
+class FieldBase(ABC):
+	@property
+	@abstractmethod
+	def name(self) -> str:
+		...
 
-	def __post_init__(self) -> None:
-		if not self.db_name:
-			self.db_name = self.name
+	@property
+	@abstractmethod
+	def schema(self) -> DataSchema:
+		...
+
+	@property
+	@abstractmethod
+	def db_name(self) -> str:
+		...
+
+@dataclass
+class Field(FieldBase):
+	_name: str
+	_schema: DataSchema
+	_db_name: str=''
+
+	@property
+	def name(self) -> str:
+		return self._name
+
+	@property
+	def schema(self) -> DataSchema:
+		return self._schema
+
+	@property
+	def db_name(self) -> str:
+		return self._db_name or self.name
 
 @dataclass
 class ArrayObjSchema(ObjSchema, RowSchema):
-	fields: list[Field]
+	_class_name: str
+	_fields: list[Field]
+
+	@property
+	def class_name(self) -> str:
+		return self._class_name
+
+	@property
+	def fields(self) -> list[Field]:
+		return self._fields
 
 @dataclass
-class RPGField:
-	name: str
-	schema: DataSchema
-	db_name: str=''
+class RPGField(FieldBase):
+	_name: str
+	_schema: DataSchema
+	_db_name: str=''
 	rpg_name: str=''
 
 	def __post_init__(self) -> None:
-		if not self.db_name:
-			self.db_name = self.name
-
 		if not self.rpg_name:
 			self.rpg_name = self.name
 
+	@property
+	def name(self) -> str:
+		return self._name
+
+	@property
+	def schema(self) -> DataSchema:
+		return self._schema
+
+	@property
+	def db_name(self) -> str:
+		return self._db_name or self.name
+
 @dataclass
 class RPGObjSchema(ObjSchema):
+	_class_name: str
 	rpg_class_name: str
-	fields: list[RPGField]
+	_fields: list[RPGField]
+
+	@property
+	def class_name(self) -> str:
+		return self._class_name
+
+	@property
+	def fields(self) -> list[RPGField]:
+		return self._fields
 
 @dataclass
 class RPGSingletonObjSchema(ObjSchema, TableSchema):
+	_class_name: str
+	_table_name: str
 	rpg_class_name: str
-	fields: list[RPGField]
+	_fields: list[RPGField]
+
+	@property
+	def class_name(self) -> str:
+		return self._class_name
+
+	@property
+	def table_name(self) -> str:
+		return self._table_name
+
+	@property
+	def fields(self) -> list[RPGField]:
+		return self._fields
 
 class FirstItem(Enum):
 	REGULAR = 0
@@ -125,15 +204,30 @@ class FirstItem(Enum):
 
 @dataclass
 class ListSchema(TableSchema):
+	_table_name: str
 	item_schema: RowSchema
 	first_item: FirstItem=FirstItem.REGULAR
 	item_name: str=''
 	maxlen: int | None=None
 
+	@property
+	def table_name(self) -> str:
+		return self._table_name
+
 @dataclass
 class SetSchema(TableSchema):
+	_table_name: str
 	item_schema: RowSchema
 	item_name: str=''
+
+	@property
+	def table_name(self) -> str:
+		return self._table_name
+
+@dataclass
+class DBName:
+	app_name: str
+	db_name: str
 
 @dataclass
 class DictSchema(TableSchema):
@@ -151,10 +245,15 @@ class DictSchema(TableSchema):
 
 	# should have key_name, key_db_name
 	# or, we should have this as an enum where one of the options is MatchesField
-	key_name: str
+	_table_name: str
+	key_name: DBName
 	key_schema: RowSchema
 	value_schema: ObjSchema
 	value_name: str=''
+
+	@property
+	def table_name(self) -> str:
+		return self._table_name
 
 @dataclass
 class FileSchema(ABC):
@@ -176,7 +275,7 @@ class SingleFileSchema(FileSchema):
 	schema: TableSchema
 
 @dataclass
-class MultipleFilesSchema(FileSchema):
+class MultipleFilesSchema(FileSchema, TableSchema):
 	"""The schema for a set of .rxdata files in the game's Data directory which
 	all match a certain regex pattern.
 
@@ -196,16 +295,20 @@ class MultipleFilesSchema(FileSchema):
 	    ObjSchema, so that the key fields can be added to it."""
 
 	pattern: re.Pattern
-	table_name: str
-	keys: list[str]
+	_table_name: str
+	keys: list[DBName]
 	schema: ObjSchema
+
+	@property
+	def table_name(self) -> str:
+		return self._table_name
 
 ###############################################################################
 
 # utility functions for quicker typing
 
 def id_field() -> RPGField:
-	return RPGField('id_', IntSchema(), db_name='id', rpg_name='id')
+	return RPGField('id_', IntSchema(), _db_name='id', rpg_name='id')
 
 def bool_field(name: str) -> RPGField:
 	return RPGField(name, BoolSchema())
@@ -231,7 +334,7 @@ int_fields = ft.partial(many_fields, maker=int_field)
 str_fields = ft.partial(many_fields, maker=str_field)
 audio_fields = ft.partial(many_fields, maker=audio_field)
 
-def enum_field(name: str, cls: Enum) -> RPGField:
+def enum_field(name: str, cls: type[Enum]) -> RPGField:
 	return RPGField(name, EnumSchema(cls))
 
 def fk_field(
@@ -278,12 +381,6 @@ ACTOR_SCHEMA = RPGObjSchema('Actor', 'RPG::Actor', [
 	*bool_fields('weapon_fix armor1_fix armor2_fix armor3_fix armor4_fix'),
 ])
 
-class AnimationPosition(Enum):
-    TOP = 0
-    MIDDLE = 1
-    BOTTOM = 2
-    SCREEN = 3
-
 ANIMATION_FRAME_SCHEMA = RPGObjSchema(
 	'AnimationFrame',
 	'RPG::Animation::Frame',
@@ -291,17 +388,6 @@ ANIMATION_FRAME_SCHEMA = RPGObjSchema(
 		int_field('cell_max'),
 		RPGField('cell_data', NDArraySchema(2)),
 	])
-
-class AnimationTimingFlashScope(Enum):
-    NONE = 0
-    TARGET = 1
-    SCREEN = 2
-    DELETE_TARGET = 3
-
-class AnimationTimingCondition(Enum):
-    NONE = 0
-    HIT = 1
-    MISS = 2
 
 ANIMATION_TIMING_SCHEMA = RPGObjSchema(
 	'AnimationTiming',
@@ -328,12 +414,6 @@ ANIMATION_SCHEMA = RPGObjSchema('Animation', 'RPG::Animation', [
 	)),
 ])
 
-class ArmorKind(Enum):
-    SHIELD = 0
-    HELMET = 1
-    BODY_ARMOR = 2
-    ACCESSORY = 3
-
 ARMOR_SCHEMA = RPGObjSchema('Armor', 'RPG::Armor', [
 	id_field(),
 	*str_fields('name icon_name description'),
@@ -347,11 +427,6 @@ ARMOR_SCHEMA = RPGObjSchema('Armor', 'RPG::Armor', [
 		'armor_guard_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
 	)),
 ])
-
-class ClassPosition(Enum):
-    FRONT = 0
-    MIDDLE = 1
-    REAR = 2
 
 CLASS_LEARNING_SCHEMA = RPGObjSchema('ClassLearning', 'RPG::Class::Learning', [
 	int_field('level'),
@@ -373,27 +448,12 @@ CLASS_SCHEMA = RPGObjSchema('Class', 'RPG::Class', [
 	RPGField('learnings', ListSchema('class_learning', CLASS_LEARNING_SCHEMA)),
 ])
 
-class CommonEventTrigger(Enum):
-    NONE = 0
-    AUTORUN = 1
-    PARALLEL = 2
-
 COMMON_EVENT_SCHEMA = RPGObjSchema('CommonEvent', 'RPG::CommonEvent', [
 	id_field(),
 	str_field('name'),
 	enum_field('trigger', CommonEventTrigger),
 	int_field('switch_id'),
 ])
-
-class EnemyActionKind(Enum):
-    BASIC = 0
-    SKILL = 1
-
-class EnemyBasicAction(Enum):
-    ATTACK = 0
-    DEFEND = 1
-    ESCAPE = 2
-    DO_NOTHING = 3
 
 ENEMY_ACTION_SCHEMA = RPGObjSchema('EnemyAction', 'RPG::Enemy::Action', [
 	enum_field('kind', EnemyActionKind),
@@ -410,7 +470,11 @@ ENEMY_SCHEMA = RPGObjSchema('Enemy', 'RPG::Enemy', [
 	id_field(),
 	*str_fields('name battler_name'),
 	hue_field('battler_hue'),
-	*int_fields('maxhp maxsp str dex agi int atk pdef mdef eva'),
+	*int_fields('maxhp maxsp'),
+	RPGField('str_', IntSchema(), _db_name='str'),
+	*int_fields('dex agi'),
+	RPGField('int_', IntSchema(), _db_name='int'),
+	*int_fields('atk pdef mdef eva'),
 	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
 	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
 	RPGField('element_ranks', NDArraySchema(1)),
@@ -422,31 +486,6 @@ ENEMY_SCHEMA = RPGObjSchema('Enemy', 'RPG::Enemy', [
 	fk_field('armor_id', lambda: ARMORS_SCHEMA, True),
 	int_field('treasure_prob'),
 ])
-
-class Scope(Enum):
-    NONE = 0
-    ONE_ENEMY = 1
-    ALL_ENEMIES = 2
-    ONE_ALLY = 3
-    ALL_ALLIES = 4
-    ONE_ALLY_HP_0 = 5
-    ALL_ALLIES_HP_0 = 6
-    USER = 7
-
-class Occasion(Enum):
-    ALWAYS = 0
-    ONLY_IN_BATTLE = 1
-    ONLY_FROM_THE_MENU = 2
-    NEVER = 3
-
-class ParameterType(Enum):
-    NONE = 0
-    MAX_HP = 1
-    MAX_SP = 2
-    STRENGTH = 3
-    DEXTERITY = 4
-    AGILITY = 5
-    INTELLIGENCE = 6
 
 ITEM_SCHEMA = RPGObjSchema('Item', 'RPG::Item', [
 	id_field(),
@@ -487,12 +526,6 @@ EVENT_PAGE_CONDITION_SCHEMA = RPGObjSchema(
 	]
 )
 
-class Direction(Enum):
-    DOWN = 2
-    LEFT = 4
-    RIGHT = 6
-    UP = 8
-
 EVENT_PAGE_GRAPHIC_SCHEMA = RPGObjSchema(
 	'EventPageGraphic',
 	'RPG::Event::Page::Graphic',
@@ -506,38 +539,9 @@ EVENT_PAGE_GRAPHIC_SCHEMA = RPGObjSchema(
 	]
 )
 
-class MoveType(Enum):
-    FIXED = 0
-    RANDOM = 1
-    APPROACH = 2
-    CUSTOM = 3
-
-class MoveSpeed(Enum):
-    SLOWEST = 1
-    SLOWER = 2
-    SLOW = 3
-    FAST = 4
-    FASTER = 5
-    FASTEST = 6
-
-class MoveFrequency(Enum):
-    LOWEST = 1
-    LOWER = 2
-    LOW = 3
-    HIGH = 4
-    HIGHER = 5
-    HIGHEST = 6
-
 MOVE_ROUTE_SCHEMA = RPGObjSchema('MoveRoute', 'RPG::MoveRoute', [
 	*bool_fields('repeat skippable'),
 ])
-
-class EventPageTrigger(Enum):
-    ACTION_BUTTON = 0
-    CONTACT_WITH_PLAYER = 1
-    CONTACT_WITH_EVENT = 2
-    AUTORUN = 3
-    PARALLEL_PROCESSING = 4
 
 EVENT_PAGE_SCHEMA = RPGObjSchema('EventPage', 'RPG::Event::Page', [
 	RPGField('condition', EVENT_PAGE_CONDITION_SCHEMA),
@@ -572,7 +576,7 @@ MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
 	RPGField('encounter_step', IntSchema()),
 	RPGField('data', NDArraySchema(3)),
 	RPGField('events', DictSchema(
-		'event', 'key', IntSchema(), EVENT_SCHEMA
+		'event', DBName('key_', 'key'), IntSchema(), EVENT_SCHEMA
 	)),
 ])
 
@@ -586,7 +590,7 @@ MAP_INFO_SCHEMA = RPGObjSchema('MapInfo', 'RPG::MapInfo', [
 ])
 
 SCRIPT_SCHEMA = ArrayObjSchema('Script', [
-	Field('id_', IntSchema(), db_name='id'),
+	Field('id_', IntSchema(), _db_name='id'),
 	Field('name', StrSchema()),
 	Field('content', ZlibSchema('utf-8'))
 ])
@@ -614,13 +618,6 @@ SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
 		'skill_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
 	)),
 ])
-
-class StateRestriction(Enum):
-    NONE = 0
-    CANT_USE_MAGIC = 1
-    ALWAYS_ATTACK_ENEMIES = 2
-    ALWAYS_ATTACK_ALLIES = 3
-    CANT_MOVE = 4
 
 STATE_SCHEMA = RPGObjSchema('State', 'RPG::State', [
 	id_field(),
@@ -684,7 +681,7 @@ SYSTEM_TEST_BATTLER_SCHEMA = RPGObjSchema(
 	]
 )
 
-SYSTEM_SCHEMA = RPGSingletonObjSchema('system', 'System', 'RPG::System', [
+SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
 	RPGField('magic_number', IntSchema()),
 	RPGField('party_members', ListSchema(
 		'party_member', FKSchema(lambda: ACTORS_SCHEMA, nullable=False)
@@ -767,11 +764,6 @@ TROOP_PAGE_CONDITION_SCHEMA = RPGObjSchema(
 	]
 )
 
-class TroopPageSpan(Enum):
-    BATTLE = 0
-    TURN = 1
-    MOMENT = 2
-
 TROOP_PAGE_SCHEMA = RPGObjSchema('TroopPage', 'RPG::Troop::Page', [
 	RPGField('condition', TROOP_PAGE_CONDITION_SCHEMA),
 	enum_field('span', TroopPageSpan),
@@ -801,25 +793,35 @@ WEAPON_SCHEMA = RPGObjSchema('Weapon', 'RPG::Weapon', [
 	)),
 ])
 
-ACTORS_SCHEMA = ListSchema('actor', ACTOR_SCHEMA, FirstItem.NULL)
-ANIMATIONS_SCHEMA = ListSchema('animation', ANIMATION_SCHEMA, FirstItem.NULL)
-ARMORS_SCHEMA = ListSchema('armor', ARMOR_SCHEMA, FirstItem.NULL)
-CLASSES_SCHEMA = ListSchema('class', CLASS_SCHEMA, FirstItem.NULL)
-COMMON_EVENTS_SCHEMA = ListSchema(
+ACTORS_SCHEMA: ListSchema = ListSchema('actor', ACTOR_SCHEMA, FirstItem.NULL)
+ANIMATIONS_SCHEMA: ListSchema = ListSchema('animation', ANIMATION_SCHEMA, FirstItem.NULL)
+ARMORS_SCHEMA: ListSchema = ListSchema('armor', ARMOR_SCHEMA, FirstItem.NULL)
+CLASSES_SCHEMA: ListSchema = ListSchema('class', CLASS_SCHEMA, FirstItem.NULL)
+
+COMMON_EVENTS_SCHEMA: ListSchema = ListSchema(
 	'common_event', COMMON_EVENT_SCHEMA, FirstItem.NULL
 )
-ENEMIES_SCHEMA = ListSchema('enemy', ENEMY_SCHEMA, FirstItem.NULL)
-ITEMS_SCHEMA = ListSchema('item', ITEM_SCHEMA, FirstItem.NULL)
-MAPS_SCHEMA = MultipleFilesSchema(
-	re.compile(r'Map(\d{3}).rxdata'), 'map', ['number'], MAP_SCHEMA
+
+ENEMIES_SCHEMA: ListSchema = ListSchema('enemy', ENEMY_SCHEMA, FirstItem.NULL)
+ITEMS_SCHEMA: ListSchema = ListSchema('item', ITEM_SCHEMA, FirstItem.NULL)
+
+MAPS_SCHEMA: MultipleFilesSchema = MultipleFilesSchema(
+	re.compile(r'Map(\d{3}).rxdata'),
+	'map',
+	[DBName('id_', 'id')],
+	MAP_SCHEMA
 )
-MAP_INFOS_SCHEMA = DictSchema('map_info', 'id_', IntSchema(), MAP_INFO_SCHEMA)
-SCRIPTS_SCHEMA = ListSchema('script', SCRIPT_SCHEMA)
-SKILLS_SCHEMA = ListSchema('skill', SKILL_SCHEMA, FirstItem.NULL)
-STATES_SCHEMA = ListSchema('state', STATE_SCHEMA, FirstItem.NULL)
-TILESETS_SCHEMA = ListSchema('tileset', TILESET_SCHEMA, FirstItem.NULL)
-TROOPS_SCHEMA = ListSchema('troop', TROOP_SCHEMA, FirstItem.NULL)
-WEAPONS_SCHEMA = ListSchema('weapon', WEAPON_SCHEMA, FirstItem.NULL)
+
+MAP_INFOS_SCHEMA: DictSchema = DictSchema(
+	'map_info', DBName('id_', 'id'), IntSchema(), MAP_INFO_SCHEMA
+)
+
+SCRIPTS_SCHEMA: ListSchema = ListSchema('script', SCRIPT_SCHEMA)
+SKILLS_SCHEMA: ListSchema = ListSchema('skill', SKILL_SCHEMA, FirstItem.NULL)
+STATES_SCHEMA: ListSchema = ListSchema('state', STATE_SCHEMA, FirstItem.NULL)
+TILESETS_SCHEMA: ListSchema = ListSchema('tileset', TILESET_SCHEMA, FirstItem.NULL)
+TROOPS_SCHEMA: ListSchema = ListSchema('troop', TROOP_SCHEMA, FirstItem.NULL)
+WEAPONS_SCHEMA: ListSchema = ListSchema('weapon', WEAPON_SCHEMA, FirstItem.NULL)
 
 FILES: list[FileSchema] = [
 	SingleFileSchema('Actors.rxdata', ACTORS_SCHEMA),

@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+import importlib.resources
 import re
 from typing import Iterator, Self
-import rpgxp.schema_v2 as schema
+import apsw
+import apsw.bestpractice
+from rpgxp import schema
 
 def camel_case_to_snake(s: str) -> str:
 	return re.sub(r'(?<=.)(?=[A-Z])', '_', s).lower()
@@ -74,7 +77,7 @@ class ForeignKeyConstraint(TableConstraint):
 @dataclass
 class PendingFK:
 	field_name: str
-	schema: FKSchema
+	schema: schema.FKSchema
 	pk: bool=False
 
 @dataclass
@@ -107,7 +110,7 @@ class TableSchema:
 			if isinstance(member, PendingFK):
 				yield member
 
-	def pk(self) -> list[ColumnSchema]:
+	def pk(self) -> list[ColumnSchema | PendingFK]:
 		return [m for m in self.members if isinstance(m, (ColumnSchema, PendingFK)) and m.pk]
 
 	def __str__(self) -> str:
@@ -185,8 +188,8 @@ def format_sql_value(value, type_) -> str:
 @dataclass
 class InsertStatement:
 	table_name: str
-	columns: tuple[str]
-	column_types: tuple[str]
+	columns: tuple[str, ...]
+	column_types: tuple[str, ...]
 	rows: list[tuple]
 
 	def __str__(self) -> str:
@@ -243,26 +246,20 @@ class DBSchema:
 			case schema.SingleFileSchema(_, content_schema):
 				self.process_table_schema(content_schema)
 			case schema.MultipleFilesSchema(
-				_, table_name, key_column_names, content_schema
+				_, table_name, key_col_names, content_schema
 			):
 				if self.has_table(table_name):
 					raise schema.SchemaError(f'{table_name} used twice')
 
 				table_schema = TableSchema(table_name, [
-					ColumnSchema(name, 'TEXT', pk=True)
-					for name in key_column_names
+					ColumnSchema(name.db_name, 'TEXT', pk=True)
+					for name in key_col_names
 				])
 
 				self.process_row_schema(table_schema, content_schema)
 				self.members.append(table_schema)
 			case _:
 				assert False
-
-	def process_row_schema(
-		self, table_schema: TableSchema, row_schema: schema.RowSchema
-	) -> None:
-	
-		table_schema += self.process_field(table_schema, '', row_schema)
 
 	def process_table_schema(
 		self,
@@ -282,14 +279,18 @@ class DBSchema:
 
 		if parent_table is not None:
 			parent_pk = parent_table.pk()
-			
-			cols = [
-				ColumnSchema(
+			cols = []
+			referenced_names = []
+
+			for col in parent_pk:
+				assert isinstance(col, ColumnSchema)
+
+				cols.append(ColumnSchema(
 					col.name, col.type_, collate=col.collate, pk=True
-				)
-				for col in parent_pk
-			]
-			
+				))
+
+				referenced_names.append(col.name) 
+						
 			cols[-1].name = f'{parent_table.name}_{cols[-1].name}'
 
 			db_table_schema.members.extend(cols)
@@ -297,7 +298,7 @@ class DBSchema:
 			db_table_schema.members.append(ForeignKeyConstraint(
 				[col.name for col in cols],
 				parent_table.name,
-				[col.name for col in parent_pk]
+				referenced_names
 			))
 
 		match table_schema:
@@ -323,14 +324,14 @@ class DBSchema:
 
 			case schema.DictSchema(_, key_name, key_schema, value_schema, value_name):
 				db_key_schema = self.process_field(
-					db_table_schema, key_name, key_schema
+					db_table_schema, key_name.db_name, key_schema
 				)
 
 				db_key_schema.make_all_pks()
 				db_table_schema += db_key_schema
 				db_table_schema += self.process_field(db_table_schema, value_name, value_schema)
 
-			case schema.RPGSingletonObjSchema(_, class_name, _, fields):
+			case schema.RPGSingletonObjSchema(_, _, _, fields):
 				assert parent_table is None
 				db_table_schema.singleton = True
 
@@ -343,6 +344,12 @@ class DBSchema:
 					db_table_schema += self.process_field(
 						db_table_schema, field.db_name, field.schema
 					)
+
+	def process_row_schema(
+		self, table_schema: TableSchema, row_schema: schema.RowSchema
+	) -> None:
+	
+		table_schema += self.process_field(table_schema, '', row_schema)
 
 	def process_field(
 		self,
@@ -406,12 +413,8 @@ class DBSchema:
 				))
 			case schema.FKSchema():
 				result.members.append(PendingFK(field_name, field_schema))
-			case (
-				schema.ArrayObjSchema(_, fields)
-				| schema.RPGObjSchema(_, _, fields)
-				| schema.RPGSingletonObjSchema(_, _, _, fields)
-			):
-				for subfield in fields:
+			case schema.ObjSchema():
+				for subfield in field_schema.fields:
 					combined_name = field_prefix + subfield.db_name
 					
 					result += self.process_field(
@@ -437,6 +440,7 @@ class DBSchema:
 				foreign_pk = foreign_table.pk()
 				assert len(foreign_pk) == 1
 				pk_col = foreign_pk[0]
+				assert isinstance(pk_col, ColumnSchema)
 
 				table.members[i:i + 1] = [
 					ColumnSchema(
@@ -448,17 +452,27 @@ class DBSchema:
 					)
 				]
 
-def generate():
+def generate_script():
 	result = DBSchema()
 
-	for s in schema.FILES:
-		result.process_file_schema(s)
+	for file_schema in schema.FILES:
+		result.process_file_schema(file_schema)
 
 	result.resolve_fks()
-
 	return str(result)
 
-if __name__ == '__main__':
-	print(generate())
+def run():
+	script = generate_script()
 
-# we just need to defer the foreign key resolving
+	with importlib.resources.path('rpgxp') as base_path:
+		with open(base_path / 'generated/db_schema.sql', 'w') as f:
+			f.write(script)
+
+		apsw.bestpractice.apply(apsw.bestpractice.recommended)
+		connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
+
+		with connection:
+			connection.execute(script)
+
+if __name__ == '__main__':
+	run()
