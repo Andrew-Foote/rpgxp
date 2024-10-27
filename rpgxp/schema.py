@@ -1,146 +1,282 @@
-"""
-This file contains class declarations for RPG Maker XP objects. As well as
-defining representations of these objects as Python objects, these declarations
-are also used to auto-generate "parsers" and "dumpers" for these objects.
-Parsers are functions which turn parsed Marshal data into one of the Python
-objects defined in this file. Dumpers are functions which turn the Python
-objects into database rows.
-
-To aid in the generation of parsers and dumpers, many of the attributes on
-classes in this file have additional annotations (besides their type),
-specified using typing.Annotated. The following kinds of additional annotations
-are used:
-
-  - An attribute of type `int` may be annotated with a `range`, indicating that
-    the value must fall within this range.
-
-  - An attribute of type `int` may be annotated with a subclass of `RPG` or
-    `RPGListItem`, indicating the value must be the ID of an instance of the
-    subclass.
-
-  - An attribute of type `list` may be annotated with an `int`, indicating that
-    the list must have the specified length.
-
-  - An attribute of type `list` may be annotated with a tuple of types, and a
-    type, indicating that the list's first items must match those in the tuple,
-    and the rest must match those in the other type. For example,
-
-      Annotated[int | None, (None,), int]
-
-    indicates that the first item of the list must be None, and the remaining
-    items must be ints.
-
-  - An attribute of type `np.ndarray` may be annotated with an `int`,
-    indicating that the array must have the specified number of dimensions.
-
-  - An attribute of type `str` may be annotated with an instance of
-    `ZlibCompressed`. This is a dataclass with one field, which is the string's
-    encoding. This annotation indicates that the value parsed from the Marshal
-    data will be compressed via zlib, and should be decompressed, and decoded
-    using the specified encoding, in order to turn it into a string.
-"""
-
 from abc import ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
+import functools as ft
 import re
-import numpy as np
-from typing import Annotated, ClassVar, Self
+from typing import Callable, Literal
 
 class SchemaError(Exception):
-    pass
+	pass
 
 @dataclass
-class ListA:
-    table_name: str
-    first_item_null: bool=False
+class DataSchema(ABC):
+	pass
 
 @dataclass
-class DictA:
-    table_name: str
-
-Hue = Annotated[int, range(361)]
-
-@dataclass
-class RPGBase(ABC):
-    id_0_is_null: ClassVar[bool]=False
+class RowSchema(DataSchema, ABC):
+	"""A schema for an object which corresponds to an individual database row
+	(as opposed to a whole table)."""
 
 @dataclass
-class RPGListItem(RPGBase, ABC):
-    pass
+class TableSchema(DataSchema, ABC):
+	"""A schema for an object which corresponds to a whole database table (as
+	opposed to an individual row)."""
+	table_name: str
 
 @dataclass
-class RPG(RPGBase, ABC):
-    pass
-
-class EventCommand(RPG):
-    code: int
-    indent: int
-    parameters: list
-
-class MoveCommand(RPG):
-    code: int
-    parameters: list
+class BoolSchema(RowSchema):
+	"""A schema for a Boolean value (true or false)."""
 
 @dataclass
-class Element(RPGListItem):
-    id_0_is_null = True
+class IntSchema(RowSchema):
+	"""A schema for an integer value.
 
-    id_: int
-    name: str
+	Attributes:
+	  lb
+	    A lower bound on the integer. Can be None for no lower bound.
+	  ub
+	    An upper bound on the integer. Can be None for no upper bound.
+	"""
 
-@dataclass
-class Switch(RPGListItem):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-
-@dataclass
-class Variable(RPGListItem):
-    id_0_is_null = True
-
-    id_: int
-    name: str
+	lb: int | None=None
+	ub: int | None=None
 
 @dataclass
-class Color(RPG):
-    red: Annotated[int, range(256)]
-    green: Annotated[int, range(256)]
-    blue: Annotated[int, range(256)]
-    alpha: Annotated[int, range(256)]
+class StrSchema(RowSchema):
+	"""A schema for a string value."""
 
 @dataclass
-class AudioFile(RPG):
-    name: str
-    volume: int
-    pitch: int
+class ZlibSchema(RowSchema):
+	"""Schema for a value consisting of bytes obtained by compressing a
+	string using zlib.
+
+	Attributes:
+	  encoding
+	    The encoding of the original string."""
+
+	encoding: str
 
 @dataclass
-class Tileset(RPG):
-    id_0_is_null = True
+class NDArraySchema(RowSchema):
+	"""Schema for a value which is a multi-dimensional array.
 
-    id_: int
-    name: str
-    tileset_name: str
-    
-    autotile_names: Annotated[list[str], 7] = field(metadata={
-        'table_name': 'tileset_autotile'
-    })
+	Attributes:
+	  dims
+	    The number of dimensions; can only be 1, 2, or 3.
+	"""
 
-    panorama_name: str
-    panorama_hue: Hue
-    fog_name: str
-    fog_hue: Hue
-    fog_opacity: int
-    fog_blend_type: int
-    fog_zoom: int
-    fog_sx: int
-    fog_sy: int
-    battleback_name: str
-    passages: Annotated[np.ndarray, 1]
-    priorities: Annotated[np.ndarray, 1]
-    terrain_tags: Annotated[np.ndarray, 1]
+	dims: Literal[1] | Literal[2] | Literal[3]
+
+@dataclass
+class EnumSchema(RowSchema):
+	enum_class: type[Enum]
+
+@dataclass
+class FKSchema(RowSchema):
+	foreign_schema_thunk: Callable[[], TableSchema] 
+	nullable: bool=True
+
+@dataclass
+class ObjSchema(RowSchema, ABC):
+	class_name: str
+
+@dataclass
+class Field:
+	name: str
+	schema: DataSchema
+	db_name: str=''
+
+	def __post_init__(self) -> None:
+		if not self.db_name:
+			self.db_name = self.name
+
+@dataclass
+class ArrayObjSchema(ObjSchema, RowSchema):
+	fields: list[Field]
+
+@dataclass
+class RPGField:
+	name: str
+	schema: DataSchema
+	db_name: str=''
+	rpg_name: str=''
+
+	def __post_init__(self) -> None:
+		if not self.db_name:
+			self.db_name = self.name
+
+		if not self.rpg_name:
+			self.rpg_name = self.name
+
+@dataclass
+class RPGObjSchema(ObjSchema):
+	rpg_class_name: str
+	fields: list[RPGField]
+
+@dataclass
+class RPGSingletonObjSchema(ObjSchema, TableSchema):
+	rpg_class_name: str
+	fields: list[RPGField]
+
+class FirstItem(Enum):
+	REGULAR = 0
+	NULL = 1
+	BLANK = 2
+
+@dataclass
+class ListSchema(TableSchema):
+	item_schema: RowSchema
+	first_item: FirstItem=FirstItem.REGULAR
+	item_name: str=''
+	maxlen: int | None=None
+
+@dataclass
+class SetSchema(TableSchema):
+	item_schema: RowSchema
+	item_name: str=''
+
+@dataclass
+class DictSchema(TableSchema):
+	"""The schema for a Marshal hash whose values are objects.
+
+	Attributes:
+	  key_name
+	    The name of the field that will be added to each object to represent
+	    the value of its key.
+	  key_schema
+	    The schema for the aforementioned key field.
+	  value_schema
+	    The schema for the values.
+	"""
+
+	# should have key_name, key_db_name
+	# or, we should have this as an enum where one of the options is MatchesField
+	key_name: str
+	key_schema: RowSchema
+	value_schema: ObjSchema
+	value_name: str=''
+
+@dataclass
+class FileSchema(ABC):
+	pass
+
+@dataclass
+class SingleFileSchema(FileSchema):
+	"""The schema for one of the .rxdata files in the game's Data directory.
+
+	Attributes:
+	  filename
+	    The name of the file to parse, not including the parent directories.
+	  schema
+	    The file's schema. It must be a TableSchema, so that we know what to
+	    call the database table corresponding to the file.
+	"""
+
+	filename: str
+	schema: TableSchema
+
+@dataclass
+class MultipleFilesSchema(FileSchema):
+	"""The schema for a set of .rxdata files in the game's Data directory which
+	all match a certain regex pattern.
+
+	Attributes:
+	  pattern
+	    The regex pattern, which will be matched against the file names (not
+	    including the parent directories).
+	  table_name
+	    The name of the database table representing this set of files.
+	  keys
+	    A list of strings corresponding to capture groups in the pattern (its
+	    length must be the same as the number of capture groups). The value of
+	    each group will be added as a field to the objects representing the
+	    individual names, with the string from here as its name.
+	  schema
+	    The schema for the content of an individual file. This must be an
+	    ObjSchema, so that the key fields can be added to it."""
+
+	pattern: re.Pattern
+	table_name: str
+	keys: list[str]
+	schema: ObjSchema
+
+###############################################################################
+
+# utility functions for quicker typing
+
+def id_field() -> RPGField:
+	return RPGField('id_', IntSchema(), db_name='id', rpg_name='id')
+
+def bool_field(name: str) -> RPGField:
+	return RPGField(name, BoolSchema())
+
+def int_field(name: str) -> RPGField:
+	return RPGField(name, IntSchema())
+
+def str_field(name: str) -> RPGField:
+	return RPGField(name, StrSchema())
+
+def audio_field(name: str) -> RPGField:
+	return RPGField(name, AUDIO_FILE_SCHEMA)
+
+def many_fields(
+	names: str, maker: Callable[[str], RPGField]
+) -> Iterator[RPGField]:
+
+	for name in names.split():
+		yield maker(name)
+
+bool_fields = ft.partial(many_fields, maker=bool_field)
+int_fields = ft.partial(many_fields, maker=int_field)
+str_fields = ft.partial(many_fields, maker=str_field)
+audio_fields = ft.partial(many_fields, maker=audio_field)
+
+def enum_field(name: str, cls: Enum) -> RPGField:
+	return RPGField(name, EnumSchema(cls))
+
+def fk_field(
+	name: str, schema_thunk: Callable[[], TableSchema], nullable: bool
+) -> RPGField:
+
+	return RPGField(name, FKSchema(schema_thunk, nullable=nullable))
+
+###############################################################################
+
+HUE_SCHEMA = IntSchema(0, 360)
+
+def hue_field(name: str) -> RPGField:
+	return RPGField(name, HUE_SCHEMA)
+
+COLOR_SCHEMA = RPGObjSchema('Color', 'Color', [
+	RPGField('red', IntSchema(0, 255)),
+	RPGField('green', IntSchema(0, 255)),
+	RPGField('blue', IntSchema(0, 255)),
+	RPGField('alpha', IntSchema(0, 255)),
+])
+
+AUDIO_FILE_SCHEMA = RPGObjSchema('AudioFile', 'RPG::AudioFile', [
+	str_field('name'), *int_fields('volume pitch')
+])
+
+ACTOR_SCHEMA = RPGObjSchema('Actor', 'RPG::Actor', [
+	id_field(),
+	str_field('name'),
+	fk_field('class_id', lambda: CLASSES_SCHEMA, False),
+	*int_fields('initial_level final_level'),
+	RPGField('exp_basis', IntSchema(10, 50)),
+	RPGField('exp_inflation', IntSchema(10, 50)),
+	str_field('character_name'),
+	hue_field('character_hue'),
+	str_field('battler_name'),
+	hue_field('battler_hue'),
+	RPGField('parameters', NDArraySchema(2)),
+	fk_field('weapon_id', lambda: WEAPONS_SCHEMA, True),
+	fk_field('armor1_id', lambda: ARMORS_SCHEMA, True),
+	fk_field('armor2_id', lambda: ARMORS_SCHEMA, True),
+	fk_field('armor3_id', lambda: ARMORS_SCHEMA, True),
+	fk_field('armor4_id', lambda: ARMORS_SCHEMA, True),
+	*bool_fields('weapon_fix armor1_fix armor2_fix armor3_fix armor4_fix'),
+])
 
 class AnimationPosition(Enum):
     TOP = 0
@@ -148,10 +284,13 @@ class AnimationPosition(Enum):
     BOTTOM = 2
     SCREEN = 3
 
-@dataclass
-class AnimationFrame(RPG):
-    cell_max: int
-    cell_data: Annotated[np.ndarray, 2]
+ANIMATION_FRAME_SCHEMA = RPGObjSchema(
+	'AnimationFrame',
+	'RPG::Animation::Frame',
+	[
+		int_field('cell_max'),
+		RPGField('cell_data', NDArraySchema(2)),
+	])
 
 class AnimationTimingFlashScope(Enum):
     NONE = 0
@@ -164,101 +303,125 @@ class AnimationTimingCondition(Enum):
     HIT = 1
     MISS = 2
 
-@dataclass
-class AnimationTiming(RPG):
-    frame: int
-    se: AudioFile
-    flash_scope: AnimationTimingFlashScope
-    flash_color: Color
-    flash_duration: int
-    condition: AnimationTimingCondition
+ANIMATION_TIMING_SCHEMA = RPGObjSchema(
+	'AnimationTiming',
+	'RPG::Animation::Timing',
+	[
+		int_field('frame'),
+		audio_field('se'),
+		enum_field('flash_scope', AnimationTimingFlashScope),
+		RPGField('flash_color', COLOR_SCHEMA),
+		int_field('flash_duration'),
+		enum_field('condition', AnimationTimingCondition),
+	]
+)
 
-@dataclass
-class Animation(RPG):
-    id_0_is_null = True
+ANIMATION_SCHEMA = RPGObjSchema('Animation', 'RPG::Animation', [
+	id_field(),
+	*str_fields('name animation_name'),
+	hue_field('animation_hue'),
+	enum_field('position', AnimationPosition),
+	int_field('frame_max'),
+	RPGField('frames', ListSchema('animation_frame', ANIMATION_FRAME_SCHEMA)),
+	RPGField('timings', ListSchema(
+		'animation_timing', ANIMATION_TIMING_SCHEMA
+	)),
+])
 
-    id_: int
-    name: str
-    animation_name: str
-    animation_hue: Hue
-    position: AnimationPosition
-    frame_max: int
-    
-    frames: list[AnimationFrame] = field(metadata={
-        'table_name': 'animation_frame'
-    })
-    
-    timings: list[AnimationTiming] = field(metadata={
-        'table_name': 'animation_timing'
-    })
+class ArmorKind(Enum):
+    SHIELD = 0
+    HELMET = 1
+    BODY_ARMOR = 2
+    ACCESSORY = 3
+
+ARMOR_SCHEMA = RPGObjSchema('Armor', 'RPG::Armor', [
+	id_field(),
+	*str_fields('name icon_name description'),
+	enum_field('kind', ArmorKind),
+	fk_field('auto_state_id', lambda: STATES_SCHEMA, True),
+	*int_fields('price pdef mdef eva str_plus dex_plus agi_plus int_plus'),
+	RPGField('guard_element_set', SetSchema(
+		'armor_guard_element', IntSchema(), 'element_id'
+	)),
+	RPGField('guard_state_set', SetSchema(
+		'armor_guard_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+])
+
+class ClassPosition(Enum):
+    FRONT = 0
+    MIDDLE = 1
+    REAR = 2
+
+CLASS_LEARNING_SCHEMA = RPGObjSchema('ClassLearning', 'RPG::Class::Learning', [
+	int_field('level'),
+	fk_field('skill_id', lambda: SKILLS_SCHEMA, False),
+])
+
+CLASS_SCHEMA = RPGObjSchema('Class', 'RPG::Class', [
+	id_field(),
+	str_field('name'),
+	enum_field('position', ClassPosition),
+	RPGField('weapon_set', SetSchema(
+		'class_weapon', FKSchema(lambda: WEAPONS_SCHEMA), 'weapon_id'
+	)),
+	RPGField('armor_set', SetSchema(
+		'class_armor', FKSchema(lambda: ARMORS_SCHEMA), 'armor_id'
+	)),
+	RPGField('element_ranks', NDArraySchema(1)),
+	RPGField('state_ranks', NDArraySchema(1)),
+	RPGField('learnings', ListSchema('class_learning', CLASS_LEARNING_SCHEMA)),
+])
 
 class CommonEventTrigger(Enum):
     NONE = 0
     AUTORUN = 1
     PARALLEL = 2
 
-@dataclass
-class CommonEvent(RPG):
-    id_0_is_null = True
+COMMON_EVENT_SCHEMA = RPGObjSchema('CommonEvent', 'RPG::CommonEvent', [
+	id_field(),
+	str_field('name'),
+	enum_field('trigger', CommonEventTrigger),
+	int_field('switch_id'),
+])
 
-    id_: int
-    name: str
-    trigger: CommonEventTrigger
-    switch_id: Annotated[int, Switch]
-    
-    list_: list[EventCommand] = field(metadata={
-        'table_name': 'common_event_command'
-    })
+class EnemyActionKind(Enum):
+    BASIC = 0
+    SKILL = 1
 
-class StateRestriction(Enum):
-    NONE = 0
-    CANT_USE_MAGIC = 1
-    ALWAYS_ATTACK_ENEMIES = 2
-    ALWAYS_ATTACK_ALLIES = 3
-    CANT_MOVE = 4
+class EnemyBasicAction(Enum):
+    ATTACK = 0
+    DEFEND = 1
+    ESCAPE = 2
+    DO_NOTHING = 3
 
-@dataclass
-class State(RPG):
-    id_0_is_null = True
+ENEMY_ACTION_SCHEMA = RPGObjSchema('EnemyAction', 'RPG::Enemy::Action', [
+	enum_field('kind', EnemyActionKind),
+	enum_field('basic', EnemyBasicAction),
+	fk_field('skill_id', lambda: SKILLS_SCHEMA, True),
+	*int_fields('''
+		condition_turn_a condition_turn_b condition_hp condition_level
+		condition_switch_id
+	'''),
+	RPGField('rating', IntSchema(1, 10)),
+])
 
-    id_: int
-    name: str
-    animation1_id: Annotated[int, Animation]
-    animation2_id: Annotated[int, Animation]
-    restriction: StateRestriction
-    nonresistance: bool
-    zero_hp: bool
-    cant_get_exp: bool
-    cant_evade: bool
-    slip_damage: bool
-    rating: Annotated[int, range(11)]
-    hit_rate: int
-    maxhp_rate: int
-    maxsp_rate: int
-    str_rate: int
-    dex_rate: int
-    agi_rate: int
-    int_rate: int
-    atk_rate: int
-    pdef_rate: int
-    mdef_rate: int
-    eva: int
-    battle_only: bool
-    hold_turn: int
-    auto_release_prob: int
-    shock_release_prob: int
-
-    guard_element_set: set[Annotated[int, Element]] = field(metadata={
-        'table_name': 'state_guard_element'
-    })
-
-    plus_state_set: set[Annotated[int, 'State']] = field(metadata={
-        'table_name': 'state_plus_state'
-    })
-
-    minus_state_set: set[Annotated[int, 'State']] = field(metadata={
-        'table_name': 'state_minus_state'
-    })
+ENEMY_SCHEMA = RPGObjSchema('Enemy', 'RPG::Enemy', [
+	id_field(),
+	*str_fields('name battler_name'),
+	hue_field('battler_hue'),
+	*int_fields('maxhp maxsp str dex agi int atk pdef mdef eva'),
+	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	RPGField('element_ranks', NDArraySchema(1)),
+	RPGField('state_ranks', NDArraySchema(1)),
+	RPGField('actions', ListSchema('enemy_action', ENEMY_ACTION_SCHEMA)),
+	*int_fields('exp gold'),
+	fk_field('item_id', lambda: ITEMS_SCHEMA, True),
+	fk_field('weapon_id', lambda: WEAPONS_SCHEMA, True),
+	fk_field('armor_id', lambda: ARMORS_SCHEMA, True),
+	int_field('treasure_prob'),
+])
 
 class Scope(Enum):
     NONE = 0
@@ -276,169 +439,6 @@ class Occasion(Enum):
     ONLY_FROM_THE_MENU = 2
     NEVER = 3
 
-@dataclass
-class Skill(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    icon_name: str
-    description: str
-    scope: Scope
-    occasion: Occasion
-    animation1_id: Annotated[int, Animation]
-    animation2_id: Annotated[int, Animation]
-    menu_se: AudioFile
-    common_event_id: Annotated[int, CommonEvent]
-    sp_cost: int
-    power: int
-    atk_f: int
-    eva_f: int
-    str_f: int
-    dex_f: int
-    agi_f: int
-    int_f: int
-    hit: int
-    pdef_f: int
-    mdef_f: int
-    variance: int
-    
-    element_set: set[Annotated[int, Element]] = field(metadata={
-        'table_name': 'skill_element'
-    })
-    
-    plus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'skill_plus_state'
-    })
-
-    minus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'skill_minus_state'
-    })
-
-class ClassPosition(Enum):
-    FRONT = 0
-    MIDDLE = 1
-    REAR = 2
-
-@dataclass
-class Weapon(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    icon_name: str
-    description: str
-    animation1_id: Annotated[int, Animation]
-    animation2_id: Annotated[int, Animation]
-    price: int
-    atk: int
-    pdef: int
-    mdef: int
-    str_plus: int
-    dex_plus: int
-    agi_plus: int
-    int_plus: int
-    
-    element_set: set[Annotated[int, Element]] = field(metadata={
-        'table_name': 'weapon_element'
-    })
-    
-    plus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'weapon_plus_state'
-    })
-
-    minus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'weapon_minus_state'
-    })
-
-class ArmorKind(Enum):
-    SHIELD = 0
-    HELMET = 1
-    BODY_ARMOR = 2
-    ACCESSORY = 3
-
-@dataclass
-class Armor(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    icon_name: str
-    description: str
-    kind: ArmorKind
-    auto_state: Annotated[int, State]
-    price: int
-    pdef: int
-    mdef: int
-    eva: int
-    str_plus: int
-    dex_plus: int
-    agi_plus: int
-    int_plus: int
-
-    guard_element_set: set[Annotated[int, Element]] = field(metadata={
-        'table_name': 'armor_guard_element'
-    })
-
-    guard_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'armor_guard_state'
-    })
-
-@dataclass
-class ClassLearning(RPG):
-    level: int
-    skill_id: Annotated[int, Skill]
-
-@dataclass
-class Class(RPG):
-    id_0_is_null = True
-
-    id: int
-    name: str
-    position: ClassPosition
-
-    weapon_set: set[Annotated[int, Weapon]] = field(metadata={
-        'table_name': 'class_weapon'
-    })
-
-    armor_set: set[Annotated[int, Armor]] = field(metadata={
-        'table_name': 'class_armor'
-    })
-
-    element_ranks: Annotated[np.ndarray, 1]
-    state_ranks: Annotated[np.ndarray, 1]
-
-    learnings: list[ClassLearning] = field(metadata={
-        'table_name': 'class_learning'
-    })
-
-@dataclass
-class Actor(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    class_id: Annotated[int, Class]
-    initial_level: int
-    final_level: int
-    exp_basis: Annotated[int, range(10, 51)]
-    exp_inflation: Annotated[int, range(10, 51)]
-    character_name: str
-    character_hue: Hue
-    battler_name: str
-    battler_hue: Hue
-    parameters: Annotated[np.ndarray, 2]
-    weapon_id: Annotated[int, Weapon]
-    armor1_id: Annotated[int, Armor]
-    armor2_id: Annotated[int, Armor]
-    armor3_id: Annotated[int, Armor]
-    armor4_id: Annotated[int, Armor]
-    weapon_fix: bool
-    armor1_fix: bool
-    armor2_fix: bool
-    armor3_fix: bool
-    armor4_fix: bool
-
 class ParameterType(Enum):
     NONE = 0
     MAX_HP = 1
@@ -448,153 +448,44 @@ class ParameterType(Enum):
     AGILITY = 5
     INTELLIGENCE = 6
 
-@dataclass
-class Item(RPG):
-    id_0_is_null = True
+ITEM_SCHEMA = RPGObjSchema('Item', 'RPG::Item', [
+	id_field(),
+	*str_fields('name icon_name description'),
+	enum_field('scope', Scope),
+	enum_field('occasion', Occasion),
+	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	audio_field('menu_se'),
+	fk_field('common_event_id', lambda: COMMON_EVENTS_SCHEMA, True),
+	int_field('price'),
+	bool_field('consumable'),
+	enum_field('parameter_type', ParameterType),
+	*int_fields('''
+		parameter_points recover_hp_rate recover_hp recover_sp_rate recover_sp
+		hit pdef_f mdef_f variance
+	'''),
+	RPGField('element_set', SetSchema(
+		'item_element', IntSchema(), 'element_id'
+	)),
+	RPGField('plus_state_set', SetSchema(
+		'item_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+	RPGField('minus_state_set', SetSchema(
+		'item_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+])
 
-    id_: int
-    name: str
-    icon_name: str
-    description: str
-    scope: Scope
-    occasion: Occasion
-    animation1_id: Annotated[int, Animation]
-    animation2_id: Annotated[int, Animation]
-    menu_se: AudioFile
-    common_event_id: Annotated[int, CommonEvent]
-    price: int
-    consumable: bool
-    parameter_type: ParameterType
-    parameter_points: int
-    recover_hp_rate: int
-    recover_hp: int
-    recover_sp_rate: int
-    recover_sp: int
-    hit: int
-    pdef_f: int
-    mdef_f: int
-    variance: int
-
-    element_set: set[Annotated[int, Element]] = field(metadata={
-        'table_name': 'item_element'
-    })
-
-    plus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'item_plus_state'
-    })
-
-    minus_state_set: set[Annotated[int, State]] = field(metadata={
-        'table_name': 'item_minus_state'
-    })
-
-class EnemyActionKind(Enum):
-    BASIC = 0
-    SKILL = 1
-
-class EnemyBasicAction(Enum):
-    ATTACK = 0
-    DEFEND = 1
-    ESCAPE = 2
-    DO_NOTHING = 3
-
-@dataclass
-class EnemyAction(RPG):
-    kind: EnemyActionKind
-    basic: EnemyBasicAction
-    skill_id: Annotated[int, Skill]
-    condition_turn_a: int
-    condition_turn_b: int
-    condition_hp: int
-    condition_level: int
-    condition_switch_id: Annotated[int, Switch]
-    rating: Annotated[int, range(1, 11)]
-
-@dataclass
-class Enemy(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    battler_name: str
-    battler_hue: Hue
-    maxhp: int
-    maxsp: int
-    str_: int
-    dex: int
-    agi: int
-    int_: int
-    atk: int
-    pdef: int
-    mdef: int
-    eva: int
-    animation1_id: Annotated[int, Animation]
-    animation2_id: Annotated[int, Animation]
-    element_ranks: Annotated[np.ndarray, 1]
-    state_ranks: Annotated[np.ndarray, 1]
-    actions: list[EnemyAction] = field(metadata={'table_name': 'enemy_action'})
-    exp: int
-    gold: int
-    item_id: Annotated[int, Item]
-    weapon_id: Annotated[int, Weapon]
-    armor_id: Annotated[int, Armor]
-    treasure_prob: int
-
-@dataclass
-class TroopMember(RPG):
-    enemy_id: Annotated[int, Enemy]
-    x: int
-    y: int
-    hidden: bool
-    immortal: bool
-
-@dataclass
-class TroopPageCondition(RPG):
-    turn_valid: bool
-    enemy_valid: bool
-    actor_valid: bool
-    switch_valid: bool
-    turn_a: int
-    turn_b: int
-    enemy_index: Annotated[int, range(8)]
-    enemy_hp: int
-    actor_id: Annotated[int, Actor]
-    actor_hp: int
-    switch_id: Annotated[int, Switch]
-
-class TroopPageSpan(Enum):
-    BATTLE = 0
-    TURN = 1
-    MOMENT = 2
-
-@dataclass
-class TroopPage(RPG):
-    condition: TroopPageCondition
-    span: TroopPageSpan
-    
-    list_: list[EventCommand] = field(metadata={
-        'table_name': 'troop_page_command'
-    })
-
-@dataclass
-class Troop(RPG):
-    id_0_is_null = True
-
-    id_: int
-    name: str
-    members: list[TroopMember] = field(metadata={'table_name': 'troop_member'})
-    pages: list[TroopPage] = field(metadata={'table_name': 'troop_page'})
-
-@dataclass
-class EventPageCondition(RPG):
-    switch1_valid: bool
-    switch2_valid: bool
-    variable_valid: bool
-    self_switch_valid: bool
-    switch1_id: int
-    switch2_id: int
-    variable_id: int
-    variable_value: int
-    self_switch_ch: str
+EVENT_PAGE_CONDITION_SCHEMA = RPGObjSchema(
+	'EventPageCondition',
+	'RPG::Event::Page::Condition',
+	[
+		*bool_fields('''
+			switch1_valid switch2_valid variable_valid self_switch_valid
+		'''),
+		*int_fields('switch1_id switch2_id variable_id variable_value'),
+		str_field('self_switch_ch'),
+	]
+)
 
 class Direction(Enum):
     DOWN = 2
@@ -602,23 +493,26 @@ class Direction(Enum):
     RIGHT = 6
     UP = 8
 
-@dataclass
-class EventPageGraphic(RPG):
-    tile_id: int
-    character_name: str
-    character_hue: Hue
-    direction: Direction
-    pattern: Annotated[int, range(4)]
-    opacity: int
-    blend_type: int
+EVENT_PAGE_GRAPHIC_SCHEMA = RPGObjSchema(
+	'EventPageGraphic',
+	'RPG::Event::Page::Graphic',
+	[
+		int_field('tile_id'),
+		str_field('character_name'),
+		hue_field('character_hue'),
+		enum_field('direction', Direction),
+		RPGField('pattern', IntSchema(0, 3)),
+		*int_fields('opacity blend_type'),
+	]
+)
 
-class EventPageMoveType(Enum):
+class MoveType(Enum):
     FIXED = 0
     RANDOM = 1
     APPROACH = 2
     CUSTOM = 3
 
-class EventPageMoveSpeed(Enum):
+class MoveSpeed(Enum):
     SLOWEST = 1
     SLOWER = 2
     SLOW = 3
@@ -626,7 +520,7 @@ class EventPageMoveSpeed(Enum):
     FASTER = 5
     FASTEST = 6
 
-class EventPageMoveFrequency(Enum):
+class MoveFrequency(Enum):
     LOWEST = 1
     LOWER = 2
     LOW = 3
@@ -634,14 +528,9 @@ class EventPageMoveFrequency(Enum):
     HIGHER = 5
     HIGHEST = 6
 
-@dataclass
-class MoveRoute(RPG):
-    repeat: bool
-    skippable: bool
-    
-    list_: list[MoveCommand] = field(metadata={
-        'table_name': 'move_route_command'
-    })
+MOVE_ROUTE_SCHEMA = RPGObjSchema('MoveRoute', 'RPG::MoveRoute', [
+	*bool_fields('repeat skippable'),
+])
 
 class EventPageTrigger(Enum):
     ACTION_BUTTON = 0
@@ -650,223 +539,303 @@ class EventPageTrigger(Enum):
     AUTORUN = 3
     PARALLEL_PROCESSING = 4
 
-@dataclass
-class EventPage(RPG):
-    condition: EventPageCondition
-    graphic: EventPageGraphic
-    move_type: EventPageMoveType
-    move_speed: EventPageMoveSpeed
-    move_frequency: EventPageMoveFrequency
-    move_route: MoveRoute
-    walk_anime: bool
-    step_anime: bool
-    direction_fix: bool
-    through: bool
-    always_on_top: bool
-    trigger: EventPageTrigger
-    
-    list_: list[EventCommand] = field(metadata={
-        'table_name': 'event_page_command'
-    })
+EVENT_PAGE_SCHEMA = RPGObjSchema('EventPage', 'RPG::Event::Page', [
+	RPGField('condition', EVENT_PAGE_CONDITION_SCHEMA),
+	RPGField('graphic', EVENT_PAGE_GRAPHIC_SCHEMA),
+	enum_field('move_type', MoveType),
+	enum_field('move_frequency', MoveFrequency),
+	enum_field('move_speed', MoveSpeed),
+	RPGField('move_route', MOVE_ROUTE_SCHEMA),
+	*bool_fields('walk_anime step_anime direction_fix through always_on_top'),
+	enum_field('trigger', EventPageTrigger),
+])
 
-@dataclass
-class Event(RPG):
-    id_: int
-    name: str
-    x: int
-    y: int
-    pages: list[EventPage] = field(metadata={'table_name': 'event_page'})
+EVENT_SCHEMA = RPGObjSchema('Event', 'RPG::Event', [
+	id_field(),
+	RPGField('name', StrSchema()),
+	RPGField('x', IntSchema()),
+	RPGField('y', IntSchema()),
+	RPGField('pages', ListSchema('event_page', EVENT_PAGE_SCHEMA))
+])
 
-@dataclass
-class Map(RPG):
-    id_0_is_null = True
+MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
+	RPGField('tileset_id', FKSchema(lambda: TILESETS_SCHEMA, nullable=False)),
+	RPGField('width', IntSchema()),
+	RPGField('height', IntSchema()),
+	RPGField('autoplay_bgm', BoolSchema()),
+	RPGField('bgm', AUDIO_FILE_SCHEMA),
+	RPGField('autoplay_bgs', BoolSchema()),
+	RPGField('bgs', AUDIO_FILE_SCHEMA),
+	RPGField('encounter_list', ListSchema(
+		'encounter', FKSchema(lambda: TROOPS_SCHEMA, nullable=False)
+	)),
+	RPGField('encounter_step', IntSchema()),
+	RPGField('data', NDArraySchema(3)),
+	RPGField('events', DictSchema(
+		'event', 'key', IntSchema(), EVENT_SCHEMA
+	)),
+])
 
-    tileset_id: Annotated[int, Tileset]
-    width: int
-    height: int
-    autoplay_bgm: bool
-    bgm: AudioFile
-    autoplay_bgs: bool
-    bgs: AudioFile
-    encounter_list: list[Annotated[int, Troop]] = field(metadata={'table_name': 'encounter'})
-    encounter_step: int
-    data: Annotated[np.ndarray, 3]
-    
-    events: dict[Annotated[int, Event], Event] = field(metadata={
-        'table_name': 'map_event'
-    })
+MAP_INFO_SCHEMA = RPGObjSchema('MapInfo', 'RPG::MapInfo', [
+	RPGField('name', StrSchema()),
+	RPGField('parent_id', FKSchema(lambda: MAP_INFOS_SCHEMA)),
+	RPGField('order', IntSchema()),
+	RPGField('expanded', BoolSchema()),
+	RPGField('scroll_x', IntSchema()),
+	RPGField('scroll_y', IntSchema()),
+])
 
-@dataclass
-class MapInfo(RPG):
-    id_0_is_null = True
+SCRIPT_SCHEMA = ArrayObjSchema('Script', [
+	Field('id_', IntSchema(), db_name='id'),
+	Field('name', StrSchema()),
+	Field('content', ZlibSchema('utf-8'))
+])
 
-    name: str
-    parent_id: int = field(metadata={'references': lambda: MapInfo})
-    order: int
-    expanded: bool
-    scroll_x: int
-    scroll_y: int
+SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
+	id_field(),
+	*str_fields('name icon_name description'),
+	enum_field('scope', Scope),
+	enum_field('occasion', Occasion),
+	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	audio_field('menu_se'),
+	fk_field('common_event_id', lambda: COMMON_EVENTS_SCHEMA, True),
+	*int_fields('''
+		sp_cost power atk_f eva_f str_f dex_f agi_f int_f hit pdef_f mdef_f
+		variance
+	'''),
+	RPGField('element_set', SetSchema(
+		'skill_element', IntSchema(), 'element_id'
+	)),
+	RPGField('plus_state_set', SetSchema(
+		'skill_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+	RPGField('minus_state_set', SetSchema(
+		'skill_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+])
 
-@dataclass
-class SystemWords(RPG):
-    gold: str
-    hp: str
-    sp: str
-    str_: str
-    dex: str
-    agi: str
-    int_: str
-    atk: str
-    pdef: str
-    mdef: str
-    weapon: str
-    armor1: str 
-    armor2: str
-    armor3: str
-    armor4: str
-    attack: str
-    skill: str
-    guard: str
-    item: str
-    equip: str
+class StateRestriction(Enum):
+    NONE = 0
+    CANT_USE_MAGIC = 1
+    ALWAYS_ATTACK_ENEMIES = 2
+    ALWAYS_ATTACK_ALLIES = 3
+    CANT_MOVE = 4
 
-@dataclass
-class SystemTestBattler(RPG):
-    actor_id: Annotated[int, Actor]
-    level: int
-    weapon_id: Annotated[int, Weapon]
-    armor1_id: Annotated[int, Armor]
-    armor2_id: Annotated[int, Armor]
-    armor3_id: Annotated[int, Armor]
-    armor4_id: Annotated[int, Armor]
+STATE_SCHEMA = RPGObjSchema('State', 'RPG::State', [
+	id_field(),
+	str_field('name'),
+	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	enum_field('restriction', StateRestriction),
+	*bool_fields('nonresistance zero_hp cant_get_exp cant_evade slip_damage'),
+	RPGField('rating', IntSchema(0, 10)),
+	*int_fields('''
+		hit_rate maxhp_rate maxsp_rate str_rate dex_rate agi_rate int_rate
+		atk_rate pdef_rate mdef_rate eva
+	'''),
+	bool_field('battle_only'),
+	*int_fields('hold_turn auto_release_prob shock_release_prob'),
+	RPGField('guard_element_set', SetSchema(
+		'state_guard_element', IntSchema(), 'element_id'
+	)),
+	RPGField('plus_state_set', SetSchema(
+		'state_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+	RPGField('minus_state_set', SetSchema(
+		'state_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+])
 
-@dataclass
-class System(RPG):
-    magic_number: int
-    
-    party_members: Annotated[
-        list[Annotated[int, Actor]],
-        List('party_member', first_item_null=True)
-    ]
-    
-    elements: Annotated[list[Element], List('element', first_item_null=True)]
-    switches: Annotated[list[Switch], List('switch', first_item_null=True)]
-    
-    variables: Annotated[
-        list[Variable],
-        List('variable', first_item_null: True)
-    ]    
-    
-    windowskin_name: str
-    title_name: str
-    gameover_name: str
-    battle_transition: str
-    title_bgm: AudioFile
-    battle_bgm: AudioFile
-    battle_end_me: AudioFile
-    gameover_me: AudioFile
-    cursor_se: AudioFile
-    decision_se: AudioFile
-    cancel_se: AudioFile
-    buzzer_se: AudioFile
-    equip_se: AudioFile
-    shop_se: AudioFile
-    save_se: AudioFile
-    load_se: AudioFile
-    battle_start_se: AudioFile
-    escape_se: AudioFile
-    actor_collapse_se: AudioFile
-    enemy_collapse_se: AudioFile
-    words: SystemWords
-    start_map_id: Annotated[int, Map]
-    start_x: int
-    start_y: int
-    test_battlers: Annotated[list[SystemTestBattler], List('test_battler')]
-    test_troop_id: Annotated[int, Troop]
-    battleback_name: str
-    battler_name: str
-    battler_hue: Hue
-    edit_map_id: Annotated[int, Map]
+SYSTEM_WORDS_SCHEMA = RPGObjSchema('SystemWords', 'RPG::System::Words', [
+	RPGField('gold', StrSchema()),
+	RPGField('hp', StrSchema()),
+	RPGField('sp', StrSchema()),
+	RPGField('str_', StrSchema(), rpg_name='str'),
+	RPGField('dex', StrSchema()),
+	RPGField('agi', StrSchema()),
+	RPGField('int_', StrSchema(), rpg_name='int'),
+	RPGField('atk', StrSchema()),
+	RPGField('pdef', StrSchema()),
+	RPGField('mdef', StrSchema()),
+	RPGField('weapon', StrSchema()),
+	RPGField('armor1', StrSchema()),
+	RPGField('armor2', StrSchema()),
+	RPGField('armor3', StrSchema()),
+	RPGField('armor4', StrSchema()),
+	RPGField('attack', StrSchema()),
+	RPGField('skill', StrSchema()),
+	RPGField('guard', StrSchema()),
+	RPGField('item', StrSchema()),
+	RPGField('equip', StrSchema()),
+])
 
-@dataclass
-class TupleLike(ABC):
-    pass
+SYSTEM_TEST_BATTLER_SCHEMA = RPGObjSchema(
+	'SystemTestBattler',
+	'RPG::System::TestBattler',
+	[
+		RPGField('actor_id', FKSchema(lambda: ACTORS_SCHEMA, nullable=False)),
+		RPGField('level', IntSchema()),
+		RPGField('weapon_id', FKSchema(lambda: WEAPONS_SCHEMA)),
+		RPGField('armor1_id', FKSchema(lambda: ARMORS_SCHEMA)),
+		RPGField('armor2_id', FKSchema(lambda: ARMORS_SCHEMA)),
+		RPGField('armor3_id', FKSchema(lambda: ARMORS_SCHEMA)),
+		RPGField('armor4_id', FKSchema(lambda: ARMORS_SCHEMA)),
+	]
+)
 
-@dataclass
-class ZlibCompressed:
-    encoding: str
+SYSTEM_SCHEMA = RPGSingletonObjSchema('system', 'System', 'RPG::System', [
+	RPGField('magic_number', IntSchema()),
+	RPGField('party_members', ListSchema(
+		'party_member', FKSchema(lambda: ACTORS_SCHEMA, nullable=False)
+	)),
+	RPGField('elements', ListSchema(
+		'element', StrSchema(), FirstItem.BLANK
+	)),
+	RPGField('switches', ListSchema(
+		'switch', StrSchema(), FirstItem.NULL
+	)),
+	RPGField('variables', ListSchema(
+		'variable', StrSchema(), FirstItem.NULL
+	)),
+	RPGField('windowskin_name', StrSchema()),
+	RPGField('title_name', StrSchema()),
+	RPGField('gameover_name', StrSchema()),
+	RPGField('battle_transition', StrSchema()),
+	RPGField('title_bgm', AUDIO_FILE_SCHEMA),
+	RPGField('battle_bgm', AUDIO_FILE_SCHEMA),
+	RPGField('battle_end_me', AUDIO_FILE_SCHEMA),
+	RPGField('gameover_me', AUDIO_FILE_SCHEMA),
+	RPGField('decision_se', AUDIO_FILE_SCHEMA),
+	RPGField('cancel_se', AUDIO_FILE_SCHEMA),
+	RPGField('buzzer_se', AUDIO_FILE_SCHEMA),
+	RPGField('equip_se', AUDIO_FILE_SCHEMA),
+	RPGField('shop_se', AUDIO_FILE_SCHEMA),
+	RPGField('save_se', AUDIO_FILE_SCHEMA),
+	RPGField('load_se', AUDIO_FILE_SCHEMA),
+	RPGField('battle_start_se', AUDIO_FILE_SCHEMA),
+	RPGField('escape_se', AUDIO_FILE_SCHEMA),
+	RPGField('actor_collapse_se', AUDIO_FILE_SCHEMA),
+	RPGField('enemy_collapse_se', AUDIO_FILE_SCHEMA),
+	RPGField('words', SYSTEM_WORDS_SCHEMA),
+	RPGField('start_map_id', FKSchema(lambda: MAPS_SCHEMA)),
+	RPGField('start_x', IntSchema()),
+	RPGField('start_y', IntSchema()),
+	RPGField('test_battlers', ListSchema(
+		'test_battler', SYSTEM_TEST_BATTLER_SCHEMA
+	)),
+	RPGField('test_troop_id', FKSchema(lambda: TROOPS_SCHEMA)),
+	RPGField('battleback_name', StrSchema()),
+	RPGField('battler_name', StrSchema()),
+	RPGField('battler_hue', HUE_SCHEMA),
+	RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA))
+])
 
-@dataclass
-class Script(TupleLike):
-    id_: int
-    name: str
-    content: Annotated[str, ZlibCompressed('utf-8')]
+TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
+	id_field(),
+	*str_fields('name tileset_name'),
+	RPGField('autotile_names', ListSchema(
+		'tileset_autotile', StrSchema(), maxlen=7
+	)),
+	str_field('panorama_name'),
+	hue_field('panorama_hue'),
+	str_field('fog_name'),
+	hue_field('fog_hue'),
+	*int_fields('fog_opacity fog_blend_type fog_zoom fog_sx fog_sy'),
+	str_field('battleback_name'),
+	RPGField('passages', NDArraySchema(1)),
+	RPGField('priorities', NDArraySchema(1)),
+	RPGField('terrain_tags', NDArraySchema(1)),
+])
 
-FILES = {
-    'Actors.rxdata': Annotated[
-        list[Actor],
-        ListA('actor', first_item_null=True)
-    ]
+TROOP_MEMBER_SCHEMA = RPGObjSchema('TroopMember', 'RPG::Troop::Member', [
+	fk_field('enemy_id', lambda: ENEMIES_SCHEMA, False),
+	*int_fields('x y'),
+	*bool_fields('hidden immortal'),
+])
 
-    'Animations.rxdata': Annotated[
-        list[Animation],
-        ListA('animation', first_item_null=True)
-    ],
+TROOP_PAGE_CONDITION_SCHEMA = RPGObjSchema(
+	'TroopPageCondition',
+	'RPG::Troop::Page::Condition',
+	[
+		*bool_fields('turn_valid enemy_valid actor_valid switch_valid'),
+		*int_fields('turn_a turn_b'),
+		RPGField('enemy_index', IntSchema(0, 7)),
+		int_field('enemy_hp'),
+		fk_field('actor_id', lambda: ACTORS_SCHEMA, True),
+		*int_fields('actor_hp switch_id'),
+	]
+)
 
-    'Armors.rxdata': Annotated[
-        list[Armor],
-        ListA('armor', first_item_null=True)
-    ],
+class TroopPageSpan(Enum):
+    BATTLE = 0
+    TURN = 1
+    MOMENT = 2
 
-    'Classes.rxdata': Annotated[
-        list[Class],
-        ListA('class', first_item_null=True)
-    ],
+TROOP_PAGE_SCHEMA = RPGObjSchema('TroopPage', 'RPG::Troop::Page', [
+	RPGField('condition', TROOP_PAGE_CONDITION_SCHEMA),
+	enum_field('span', TroopPageSpan),
+])
 
-    'CommonEvents.rxdata': Annotated[
-        list[CommonEvent],
-        ListA('common_event', first_item_null=True)
-    ],
+TROOP_SCHEMA = RPGObjSchema('Troop', 'RPG::Troop', [
+	id_field(),
+	str_field('name'),
+	RPGField('members', ListSchema('troop_member', TROOP_MEMBER_SCHEMA)),
+	RPGField('pages', ListSchema('troop_page', TROOP_PAGE_SCHEMA)),
+])
 
-    'Enemies.rxdata': Annotated[
-        list[Enemy],
-        ListA('enemy', first_item_null=True)
-    ],
+WEAPON_SCHEMA = RPGObjSchema('Weapon', 'RPG::Weapon', [
+	id_field(),
+	*str_fields('name icon_name description'),
+	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	*int_fields('price atk pdef mdef str_plus dex_plus agi_plus int_plus'),
+	RPGField('element_set', SetSchema(
+		'weapon_element', IntSchema(), 'element_id'
+	)),
+	RPGField('plus_state_set', SetSchema(
+		'weapon_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+	RPGField('minus_state_set', SetSchema(
+		'weapon_minus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
+	)),
+])
 
-    'Items.rxdata': Annotated[
-        list[Item],
-        ListA('item', first_item_null=True)
-    ],
+ACTORS_SCHEMA = ListSchema('actor', ACTOR_SCHEMA, FirstItem.NULL)
+ANIMATIONS_SCHEMA = ListSchema('animation', ANIMATION_SCHEMA, FirstItem.NULL)
+ARMORS_SCHEMA = ListSchema('armor', ARMOR_SCHEMA, FirstItem.NULL)
+CLASSES_SCHEMA = ListSchema('class', CLASS_SCHEMA, FirstItem.NULL)
+COMMON_EVENTS_SCHEMA = ListSchema(
+	'common_event', COMMON_EVENT_SCHEMA, FirstItem.NULL
+)
+ENEMIES_SCHEMA = ListSchema('enemy', ENEMY_SCHEMA, FirstItem.NULL)
+ITEMS_SCHEMA = ListSchema('item', ITEM_SCHEMA, FirstItem.NULL)
+MAPS_SCHEMA = MultipleFilesSchema(
+	re.compile(r'Map(\d{3}).rxdata'), 'map', ['number'], MAP_SCHEMA
+)
+MAP_INFOS_SCHEMA = DictSchema('map_info', 'id_', IntSchema(), MAP_INFO_SCHEMA)
+SCRIPTS_SCHEMA = ListSchema('script', SCRIPT_SCHEMA)
+SKILLS_SCHEMA = ListSchema('skill', SKILL_SCHEMA, FirstItem.NULL)
+STATES_SCHEMA = ListSchema('state', STATE_SCHEMA, FirstItem.NULL)
+TILESETS_SCHEMA = ListSchema('tileset', TILESET_SCHEMA, FirstItem.NULL)
+TROOPS_SCHEMA = ListSchema('troop', TROOP_SCHEMA, FirstItem.NULL)
+WEAPONS_SCHEMA = ListSchema('weapon', WEAPON_SCHEMA, FirstItem.NULL)
 
-    re.compile(r'Map(\d\d\d).rxdata'): Map,
-
-    'MapInfos.rxdata': Annotated[dict[int, MapInfo], DictA('map_info')]
-    'Scripts.rxdata': Annotated[list[Script], ListA('script')]
-
-    'Skills.rxdata': Annotated[
-        list[Skill],
-        ListA('skill', first_item_null=True)
-    ]
-
-    'States.rxdata': Annotated[
-        list[State],
-        ListA('state', first_item_null=True)
-    ],
-
-    'System.rxdata': System,
-
-    'Tilesets.rxdata': Annotated[
-        list[Tileset], 
-        ListA('tileset', first_item_null=True)
-    ],
-
-    'Troops.rxdata': Annotated[
-        list[Troop],
-        ListA('troop', first_item_null=True)
-    ],
-
-    'Weapons.rxdata': Annotated[
-        list[Weapon],
-        ListA('weapon', first_item_null=True)
-    ],
-}
+FILES: list[FileSchema] = [
+	SingleFileSchema('Actors.rxdata', ACTORS_SCHEMA),
+	SingleFileSchema('Animations.rxdata', ANIMATIONS_SCHEMA),
+	SingleFileSchema('Armors.rxdata', ARMORS_SCHEMA),
+	SingleFileSchema('Classes.rxdata', CLASSES_SCHEMA),
+	SingleFileSchema('CommonEvents.rxdata', COMMON_EVENTS_SCHEMA),
+	SingleFileSchema('Enemies.rxdata', ENEMIES_SCHEMA),
+	SingleFileSchema('Items.rxdata', ITEMS_SCHEMA),
+	MAPS_SCHEMA,
+	SingleFileSchema('MapInfos.rxdata', MAP_INFOS_SCHEMA),
+	SingleFileSchema('Scripts.rxdata', SCRIPTS_SCHEMA),
+	SingleFileSchema('Skills.rxdata', SKILLS_SCHEMA),
+	SingleFileSchema('States.rxdata', STATES_SCHEMA),
+	SingleFileSchema('System.rxdata', SYSTEM_SCHEMA),
+	SingleFileSchema('Tilesets.rxdata', TILESETS_SCHEMA),
+	SingleFileSchema('Troops.rxdata', TROOPS_SCHEMA),
+	SingleFileSchema('Weapons.rxdata', WEAPONS_SCHEMA),
+]

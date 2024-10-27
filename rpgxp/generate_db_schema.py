@@ -75,6 +75,7 @@ class ForeignKeyConstraint(TableConstraint):
 class PendingFK:
 	field_name: str
 	schema: FKSchema
+	pk: bool=False
 
 @dataclass
 class TableSchema:
@@ -84,15 +85,17 @@ class TableSchema:
 		ColumnSchema | TableConstraint | PendingFK
 	] = field(default_factory=lambda: [])
 	
-	# columns: list[ColumnSchema] = field(default_factory=lambda: [])
-	# constraints: list[TableConstraint] = field(default_factory=lambda: [])
 	singleton: bool=False
-	# pending_fks: list[tuple[str, schema.FKSchema]]=field(default_factory=lambda: [])
 
 	def columns(self) -> Iterator[ColumnSchema]:
 		for member in self.members:
 			if isinstance(member, ColumnSchema):
 				yield member
+
+	def make_all_pks(self) -> None:
+		for member in self.members:
+			if isinstance(member, (ColumnSchema, PendingFK)):
+				member.pk = True
 
 	def constraints(self) -> Iterator[TableConstraint]:
 		for member in self.members:
@@ -105,7 +108,7 @@ class TableSchema:
 				yield member
 
 	def pk(self) -> list[ColumnSchema]:
-		return [col for col in self.columns() if col.pk]
+		return [m for m in self.members if isinstance(m, (ColumnSchema, PendingFK)) and m.pk]
 
 	def __str__(self) -> str:
 		column_decls: list[str] = []
@@ -136,9 +139,11 @@ class TableSchema:
 					column_decls[column_index] += ' ' + member.inline_string()
 				else:
 					constraint_decls.append(str(member))
+			elif isinstance(member, PendingFK):
+				raise ValueError("can't stringify table schema with unresolved FKs")
 
 		if not pk_columns:
-			raise SchemaError(f'table {self.name} has no primary key')
+			raise schema.SchemaError(f'table {self.name} has no primary key')
 		elif len(pk_columns) == 1:
 			pk_column_index = pk_columns[0][0]
 			column_decls[pk_column_index] += ' PRIMARY KEY'
@@ -169,18 +174,65 @@ class TableSchema:
 		self.members = combined.members
 		return self
 
+def format_sql_value(value, type_) -> str:
+	match type_:
+		case 'TEXT':
+			value.replace("'", "''")
+			return f"'{value}'"
+		case _:
+			return str(value)
+
 @dataclass
-class DBSchema:
-	tables: list[TableSchema]=field(default_factory=lambda: [])
+class InsertStatement:
+	table_name: str
+	columns: tuple[str]
+	column_types: tuple[str]
+	rows: list[tuple]
 
 	def __str__(self) -> str:
-		return '\n\n'.join(map(str, self.tables))
+		columns_csv = ', '.join(f'"{col}"' for col in self.columns)
+
+		formatted_rows = []
+
+		for row in self.rows:
+			formatted_cells = []
+
+			for type_, cell in zip(self.column_types, row):
+				formatted_cell = format_sql_value(cell, type_)
+				formatted_cells.append(formatted_cell)
+
+			cells_csv = ', '.join(formatted_cells)
+			formatted_rows.append(f'({cells_csv})')
+
+		rows_csv = ',\n    '.join(formatted_rows)
+
+		return '\n'.join([
+			f'INSERT INTO "{self.table_name}" ({columns_csv}) VALUES',
+			f'    {rows_csv};'
+		])
+
+@dataclass
+class DBSchema:
+	members: list[TableSchema | InsertStatement]=field(default_factory=lambda: [])
+
+	def tables(self) -> Iterator[TableSchema]:
+		for member in self.members:
+			if isinstance(member, TableSchema):
+				yield member
+
+	def inserts(self) -> Iterator[InsertStatement]:
+		for member in self.members:
+			if isinstance(member, InsertStatement):
+				yield member
+
+	def __str__(self) -> str:
+		return '\n\n'.join(map(str, self.members))
 
 	def has_table(self, name: str) -> bool:
-		return any(table.name == name for table in self.tables)
+		return any(table.name == name for table in self.tables())
 
 	def get_table(self, name: str) -> TableSchema:
-		for table in self.tables:
+		for table in self.tables():
 			if table.name == name:
 				return table
 
@@ -202,7 +254,7 @@ class DBSchema:
 				])
 
 				self.process_row_schema(table_schema, content_schema)
-				self.tables.append(table_schema)
+				self.members.append(table_schema)
 			case _:
 				assert False
 
@@ -223,6 +275,7 @@ class DBSchema:
 			raise schema.SchemaError(f'{table_name} used twice')
 
 		db_table_schema = TableSchema(table_name)
+		self.members.append(db_table_schema)
 
 		if parent_table is not None and parent_table.singleton:
 			parent_table = None
@@ -248,7 +301,7 @@ class DBSchema:
 			))
 
 		match table_schema:
-			case schema.ListSchema(_, item_schema, first_item):
+			case schema.ListSchema(_, item_schema, first_item, item_name):
 				min_index = 0 if first_item is schema.FirstItem.REGULAR else 1
 
 				db_table_schema.members.extend([
@@ -256,20 +309,26 @@ class DBSchema:
 					CheckConstraint(f'"index" >= {min_index}'),
 				])
 
-				self.tables.append(db_table_schema)
-				self.process_row_schema(db_table_schema, item_schema)
+				db_table_schema += self.process_field(
+					db_table_schema, item_name, item_schema
+				)
 
-			case schema.DictSchema(_, key_name, key_schema, value_schema):
+			case schema.SetSchema(_, item_schema, item_name):
+				db_member_schema = self.process_field(
+					db_table_schema, item_name, item_schema
+				)
+
+				db_member_schema.make_all_pks()
+				db_table_schema += db_member_schema
+
+			case schema.DictSchema(_, key_name, key_schema, value_schema, value_name):
 				db_key_schema = self.process_field(
 					db_table_schema, key_name, key_schema
 				)
 
-				for col in db_key_schema.columns():
-					col.pk = True
-
+				db_key_schema.make_all_pks()
 				db_table_schema += db_key_schema
-				self.tables.append(db_table_schema)
-				self.process_row_schema(db_table_schema, value_schema)
+				db_table_schema += self.process_field(db_table_schema, value_name, value_schema)
 
 			case schema.RPGSingletonObjSchema(_, class_name, _, fields):
 				assert parent_table is None
@@ -284,8 +343,6 @@ class DBSchema:
 					db_table_schema += self.process_field(
 						db_table_schema, field.db_name, field.schema
 					)
-
-				self.tables.append(db_table_schema)
 
 	def process_field(
 		self,
@@ -332,10 +389,17 @@ class DBSchema:
 				result.members.append(ColumnSchema(field_name, 'INTEGER'))
 
 				if not self.has_table(enum_table_name):
-					self.tables.append(TableSchema(enum_table_name, [
+					self.members.append(TableSchema(enum_table_name, [
 						ColumnSchema('id', 'INTEGER', pk=True),
 						ColumnSchema('name', 'TEXT')
 					]))
+
+					self.members.append(InsertStatement(
+						enum_table_name,
+						('id', 'name'),
+						('INTEGER', 'TEXT'),
+						[(member.value, member.name) for member in enum_class]
+					))
 
 				result.members.append(ForeignKeyConstraint(
 					[field_name], enum_table_name, ['id']
@@ -359,28 +423,30 @@ class DBSchema:
 		return result
 
 	def resolve_fks(self) -> None:
-		for table in self.tables:
+		for table in self.tables():
 			for i, member in enumerate(table.members):
-				if isinstance(member, PendingFK):
-					field_name = member.field_name
-					schema = member.schema
-					foreign_schema = schema.foreign_schema_thunk()
-					nullable = schema.nullable
-					foreign_table_name = foreign_schema.table_name
-					foreign_table = self.get_table(foreign_table_name)
-					foreign_pk = foreign_table.pk()
-					assert len(foreign_pk) == 1
-					pk_col = foreign_pk[0]
+				if not isinstance(member, PendingFK):
+					continue
+				
+				field_name = member.field_name
+				schema = member.schema
+				foreign_schema = schema.foreign_schema_thunk()
+				nullable = schema.nullable
+				foreign_table_name = foreign_schema.table_name
+				foreign_table = self.get_table(foreign_table_name)
+				foreign_pk = foreign_table.pk()
+				assert len(foreign_pk) == 1
+				pk_col = foreign_pk[0]
 
-					table.members[i:i + 1] = [
-						ColumnSchema(
-							field_name, pk_col.type_, collate=pk_col.collate,
-							nullable=nullable
-						),
-						ForeignKeyConstraint(
-							[field_name], foreign_table_name, [pk_col.name]
-						)
-					]
+				table.members[i:i + 1] = [
+					ColumnSchema(
+						field_name, pk_col.type_, collate=pk_col.collate,
+						nullable=nullable, pk=member.pk
+					),
+					ForeignKeyConstraint(
+						[field_name], foreign_table_name, [pk_col.name]
+					)
+				]
 
 def generate():
 	result = DBSchema()
