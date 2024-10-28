@@ -1,583 +1,307 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import importlib.resources
-import re
-from typing import Iterator, Self
+import io
+from pathlib import Path
+from typing import Any, Iterator, Self
 import apsw
 import apsw.bestpractice
-from rpgxp import schema
-
-def camel_case_to_snake(s: str) -> str:
-	return re.sub(r'(?<=.)(?=[A-Z])', '_', s).lower()
-
-@dataclass
-class ColumnSchema:
-	name: str
-	type_: str
-	nullable: bool=False
-	default: str=''
-	collate: str=''
-	pk: bool=False
-
-	def __str__(self) -> str:		
-		result = f'"{self.name}" {self.type_}'
-
-		if not self.nullable:
-			result += ' NOT NULL'
-
-		if self.default:
-			result += f' DEFAULT {self.default}'
-
-		if self.collate:
-			result += f' COLLATE {self.collate}'
-
-		return result
-
-@dataclass
-class TableConstraint(ABC):
-	@abstractmethod
-	def __str__(self) -> str:
-		...
-
-@dataclass
-class UniqueConstraint(TableConstraint):
-	columns: list[str]
-
-	def __str__(self) -> str:
-		columns_csv = ', '.join(f'"{column}"' for column in self.columns)
-		return f'UNIQUE ({columns_csv})'
-
-@dataclass
-class CheckConstraint(TableConstraint):
-	expr: str
-
-	def __str__(self) -> str:
-		return f'CHECK ({self.expr})'
-
-@dataclass
-class ForeignKeyConstraint(TableConstraint):
-	columns: list[str]
-	referenced_table: str
-	referenced_columns: list[str]
-
-	def inline_string(self) -> str:
-		referenced_columns_csv = ', '.join(f'"{column}"' for column in self.referenced_columns)
-		return f'REFERENCES "{self.referenced_table}" ({referenced_columns_csv})'
-
-	def __str__(self) -> str:
-		columns_csv = ', '.join(f'"{column}"' for column in self.columns)
-		referenced_columns_csv = ', '.join(f'"{column}"' for column in self.referenced_columns)
-		
-		return ' '.join([
-			f'FOREIGN KEY ({columns_csv}) ',
-			f'REFERENCES "{self.referenced_table}"',
-			f'({referenced_columns_csv})'
-		])
-
-@dataclass
-class PendingFK:
-	field_name: str
-	schema: schema.FKSchema
-	pk: bool=False
-
-@dataclass
-class TableSchema:
-	name: str
-	
-	members: list[
-		ColumnSchema | TableConstraint | PendingFK
-	] = field(default_factory=lambda: [])
-	
-	singleton: bool=False
-
-	def columns(self) -> Iterator[ColumnSchema]:
-		for member in self.members:
-			if isinstance(member, ColumnSchema):
-				yield member
-
-	def constraints(self) -> Iterator[TableConstraint]:
-		for member in self.members:
-			if isinstance(member, TableConstraint):
-				yield member
-
-	def pending_fks(self) -> Iterator[PendingFK]:
-		for member in self.members:
-			if isinstance(member, PendingFK):
-				yield member
-
-	def pk(self) -> list[ColumnSchema | PendingFK]:
-		result = [
-			m for m in self.members
-			if isinstance(m, (ColumnSchema, PendingFK)) and m.pk
-		]
-
-		if not result:
-			print(self.members)
-			raise schema.SchemaError(f'table {self.name} has no PK')
-
-		return result
-
-	def make_all_pks(self) -> None:
-		for member in self.members:
-			if isinstance(member, (ColumnSchema, PendingFK)):
-				member.pk = True
-
-	def set_pk(self, pk_col_names: set[str]) -> None:
-		found_names = set()
-
-		for member in self.members:
-			if isinstance(member, ColumnSchema):
-				if member.name in pk_col_names:
-					member.pk = True
-					found_names.add(member.name)
-				else:
-					member.pk = False
-
-		if found_names != pk_col_names:
-			raise ValueError(
-				"can't set primary key to include "
-				f"{', '.join(pk_col_names - found_names)} because these columns"
-				"don't exist"
-			)
-
-	def __str__(self) -> str:
-		column_decls: list[str] = []
-		constraint_decls: list[str] = []
-		pk_columns: list[tuple[int, str]] = []
-
-		# sqlite forces us to put all constraints after all columns
-
-		for i, member in enumerate(self.members):
-			if isinstance(member, ColumnSchema):
-				column_decls.append(str(member))
-
-				if member.pk:
-					pk_columns.append((len(column_decls) - 1, member.name))
-			elif isinstance(member, UniqueConstraint):
-				if len(member.columns) == 1:
-					uniq_column = member.columns[0]
-					column_index = [c.name for c in self.columns()].index(uniq_column)
-					column_decls[column_index] += ' UNIQUE'
-				else:
-					constraint_decls.append(str(member))
-			elif isinstance(member, CheckConstraint):
-				column_decls[-1] += ' ' + str(member)
-			elif isinstance(member, ForeignKeyConstraint):
-				if len(member.columns) == 1:
-					fk_column = member.columns[0]
-					column_index = [c.name for c in self.columns()].index(fk_column)
-					column_decls[column_index] += ' ' + member.inline_string()
-				else:
-					constraint_decls.append(str(member))
-			elif isinstance(member, PendingFK):
-				raise ValueError("can't stringify table schema with unresolved FKs")
-
-		if not pk_columns:
-			raise schema.SchemaError(f'table {self.name} has no primary key')
-		elif len(pk_columns) == 1:
-			pk_column_index = pk_columns[0][0]
-			column_decls[pk_column_index] += ' PRIMARY KEY'
-		else:
-			pk_columns_csv = ', '.join(f'"{name}"' for _, name in pk_columns)
-			constraint_decls.insert(0, f'PRIMARY KEY ({pk_columns_csv})')
-
-		decls_csv = ',\n    '.join(column_decls + constraint_decls)
-
-		return '\n'.join([
-			f'DROP TABLE IF EXISTS "{self.name}";',
-			f'CREATE TABLE "{self.name}" (',
-		    f'    {decls_csv}',
-		    ') WITHOUT ROWID, STRICT;'
-		])
-
-	def __add__(self, other: Self) -> Self:
-		if other.name != self.name:
-			raise ValueError('cannot concatenate table schemas with different names')
-
-		return self.__class__(
-			self.name,
-			self.members + other.members,
-			self.singleton, # self will override other!
-		)
-
-	def __iadd__(self, other: Self) -> Self:
-		combined = self + other
-		self.members = combined.members
-		return self
-
-def format_sql_value(value, type_) -> str:
-	match type_:
-		case 'TEXT':
-			value.replace("'", "''")
-			return f"'{value}'"
-		case _:
-			return str(value)
-
-@dataclass
-class InsertStatement:
-	table_name: str
-	columns: tuple[str, ...]
-	column_types: tuple[str, ...]
-	rows: list[tuple]
-
-	def __str__(self) -> str:
-		columns_csv = ', '.join(f'"{col}"' for col in self.columns)
-
-		formatted_rows = []
-
-		for row in self.rows:
-			formatted_cells = []
-
-			for type_, cell in zip(self.column_types, row):
-				formatted_cell = format_sql_value(cell, type_)
-				formatted_cells.append(formatted_cell)
-
-			cells_csv = ', '.join(formatted_cells)
-			formatted_rows.append(f'({cells_csv})')
-
-		rows_csv = ',\n    '.join(formatted_rows)
-
-		return '\n'.join([
-			f'INSERT INTO "{self.table_name}" ({columns_csv}) VALUES',
-			f'    {rows_csv};'
-		])
-
-@dataclass
-class DBSchema:
-	members: list[TableSchema | InsertStatement]=field(default_factory=lambda: [])
-
-	def tables(self) -> Iterator[TableSchema]:
-		for member in self.members:
-			if isinstance(member, TableSchema):
-				yield member
-
-	def inserts(self) -> Iterator[InsertStatement]:
-		for member in self.members:
-			if isinstance(member, InsertStatement):
-				yield member
-
-	def __str__(self) -> str:
-		return '\n\n'.join(map(str, self.members))
-
-	def has_table(self, name: str) -> bool:
-		return any(table.name == name for table in self.tables())
-
-	def get_table(self, name: str) -> TableSchema:
-		for table in self.tables():
-			if table.name == name:
-				return table
-
-		raise ValueError(f'table {name} not found')
-
-	def process_file_schema(self, file_schema: schema.FileSchema) -> None:
-		match file_schema:
-			case schema.SingleFileSchema(_, content_schema):
-				self.process_table_schema(content_schema)
-			case schema.MultipleFilesSchema(
-				_, table_name, keys, content_schema
-			):
-				if self.has_table(table_name):
-					raise schema.SchemaError(f'{table_name} used twice')
-
-				table_schema = TableSchema(table_name)
-
-				for key in keys:
-					table_schema += self.process_field(
-						table_schema, key.db_name, key.schema
-					)
-
-				table_schema.make_all_pks()
-				self.process_row_schema(table_schema, content_schema)
-				self.members.append(table_schema)
-			case _:
-				assert False
-
-	def process_table_schema(
-		self,
-		table_schema: schema.TableSchema,
-		parent_table: TableSchema | None=None
-	) -> None:
-		table_name = table_schema.table_name
-
-		if self.has_table(table_name):
-			raise schema.SchemaError(f'{table_name} used twice')
-
-		db_table_schema = TableSchema(table_name)
-		self.members.append(db_table_schema)
-
-		if parent_table is not None and parent_table.singleton:
-			parent_table = None
-
-		if parent_table is not None:
-			parent_pk = parent_table.pk()
-			cols = []
-			referenced_names = []
-
-			for col in parent_pk:
-				assert isinstance(col, ColumnSchema)
-
-				cols.append(ColumnSchema(
-					col.name, col.type_, collate=col.collate, pk=True
-				))
-
-				referenced_names.append(col.name) 
-						
-			cols[-1].name = f'{parent_table.name}_{cols[-1].name}'
-
-			db_table_schema.members.extend(cols)
-
-			db_table_schema.members.append(ForeignKeyConstraint(
-				[col.name for col in cols],
-				parent_table.name,
-				referenced_names
-			))
-
-		match table_schema:
-			case schema.ListSchema(
-				_, item_schema, first_item=first_item, item_name=item_name,
-				index=index_behavior
-			):
-				pk_field_name: str | None=None
-
-				match index_behavior:
-					case schema.AddIndexColumn(index_col_name):
-						min_index = (
-							0 if first_item is schema.FirstItem.REGULAR
-							else 1
-						)
-
-						db_table_schema.members.extend([
-							ColumnSchema(index_col_name, 'INTEGER', pk=True),
-							CheckConstraint(
-								f'"{index_col_name}" >= {min_index}'
-							),
-						])
-
-						pk_col_name = index_col_name
-					case schema.MatchIndexToField(pk_field_name):
-						assert isinstance(item_schema, schema.ObjSchema)
-						pk_field = item_schema.get_field(pk_field_name)
-						pk_field_name = pk_field.name
-
-						db_index_schema = self.process_field(
-							db_table_schema, pk_field.db_name, pk_field.schema
-						)
-
-						db_index_schema.make_all_pks()
-						db_table_schema += db_index_schema
-
-				db_table_schema += self.process_field(
-					db_table_schema, item_name, item_schema,
-					skip_field_name=pk_field_name
-				)
-
-			case schema.SetSchema(_, item_schema, item_name):
-				db_member_schema = self.process_field(
-					db_table_schema, item_name, item_schema
-				)
-
-				db_member_schema.make_all_pks()
-				db_table_schema += db_member_schema
-
-			case schema.DictSchema(_, key_behavior, value_schema, value_name):
-				pk_field_name2: str | None=None
-
-				match key_behavior:
-					case schema.AddKeyColumn(key_col_name, key_schema):
-						db_key_schema = self.process_field(
-							db_table_schema, key_col_name, key_schema
-						)
-					case schema.MatchKeyToField(pk_field_name):
-						pk_field = value_schema.get_field(pk_field_name)
-						pk_field_name2 = pk_field.name
-
-						db_key_schema = self.process_field(
-							db_table_schema, pk_field.db_name, pk_field.schema
-						)
-					case _:
-						assert False
-
-				db_key_schema.make_all_pks()
-				db_table_schema += db_key_schema
-
-				db_table_schema += self.process_field(
-					db_table_schema, value_name, value_schema, pk_field_name2
-				)
-
-			case schema.RPGSingletonObjSchema(_, _, _, fields):
-				assert parent_table is None
-				db_table_schema.singleton = True
-
-				db_table_schema.members.extend([
-					ColumnSchema('id', 'INTEGER', default='0', pk=True),
-					CheckConstraint('"id" = 0'),
-				])
-
-				for field in fields:
-					db_table_schema += self.process_field(
-						db_table_schema, field.db_name, field.schema
-					)
-
-	def process_row_schema(
-		self, table_schema: TableSchema, row_schema: schema.RowSchema
-	) -> None:
-	
-		table_schema += self.process_field(table_schema, '', row_schema)
-
-	def process_field(
-		self,
-		table_schema: TableSchema,
-		field_name: str,
-		field_schema: schema.DataSchema,
-		skip_field_name: str | None=None
-	) -> TableSchema:
-
-		result: TableSchema = TableSchema(table_schema.name)
-
-		if field_name == '':
-			field_name = 'content'
-			field_prefix = ''
-		else:
-			field_prefix = field_name + '_'
-
-		match field_schema:
-			case schema.BoolSchema():
-				result.members.extend([
-					ColumnSchema(field_name, 'INTEGER'),
-					CheckConstraint(f'"{field_name}" in (0, 1)'),
-				])
-			case schema.IntSchema(lb, ub):
-				result.members.append(ColumnSchema(field_name, 'INTEGER'))
-
-				if lb is not None and ub is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name}" BETWEEN {lb} AND {ub}'
-					))
-				elif lb is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name} >= {lb}'
-					))
-				elif ub is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name} <= {ub}'
-					))
-			case schema.FloatSchema(lb, ub):
-				result.members.append(ColumnSchema(field_name, 'REAL'))
-
-				if lb is not None and ub is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name}" BETWEEN {lb} AND {ub}'
-					))
-				elif lb is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name} >= {lb}'
-					))
-				elif ub is not None:
-					result.members.append(CheckConstraint(
-						f'"{field_name} <= {ub}'
-					))
-			case schema.StrSchema():
-				result.members.append(ColumnSchema(field_name, 'TEXT'))
-			case schema.ZlibSchema() | schema.NDArraySchema():
-				result.members.append(ColumnSchema(field_name, 'BLOB'))
-			# case schema.ColorSchema():
-			# 	for subfield in 'red green blue alpha'.split():
-			# 		combined_name = field_prefix + subfield
-						
-			# 		field_result = self.process_field(
-			# 			table_schema, combined_name, FloatSchema(),
-			# 		)
-
-			# 		result += field_result
-			case schema.EnumSchema(enum_class):
-				enum_table_name = camel_case_to_snake(enum_class.__name__)
-				result.members.append(ColumnSchema(field_name, 'INTEGER'))
-
-				if not self.has_table(enum_table_name):
-					self.members.append(TableSchema(enum_table_name, [
-						ColumnSchema('id', 'INTEGER', pk=True),
-						ColumnSchema('name', 'TEXT')
-					]))
-
-					self.members.append(InsertStatement(
-						enum_table_name,
-						('id', 'name'),
-						('INTEGER', 'TEXT'),
-						[(member.value, member.name) for member in enum_class]
-					))
-
-				result.members.append(ForeignKeyConstraint(
-					[field_name], enum_table_name, ['id']
-				))
-			case schema.FKSchema():
-				result.members.append(PendingFK(field_name, field_schema))
-			case schema.ObjSchema():
-				for subfield in field_schema.fields:
-					if skip_field_name is not None and subfield.name == skip_field_name:
-						# should eb alreay added
-						continue
-
-					combined_name = field_prefix + subfield.db_name
-						
-					field_result = self.process_field(
-						table_schema, combined_name, subfield.schema,
-						#skip_field_name=skip_field_name
-					)
-
-					result += field_result
-			case schema.TableSchema():
-				self.process_table_schema(field_schema, table_schema)
-
-		return result
-
-	def resolve_fks(self) -> None:
-		for table in self.tables():
-			for i, member in enumerate(table.members):
-				if not isinstance(member, PendingFK):
-					continue
-				
-				field_name = member.field_name
-				schema = member.schema
-				foreign_schema = schema.foreign_schema_thunk()
-				nullable = schema.nullable
-				foreign_table_name = foreign_schema.table_name
-				foreign_table = self.get_table(foreign_table_name)
-				foreign_pk = foreign_table.pk()
-				assert len(foreign_pk) == 1
-				pk_col = foreign_pk[0]
-				assert isinstance(pk_col, ColumnSchema)
-
-				table.members[i:i + 1] = [
-					ColumnSchema(
-						field_name, pk_col.type_, collate=pk_col.collate,
-						nullable=nullable, pk=member.pk
-					),
-					ForeignKeyConstraint(
-						[field_name], foreign_table_name, [pk_col.name]
-					)
-				]
-
-def generate_script() -> str:
-	result = DBSchema()
-
-	for file_schema in schema.FILES:
-		result.process_file_schema(file_schema)
-
-	result.resolve_fks()
-	return str(result)
-
-def run() -> None:
-	script = generate_script()
-
-	with importlib.resources.path('rpgxp') as base_path:
-		with open(base_path / 'generated/db_data.sql', 'w') as f:
-			f.write(script)
-
-		apsw.bestpractice.apply(apsw.bestpractice.recommended)
-		connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
-
-		with connection:
-			connection.execute(script)
+import numpy as np
+from rpgxp import parse, schema, sql
+from rpgxp.generate_db_schema import DBSchema, generate_schema
+
+def process_field(
+    field_value: Any, col_name: str,
+    field_schema: schema.DataSchema,
+    parent_refs: dict[str, Any],
+    db_schema: DBSchema,
+    skip_field_name: str | None=None,
+) -> tuple[dict[str, Any], sql.Script]:
+
+    row_result: dict[str, Any] = {}
+    script_result = sql.Script([])
+
+    if col_name == '':
+        col_name = 'content'
+        col_prefix = ''
+    else:
+        col_prefix = col_name + '_'
+
+    match field_schema:
+        case (
+            schema.BoolSchema() | schema.IntSchema() | schema.FloatSchema()
+            | schema.StrSchema() | schema.ZlibSchema()
+        ):
+            row_result = {col_name: field_value}
+        case schema.NDArraySchema():
+            stream = io.BytesIO()
+            np.save(stream, field_value)
+            row_result = {col_name: stream.getvalue()}
+        case schema.EnumSchema(enum_class):
+            row_result = {col_name: field_value.value}
+        case schema.FKSchema(foreign_schema_thunk, nullable):
+            foreign_schema = foreign_schema_thunk()
+            foreign_pk_schema = foreign_schema.pk_schema()
+
+            row_result, script_result = process_field(
+                field_value, col_name, foreign_pk_schema,
+                parent_refs, db_schema
+            )
+
+        case schema.ObjSchema():
+            for subfield in field_schema.fields:
+                if (
+                    skip_field_name is not None
+                    and subfield.name == skip_field_name
+                ):
+                    continue
+
+                combined_name = col_prefix + subfield.db_name
+
+                subfield_value = getattr(field_value, subfield.name) 
+
+                field_row_result, field_script_result = process_field(
+                    subfield_value, combined_name, subfield.schema,
+                    parent_refs, db_schema
+                )
+
+                row_result |= field_row_result
+                script_result += field_script_result
+        case schema.TableSchema():
+            # suppose this is the ListSchema for map events
+            # in this case the field value is a list of events
+            # the relevant parent refs are { map_id : <mapid> }
+            # which'll have to be passeed in from above
+
+            print('faz', parent_refs)
+
+            script_result = process_table_schema(
+                field_schema, field_value,
+                db_schema, parent_refs
+            )
+        case _:
+            assert False
+
+    return row_result, script_result
+
+def process_table_schema(
+    table_schema: schema.TableSchema, data: Any,
+    db_schema: DBSchema, parent_refs: dict[str, Any]
+) -> sql.Script:
+
+    result = sql.Script([])
+
+    table_name = table_schema.table_name
+    columns = tuple(db_schema.get_table(table_name).columns())
+    column_names = tuple(col.name for col in columns)
+    column_types = tuple(col.type_ for col in columns)
+    rows: list[dict[str, Any]] = []
+
+    match table_schema:
+        case schema.ListSchema(
+            _, item_schema, item_name=item_name,
+            first_item=first_item,
+            index=index_behavior
+        ):
+            assert isinstance(data, list)
+
+            for raw_index, item in enumerate(data):
+                row: dict[str, Any] = {}
+                row |= parent_refs
+
+                min_index = 0 if first_item is schema.FirstItem.REGULAR else 1
+                index = raw_index + min_index
+
+                match index_behavior:
+                    case schema.AddIndexColumn(index_col_name):
+                        row_result, script_result = process_field(
+                            index, index_col_name,
+                            schema.IntSchema(), parent_refs, db_schema
+                        )
+
+                        row |= row_result
+                        result += script_result
+
+                        parent_refs_for_row = parent_refs | {f'{table_name}_{index_col_name}': index}
+                    case schema.MatchIndexToField(pk_field_name):
+                        assert isinstance(item_schema, schema.ObjSchema)
+                        pk_field = item_schema.get_field(pk_field_name)
+                        pk_field_name = pk_field.name
+                        pk_col_name = pk_field.db_name
+
+                        row_result, script_result = process_field(
+                            index, pk_col_name,
+                            pk_field.schema, parent_refs,
+                            db_schema
+                        )
+
+                        row |= row_result
+                        result += script_result
+
+                        parent_refs_for_row = parent_refs | {f'{table_name}_{pk_col_name}': index}
+                        print(parent_refs_for_row)
+                    case _:
+                        assert False
+
+                row_result, script_result = process_field(
+                    item, item_name, item_schema, parent_refs_for_row, db_schema
+                )
+
+                row |= row_result
+                result += script_result
+                rows.append(row)
+
+        case schema.SetSchema(_, item_schema, item_name):
+            assert isinstance(data, set)
+
+            for item in data:
+                row2: dict[str, Any] = {}
+                row2 |= parent_refs
+
+                row_result, script_result = process_field(
+                    item, item_name, item_schema, parent_refs, db_schema
+                )
+
+                row2 |= row_result
+                result += script_result
+
+                rows.append(row2)
+
+        case schema.DictSchema(_, key_behavior, value_schema, value_name):
+            assert isinstance(data, dict)
+            pk_field_name2: str | None=None
+
+            for key, value in data.items():
+                row3: dict[str, Any] = {}
+                row3 |= parent_refs
+
+                match key_behavior:
+                    case schema.AddKeyColumn(key_col_name, key_schema):
+                        row_result, script_result = process_field(
+                            key, key_col_name, key_schema, parent_refs,
+                            db_schema
+                        )
+
+                        row3 |= row_result
+                        result += script_result
+
+                        parent_refs_for_row |= {f'{table_name}_{key_col_name}': key}
+                    case schema.MatchKeyToField(pk_field_name):
+                        pk_field = value_schema.get_field(pk_field_name)
+                        pk_field_name2 = pk_field.name
+                        pk_col_name2 = pk_field.db_name
+
+                        row_result, script_result = process_field(
+                            key, pk_col_name2, pk_field.schema, parent_refs,
+                            db_schema
+                        )
+
+                        row3 |= row_result
+                        result += script_result
+
+                        parent_refs_for_row |= {f'{table_name}_{pk_col_name2}': key}
+                    case _:
+                        assert False
+
+                row_result, script_result = process_field(
+                    value, value_name, value_schema, parent_refs_for_row,
+                    db_schema
+                )
+
+                row3 |= row_result
+                result += script_result
+
+                rows.append(row3)
+
+        case schema.RPGSingletonObjSchema(_, _, _, fields):
+            assert not parent_refs
+            row4: dict[str, Any] = {}
+            row4 |= {'id': 0}
+
+            for field in fields:
+                field_value = getattr(data, field.name)
+                row_result, script_result = process_field(
+                    field_value, field.db_name, field.schema, parent_refs,
+                    db_schema
+                )
+
+                row4 |= row_result
+                result += script_result
+
+            rows.append(row4)
+
+        case _:
+            assert False
+
+    if rows:
+        array_rows: list[tuple] = []
+
+        for row in rows:
+            array_row = []
+
+            for column in column_names:
+                if column not in row:
+                    raise RuntimeError(f'{column} not in {row}')
+
+                array_row.append(row[column])
+
+            array_rows.append(tuple(array_row))
+
+        result.statements.append(sql.InsertStatement(
+            table_name, column_names, column_types, array_rows
+        ))
+
+    return result
+
+def process_file_schema(
+    file_schema: schema.FileSchema, data_root: Path, db_schema: DBSchema
+) -> sql.Script:
+
+    match file_schema:
+        case schema.SingleFileSchema(filename, content_schema):
+            print(f'processing {filename}')
+            parsed_content = parse.parse_filename(filename, data_root)
+
+            return process_table_schema(
+                content_schema, parsed_content, db_schema, {}
+            )
+        case schema.MultipleFilesSchema(pattern, _, _, content_schema):
+            return sql.Script([])
+        case _:
+            assert False
+
+def generate_script(data_root: Path, db_schema: DBSchema) -> str:
+    result = sql.Script()
+
+    for file_schema in schema.FILES[:2]:
+        result += process_file_schema(file_schema, data_root, db_schema)
+
+    return str(result.with_truncation())
+
+def run(data_root: Path) -> None:
+    db_schema = generate_schema()
+    script = generate_script(data_root, db_schema)
+
+    with importlib.resources.path('rpgxp') as base_path:
+        with open(base_path / 'generated/db_data.sql', 'w') as f:
+            f.write(script)
+
+        apsw.bestpractice.apply(apsw.bestpractice.recommended)
+        connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
+        connection.pragma('foreign_keys', False)
+
+        with connection:
+            connection.execute(script)
 
 if __name__ == '__main__':
-	run()
+    import argparse
+
+    arg_parser = argparse.ArgumentParser(
+        prog='RPG Maker XP Data Parser',
+        description='Dumps RPG Maker XP data files to an SQLite database'
+    )
+
+    arg_parser.add_argument('data_root', type=Path)
+    parsed_args = arg_parser.parse_args()
+    data_root = parsed_args.data_root
+    run(data_root)

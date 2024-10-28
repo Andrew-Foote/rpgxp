@@ -364,7 +364,7 @@ DROP TABLE IF EXISTS "encounter";
 CREATE TABLE "encounter" (
     "map_id" INTEGER NOT NULL REFERENCES "map" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "content" INTEGER NOT NULL REFERENCES "troop" ("id"),
+    "troop_id" INTEGER NOT NULL REFERENCES "troop" ("id"),
     PRIMARY KEY ("map_id", "index")
 ) WITHOUT ROWID, STRICT;
 
@@ -513,7 +513,7 @@ CREATE TABLE "script" (
     "index" INTEGER NOT NULL CHECK ("index" >= 0) PRIMARY KEY,
     "id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
-    "content" BLOB NOT NULL
+    "content" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "skill";
@@ -718,25 +718,25 @@ CREATE TABLE "system" (
 DROP TABLE IF EXISTS "party_member";
 CREATE TABLE "party_member" (
     "index" INTEGER NOT NULL CHECK ("index" >= 0) PRIMARY KEY,
-    "content" INTEGER NOT NULL REFERENCES "actor" ("id")
+    "actor_id" INTEGER NOT NULL REFERENCES "actor" ("id")
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "element";
 CREATE TABLE "element" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "content" TEXT NOT NULL
+    "name" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "switch";
 CREATE TABLE "switch" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "content" TEXT NOT NULL
+    "name" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "variable";
 CREATE TABLE "variable" (
     "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
-    "content" TEXT NOT NULL
+    "name" TEXT NOT NULL
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "test_battler";
@@ -775,7 +775,7 @@ DROP TABLE IF EXISTS "tileset_autotile";
 CREATE TABLE "tileset_autotile" (
     "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "content" TEXT NOT NULL,
+    "autotile_name" TEXT NOT NULL,
     PRIMARY KEY ("tileset_id", "index")
 ) WITHOUT ROWID, STRICT;
 

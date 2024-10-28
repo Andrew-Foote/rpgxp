@@ -408,8 +408,6 @@ class DictSchema(RefableSchema):
         The schema for the values.
     """
 
-    # should have key_name, key_db_name
-    # or, we should have this as an enum where one of the options is MatchesField
     _table_name: str
     key: KeyBehavior
     value_schema: ObjSchema
@@ -782,7 +780,8 @@ MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
     RPGField('autoplay_bgs', BoolSchema()),
     RPGField('bgs', AUDIO_FILE_SCHEMA),
     RPGField('encounter_list', ListSchema(
-        'encounter', FKSchema(lambda: TROOPS_SCHEMA, nullable=False)
+        'encounter', FKSchema(lambda: TROOPS_SCHEMA, nullable=False),
+        item_name='troop_id'
     )),
     RPGField('encounter_step', IntSchema()),
     RPGField('data', NDArraySchema(3)),
@@ -894,16 +893,17 @@ SYSTEM_TEST_BATTLER_SCHEMA = RPGObjSchema(
 SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
     RPGField('magic_number', IntSchema()),
     RPGField('party_members', ListSchema(
-        'party_member', FKSchema(lambda: ACTORS_SCHEMA, nullable=False)
+        'party_member', FKSchema(lambda: ACTORS_SCHEMA, nullable=False),
+        item_name='actor_id'
     )),
     RPGField('elements', ListSchema(
-        'element', StrSchema(), FirstItem.BLANK
+        'element', StrSchema(), FirstItem.BLANK, item_name='name'
     )),
     RPGField('switches', ListSchema(
-        'switch', StrSchema(), FirstItem.NULL
+        'switch', StrSchema(), FirstItem.NULL, item_name='name'
     )),
     RPGField('variables', ListSchema(
-        'variable', StrSchema(), FirstItem.NULL
+        'variable', StrSchema(), FirstItem.NULL, item_name='name'
     )),
     RPGField('windowskin_name', StrSchema()),
     RPGField('title_name', StrSchema()),
@@ -933,7 +933,8 @@ TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
     id_field(),
     *str_fields('name tileset_name'),
     RPGField('autotile_names', ListSchema(
-        'tileset_autotile', StrSchema(), length_schema=IntSchema(7, 7)
+        'tileset_autotile', StrSchema(),
+        item_name='autotile_name', length_schema=IntSchema(7, 7)
     )),
     str_field('panorama_name'),
     hue_field('panorama_hue'),

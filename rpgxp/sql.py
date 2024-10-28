@@ -209,11 +209,16 @@ class TableSchema:
 		self.members = combined.members
 		return self
 
-def format_sql_value(value, type_) -> str:
+def format_sql_value(value: Any, type_) -> str:
 	match type_:
 		case 'TEXT':
-			value.replace("'", "''")
+			assert isinstance(value, str)
+			value = value.replace("'", "''")
 			return f"'{value}'"
+		case 'BLOB':
+			assert isinstance(value, bytes)
+			hexbytes = ''.join(hex(byte)[2:].zfill(2) for byte in value)
+			return f"x'{hexbytes}'"
 		case _:
 			return str(value)
 
@@ -247,8 +252,42 @@ class InsertStatement:
 		])
 
 @dataclass
+class DeleteStatement:
+	table_name: str
+
+	def __str__(self) -> str:
+		return f'DELETE FROM "{self.table_name}";'
+
+@dataclass
 class Script:
 	statements: list[TableSchema | InsertStatement]=field(default_factory=lambda: [])
 
 	def __str__(self) -> str:
 		return '\n\n'.join(map(str, self.statements))
+
+	def __add__(self, other: Self) -> Self:
+		return self.__class__(self.statements + other.statements)
+
+	def __iadd__(self, other: Self) -> Self:
+		combined = self + other
+		self.statements = combined.statements
+		return self
+
+	def with_truncation(self) -> Self:
+		tables_with_inserts = []
+		seen = set()
+
+		for s in self.statements:
+			if isinstance(s, InsertStatement):
+				table = s.table_name
+
+				if table not in seen:
+					tables_with_inserts.append(table)
+					seen.add(table)
+
+		deletes = []
+
+		for table in tables_with_inserts:
+			deletes.append(DeleteStatement(table))
+
+		return self.__class__(deletes) + self
