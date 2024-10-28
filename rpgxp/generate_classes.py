@@ -42,7 +42,7 @@ def schema_to_type(s: schema.DataSchema) -> str:
 		case schema.EnumSchema(enum_class):
 			return enum_class.__name__
 		case schema.FKSchema(foreign_schema_thunk, nullable):
-			result = schema_to_type(foreign_schema_thunk())
+			result = schema_to_type(foreign_schema_thunk().pk_schema())
 
 			if nullable:
 				result = f'Optional[{result}]'

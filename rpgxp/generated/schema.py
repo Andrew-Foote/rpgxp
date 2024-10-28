@@ -7,7 +7,7 @@ from rpgxp.common import *
 class Actor:
     id_: int
     name: str
-    class_id: list[Class]
+    class_id: int
     initial_level: int
     final_level: int
     exp_basis: int
@@ -17,11 +17,11 @@ class Actor:
     battler_name: str
     battler_hue: int
     parameters: np.ndarray
-    weapon_id: Optional[list[Weapon]]
-    armor1_id: Optional[list[Armor]]
-    armor2_id: Optional[list[Armor]]
-    armor3_id: Optional[list[Armor]]
-    armor4_id: Optional[list[Armor]]
+    weapon_id: Optional[int]
+    armor1_id: Optional[int]
+    armor2_id: Optional[int]
+    armor3_id: Optional[int]
+    armor4_id: Optional[int]
     weapon_fix: bool
     armor1_fix: bool
     armor2_fix: bool
@@ -73,7 +73,7 @@ class Armor:
     icon_name: str
     description: str
     kind: ArmorKind
-    auto_state_id: Optional[list[State]]
+    auto_state_id: Optional[int]
     price: int
     pdef: int
     mdef: int
@@ -83,15 +83,15 @@ class Armor:
     agi_plus: int
     int_plus: int
     guard_element_set: set[int]
-    guard_state_set: set[Optional[list[State]]]
+    guard_state_set: set[Optional[int]]
 
 @dataclass
 class Class:
     id_: int
     name: str
     position: ClassPosition
-    weapon_set: set[Optional[list[Weapon]]]
-    armor_set: set[Optional[list[Armor]]]
+    weapon_set: set[Optional[int]]
+    armor_set: set[Optional[int]]
     element_ranks: np.ndarray
     state_ranks: np.ndarray
     learnings: list[ClassLearning]
@@ -99,7 +99,7 @@ class Class:
 @dataclass
 class ClassLearning:
     level: int
-    skill_id: list[Skill]
+    skill_id: int
 
 @dataclass
 class CommonEvent:
@@ -124,23 +124,23 @@ class Enemy:
     pdef: int
     mdef: int
     eva: int
-    animation1_id: Optional[list[Animation]]
-    animation2_id: Optional[list[Animation]]
+    animation1_id: Optional[int]
+    animation2_id: Optional[int]
     element_ranks: np.ndarray
     state_ranks: np.ndarray
     actions: list[EnemyAction]
     exp: int
     gold: int
-    item_id: Optional[list[Item]]
-    weapon_id: Optional[list[Weapon]]
-    armor_id: Optional[list[Armor]]
+    item_id: Optional[int]
+    weapon_id: Optional[int]
+    armor_id: Optional[int]
     treasure_prob: int
 
 @dataclass
 class EnemyAction:
     kind: EnemyActionKind
     basic: EnemyBasicAction
-    skill_id: Optional[list[Skill]]
+    skill_id: Optional[int]
     condition_turn_a: int
     condition_turn_b: int
     condition_hp: int
@@ -156,10 +156,10 @@ class Item:
     description: str
     scope: Scope
     occasion: Occasion
-    animation1_id: Optional[list[Animation]]
-    animation2_id: Optional[list[Animation]]
+    animation1_id: Optional[int]
+    animation2_id: Optional[int]
     menu_se: AudioFile
-    common_event_id: Optional[list[CommonEvent]]
+    common_event_id: Optional[int]
     price: int
     consumable: bool
     parameter_type: ParameterType
@@ -173,19 +173,19 @@ class Item:
     mdef_f: int
     variance: int
     element_set: set[int]
-    plus_state_set: set[Optional[list[State]]]
-    minus_state_set: set[Optional[list[State]]]
+    plus_state_set: set[Optional[int]]
+    minus_state_set: set[Optional[int]]
 
 @dataclass
 class Map:
-    tileset_id: list[Tileset]
+    tileset_id: int
     width: int
     height: int
     autoplay_bgm: bool
     bgm: AudioFile
     autoplay_bgs: bool
     bgs: AudioFile
-    encounter_list: list[list[Troop]]
+    encounter_list: list[int]
     encounter_step: int
     data: np.ndarray
     events: dict[int, Event]
@@ -243,7 +243,7 @@ class MoveRoute:
 @dataclass
 class MapInfo:
     name: str
-    parent_id: Optional[dict[int, MapInfo]]
+    parent_id: Optional[int]
     order: int
     expanded: bool
     scroll_x: int
@@ -263,10 +263,10 @@ class Skill:
     description: str
     scope: Scope
     occasion: Occasion
-    animation1_id: Optional[list[Animation]]
-    animation2_id: Optional[list[Animation]]
+    animation1_id: Optional[int]
+    animation2_id: Optional[int]
     menu_se: AudioFile
-    common_event_id: Optional[list[CommonEvent]]
+    common_event_id: Optional[int]
     sp_cost: int
     power: int
     atk_f: int
@@ -280,14 +280,14 @@ class Skill:
     mdef_f: int
     variance: int
     element_set: set[int]
-    plus_state_set: set[Optional[list[State]]]
-    minus_state_set: set[Optional[list[State]]]
+    plus_state_set: set[Optional[int]]
+    minus_state_set: set[Optional[int]]
 
 @dataclass
 class State:
     id_: int
     name: str
-    animation_id: Optional[list[Animation]]
+    animation_id: Optional[int]
     restriction: StateRestriction
     nonresistance: bool
     zero_hp: bool
@@ -311,13 +311,13 @@ class State:
     auto_release_prob: int
     shock_release_prob: int
     guard_element_set: set[int]
-    plus_state_set: set[Optional[list[State]]]
-    minus_state_set: set[Optional[list[State]]]
+    plus_state_set: set[Optional[int]]
+    minus_state_set: set[Optional[int]]
 
 @dataclass
 class System:
     magic_number: int
-    party_members: list[list[Actor]]
+    party_members: list[int]
     elements: list[str]
     switches: list[str]
     variables: list[str]
@@ -342,15 +342,15 @@ class System:
     actor_collapse_se: AudioFile
     enemy_collapse_se: AudioFile
     words: SystemWords
-    start_map_id: Optional[dict[tuple[str], Map]]
+    start_map_id: Optional[int]
     start_x: int
     start_y: int
     test_battlers: list[SystemTestBattler]
-    test_troop_id: Optional[list[Troop]]
+    test_troop_id: Optional[int]
     battleback_name: str
     battler_name: str
     battler_hue: int
-    edit_map_id: Optional[dict[tuple[str], Map]]
+    edit_map_id: Optional[int]
     _: int
 
 @dataclass
@@ -378,13 +378,13 @@ class SystemWords:
 
 @dataclass
 class SystemTestBattler:
-    actor_id: list[Actor]
+    actor_id: int
     level: int
-    weapon_id: Optional[list[Weapon]]
-    armor1_id: Optional[list[Armor]]
-    armor2_id: Optional[list[Armor]]
-    armor3_id: Optional[list[Armor]]
-    armor4_id: Optional[list[Armor]]
+    weapon_id: Optional[int]
+    armor1_id: Optional[int]
+    armor2_id: Optional[int]
+    armor3_id: Optional[int]
+    armor4_id: Optional[int]
 
 @dataclass
 class Tileset:
@@ -415,7 +415,7 @@ class Troop:
 
 @dataclass
 class TroopMember:
-    enemy_id: list[Enemy]
+    enemy_id: int
     x: int
     y: int
     hidden: bool
@@ -436,7 +436,7 @@ class TroopPageCondition:
     turn_b: int
     enemy_index: int
     enemy_hp: int
-    actor_id: Optional[list[Actor]]
+    actor_id: Optional[int]
     actor_hp: int
     switch_id: int
 
@@ -446,8 +446,8 @@ class Weapon:
     name: str
     icon_name: str
     description: str
-    animation1_id: Optional[list[Animation]]
-    animation2_id: Optional[list[Animation]]
+    animation1_id: Optional[int]
+    animation2_id: Optional[int]
     price: int
     atk: int
     pdef: int
@@ -457,5 +457,5 @@ class Weapon:
     agi_plus: int
     int_plus: int
     element_set: set[int]
-    plus_state_set: set[Optional[list[State]]]
-    minus_state_set: set[Optional[list[State]]]
+    plus_state_set: set[Optional[int]]
+    minus_state_set: set[Optional[int]]

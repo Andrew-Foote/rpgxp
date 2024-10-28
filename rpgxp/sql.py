@@ -124,6 +124,11 @@ class TableSchema:
 			if isinstance(member, (ColumnSchema, PendingFK)):
 				member.pk = True
 
+	def make_all_nullable(self) -> None:
+		for member in self.members:
+			if isinstance(member, ColumnSchema):
+				member.nullable = True
+
 	def set_pk(self, pk_col_names: set[str]) -> None:
 		found_names = set()
 

@@ -193,21 +193,6 @@ class DBSchema:
 	
 		table_schema += self.process_field(table_schema, '', row_schema)
 
-	# process_field
-
-	# takes in:
-	#   an sql table schema
-	#   a field name
-	#   a field schema
-	#   a field name to skip
-	#
-	# returns a table schema
-	# also adds a table schema and an insert, for enums
-
-	# so the output is basically:
-	# - a set of declarations for the current table
-	# - plus possible additional tables to add
-
 	def process_field(
 		self,
 		table_schema: sql.TableSchema,
@@ -284,8 +269,24 @@ class DBSchema:
 				result.members.append(sql.ForeignKeyConstraint(
 					[field_name], enum_table_name, ['id']
 				))
-			case schema.FKSchema():
-				result.members.append(sql.PendingFK(field_name, field_schema))
+			case schema.FKSchema(foreign_schema_thunk, nullable):
+				foreign_schema = foreign_schema_thunk()
+				foreign_table_name = foreign_schema.table_name
+				pk_db_name = foreign_schema.pk_db_name()
+				pk_schema = foreign_schema.pk_schema()
+
+				result += self.process_field(
+					table_schema, field_name, pk_schema
+				)
+
+				if nullable:
+					result.make_all_nullable()
+
+				result.members.append(
+					sql.ForeignKeyConstraint(
+						[field_name], foreign_table_name, [pk_db_name]
+					)
+				)
 			case schema.ObjSchema():
 				for subfield in field_schema.fields:
 					if skip_field_name is not None and subfield.name == skip_field_name:
@@ -331,6 +332,14 @@ class DBSchema:
 						[field_name], foreign_table_name, [pk_col.name]
 					)
 				]
+
+				# we only need:
+				# field name (already known at time of creation)
+				# pk col type
+				# pk col collate
+				# nullability (already known at time of creation)
+				# if col is a pk (but not really)
+				# pk col name
 
 def generate_script() -> str:
 	result = DBSchema()

@@ -162,7 +162,7 @@ def parse_rpg_obj[T](
 			f"'{type(content).__name__}'"
 		)
 
-	class_name = node.body_content.class_name
+	class_name = content.class_name
 
 	if class_name != rpg_class_name:
 		raise ParseError(
@@ -195,11 +195,11 @@ def parse_rpg_obj[T](
 
 	return cls(**attr_values)
 
-def parse_color_from_data(data: bytes) -> Color:
+def parse_color_from_data(data: bytes) -> gschema.Color:
 	r, g, b, a = struct.unpack('<dddd', data)
 	return gschema.Color(r, g, b, a)
 
-def parse_color(node: marshal.Node) -> Color:
+def parse_color(node: marshal.Node) -> gschema.Color:
 	node_content = node.body_content
 
 	if not (
@@ -326,22 +326,7 @@ def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
 			return parse_enum(enum_class, node)
 		case schema.FKSchema(foreign_schema_thunk, nullable):
 			foreign_schema = foreign_schema_thunk()
-			foreign_pk_schema: schema.DataSchema
-
-			match foreign_schema:
-				case schema.ListSchema():
-					foreign_pk_schema = schema.IntSchema(lb=0)
-				case schema.DictSchema():
-					foreign_pk_schema = foreign_schema.key_schema
-				case schema.MultipleFilesSchema():
-					assert len(foreign_schema.keys) == 1
-					foreign_pk_schema = schema.IntSchema()
-				case _:
-					raise ParseError(
-						f"unexpected schema type "
-						f"'{type(foreign_schema).__name__}' for foreign schema"
-					)
-
+			foreign_pk_schema = foreign_schema.pk_schema()
 			return parse(foreign_pk_schema, node)
 		case schema.ArrayObjSchema(class_name, fields):
 			klass = getattr(gschema, class_name)
