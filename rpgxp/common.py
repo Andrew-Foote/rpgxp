@@ -1,4 +1,6 @@
 from enum import Enum
+import struct
+from typing import Self
 
 class AnimationPosition(Enum):
     TOP = 0

@@ -274,16 +274,19 @@ class DBSchema:
 			case schema.SingleFileSchema(_, content_schema):
 				self.process_table_schema(content_schema)
 			case schema.MultipleFilesSchema(
-				_, table_name, key_col_names, content_schema
+				_, table_name, keys, content_schema
 			):
 				if self.has_table(table_name):
 					raise schema.SchemaError(f'{table_name} used twice')
 
-				table_schema = TableSchema(table_name, [
-					ColumnSchema(name.db_name, 'TEXT', pk=True)
-					for name in key_col_names
-				])
+				table_schema = TableSchema(table_name)
 
+				for key in keys:
+					table_schema += self.process_field(
+						table_schema, key.db_name, key.schema
+					)
+
+				table_schema.make_all_pks()
 				self.process_row_schema(table_schema, content_schema)
 				self.members.append(table_schema)
 			case _:
@@ -458,10 +461,34 @@ class DBSchema:
 					result.members.append(CheckConstraint(
 						f'"{field_name} <= {ub}'
 					))
+			case schema.FloatSchema(lb, ub):
+				result.members.append(ColumnSchema(field_name, 'REAL'))
+
+				if lb is not None and ub is not None:
+					result.members.append(CheckConstraint(
+						f'"{field_name}" BETWEEN {lb} AND {ub}'
+					))
+				elif lb is not None:
+					result.members.append(CheckConstraint(
+						f'"{field_name} >= {lb}'
+					))
+				elif ub is not None:
+					result.members.append(CheckConstraint(
+						f'"{field_name} <= {ub}'
+					))
 			case schema.StrSchema():
 				result.members.append(ColumnSchema(field_name, 'TEXT'))
 			case schema.ZlibSchema() | schema.NDArraySchema():
 				result.members.append(ColumnSchema(field_name, 'BLOB'))
+			# case schema.ColorSchema():
+			# 	for subfield in 'red green blue alpha'.split():
+			# 		combined_name = field_prefix + subfield
+						
+			# 		field_result = self.process_field(
+			# 			table_schema, combined_name, FloatSchema(),
+			# 		)
+
+			# 		result += field_result
 			case schema.EnumSchema(enum_class):
 				enum_table_name = camel_case_to_snake(enum_class.__name__)
 				result.members.append(ColumnSchema(field_name, 'INTEGER'))
@@ -494,7 +521,7 @@ class DBSchema:
 						
 					field_result = self.process_field(
 						table_schema, combined_name, subfield.schema,
-						skip_field_name=skip_field_name
+						#skip_field_name=skip_field_name
 					)
 
 					result += field_result
@@ -530,7 +557,7 @@ class DBSchema:
 					)
 				]
 
-def generate_script():
+def generate_script() -> str:
 	result = DBSchema()
 
 	for file_schema in schema.FILES:
@@ -539,7 +566,7 @@ def generate_script():
 	result.resolve_fks()
 	return str(result)
 
-def run():
+def run() -> None:
 	script = generate_script()
 
 	with importlib.resources.path('rpgxp') as base_path:

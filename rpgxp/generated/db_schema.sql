@@ -64,10 +64,10 @@ CREATE TABLE "animation_timing" (
     "se_volume" INTEGER NOT NULL,
     "se_pitch" INTEGER NOT NULL,
     "flash_scope" INTEGER NOT NULL REFERENCES "animation_timing_flash_scope" ("id"),
-    "flash_color_red" INTEGER NOT NULL CHECK ("flash_color_red" BETWEEN 0 AND 255),
-    "flash_color_green" INTEGER NOT NULL CHECK ("flash_color_green" BETWEEN 0 AND 255),
-    "flash_color_blue" INTEGER NOT NULL CHECK ("flash_color_blue" BETWEEN 0 AND 255),
-    "flash_color_alpha" INTEGER NOT NULL CHECK ("flash_color_alpha" BETWEEN 0 AND 255),
+    "flash_color_red" REAL NOT NULL CHECK ("flash_color_red" BETWEEN 0 AND 255),
+    "flash_color_green" REAL NOT NULL CHECK ("flash_color_green" BETWEEN 0 AND 255),
+    "flash_color_blue" REAL NOT NULL CHECK ("flash_color_blue" BETWEEN 0 AND 255),
+    "flash_color_alpha" REAL NOT NULL CHECK ("flash_color_alpha" BETWEEN 0 AND 255),
     "flash_duration" INTEGER NOT NULL,
     "condition" INTEGER NOT NULL REFERENCES "animation_timing_condition" ("id"),
     PRIMARY KEY ("animation_id", "index")
@@ -362,7 +362,7 @@ CREATE TABLE "item_minus_state" (
 
 DROP TABLE IF EXISTS "encounter";
 CREATE TABLE "encounter" (
-    "map_id" TEXT NOT NULL REFERENCES "map" ("id"),
+    "map_id" INTEGER NOT NULL REFERENCES "map" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "content" INTEGER NOT NULL REFERENCES "troop" ("id"),
     PRIMARY KEY ("map_id", "index")
@@ -370,7 +370,7 @@ CREATE TABLE "encounter" (
 
 DROP TABLE IF EXISTS "event";
 CREATE TABLE "event" (
-    "map_id" TEXT NOT NULL REFERENCES "map" ("id"),
+    "map_id" INTEGER NOT NULL REFERENCES "map" ("id"),
     "id" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "x" INTEGER NOT NULL,
@@ -380,7 +380,7 @@ CREATE TABLE "event" (
 
 DROP TABLE IF EXISTS "event_page";
 CREATE TABLE "event_page" (
-    "map_id" TEXT NOT NULL,
+    "map_id" INTEGER NOT NULL,
     "event_id" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "condition_switch1_valid" INTEGER NOT NULL CHECK ("condition_switch1_valid" in (0, 1)),
@@ -481,7 +481,7 @@ INSERT INTO "event_page_trigger" ("id", "name") VALUES
 
 DROP TABLE IF EXISTS "map";
 CREATE TABLE "map" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY,
     "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("id"),
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
@@ -569,8 +569,7 @@ DROP TABLE IF EXISTS "state";
 CREATE TABLE "state" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "animation1_id" INTEGER REFERENCES "animation" ("id"),
-    "animation2_id" INTEGER REFERENCES "animation" ("id"),
+    "animation_id" INTEGER REFERENCES "animation" ("id"),
     "restriction" INTEGER NOT NULL REFERENCES "state_restriction" ("id"),
     "nonresistance" INTEGER NOT NULL CHECK ("nonresistance" in (0, 1)),
     "zero_hp" INTEGER NOT NULL CHECK ("zero_hp" in (0, 1)),
@@ -649,6 +648,9 @@ CREATE TABLE "system" (
     "gameover_me_name" TEXT NOT NULL,
     "gameover_me_volume" INTEGER NOT NULL,
     "gameover_me_pitch" INTEGER NOT NULL,
+    "cursor_se_name" TEXT NOT NULL,
+    "cursor_se_volume" INTEGER NOT NULL,
+    "cursor_se_pitch" INTEGER NOT NULL,
     "decision_se_name" TEXT NOT NULL,
     "decision_se_volume" INTEGER NOT NULL,
     "decision_se_pitch" INTEGER NOT NULL,
@@ -702,14 +704,15 @@ CREATE TABLE "system" (
     "words_guard" TEXT NOT NULL,
     "words_item" TEXT NOT NULL,
     "words_equip" TEXT NOT NULL,
-    "start_map_id" TEXT REFERENCES "map" ("id"),
+    "start_map_id" INTEGER REFERENCES "map" ("id"),
     "start_x" INTEGER NOT NULL,
     "start_y" INTEGER NOT NULL,
     "test_troop_id" INTEGER REFERENCES "troop" ("id"),
     "battleback_name" TEXT NOT NULL,
     "battler_name" TEXT NOT NULL,
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
-    "edit_map_id" TEXT REFERENCES "map" ("id")
+    "edit_map_id" INTEGER REFERENCES "map" ("id"),
+    "_" INTEGER NOT NULL
 ) WITHOUT ROWID, STRICT;
 
 DROP TABLE IF EXISTS "party_member";

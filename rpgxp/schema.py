@@ -50,6 +50,46 @@ class IntSchema(RowSchema):
 	lb: int | None=None
 	ub: int | None=None
 
+	def matches(self, value: int) -> bool:
+		lb = self.lb
+
+		if lb is not None and value < lb:
+			return False
+
+		ub = self.ub
+
+		if ub is not None and value > ub:
+			return False
+
+		return True
+
+@dataclass(frozen=True)
+class FloatSchema(RowSchema):
+	"""A schema for a floating-point value.
+
+	Attributes:
+	  lb
+	    A lower bound on the value. Can be None for no lower bound.
+	  ub
+	    An upper bound on the value. Can be None for no upper bound.
+	"""
+
+	lb: float | None=None
+	ub: float | None=None
+
+	def matches(self, value: float) -> bool:
+		lb = self.lb
+
+		if lb is not None and value < lb:
+			return False
+
+		ub = self.ub
+
+		if ub is not None and value > ub:
+			return False
+
+		return True
+
 @dataclass(frozen=True)
 class StrSchema(RowSchema):
 	"""A schema for a string value."""
@@ -215,6 +255,23 @@ class RPGSingletonObjSchema(ObjSchema, TableSchema):
 	def fields(self) -> list[RPGField]:
 		return self._fields
 
+@dataclass(frozen=True)
+class ColorSchema(ObjSchema):
+	"""A schema for an RGSS 'Color' object."""
+
+	@property
+	def class_name(self) -> str:
+		return 'Color'
+
+	@property
+	def fields(self) -> list[FieldBase]:
+		return [
+			RPGField('red', FloatSchema(0, 255)),
+			RPGField('green', FloatSchema(0, 255)),
+			RPGField('blue', FloatSchema(0, 255)),
+			RPGField('alpha', FloatSchema(0, 255)),
+		]
+
 class FirstItem(Enum):
 	REGULAR = 0
 	NULL = 1
@@ -332,6 +389,16 @@ class DictSchema(TableSchema):
 	def table_name(self) -> str:
 		return self._table_name
 
+	@property
+	def key_schema(self) -> DataSchema:
+		match self.key:
+			case AddKeyColumn(_, key_schema):
+				return key_schema
+			case MatchKeyToField(field_name):
+				return self.value_schema.get_field(field_name).schema
+			case _:
+				assert False
+
 	def __post_init__(self) -> None:
 		if isinstance(self.key, MatchKeyToField):
 			assert self.value_schema.has_field(self.key.match_to)
@@ -356,7 +423,8 @@ class SingleFileSchema(FileSchema):
 	schema: TableSchema
 
 @dataclass(frozen=True)
-class DBName:
+class FileKey:
+	schema: DataSchema
 	app_name: str
 	db_name: str=''
 
@@ -386,7 +454,7 @@ class MultipleFilesSchema(FileSchema, TableSchema):
 
 	pattern: re.Pattern
 	_table_name: str
-	keys: list[DBName]
+	keys: list[FileKey]
 	schema: ObjSchema
 
 	@property
@@ -442,13 +510,6 @@ HUE_SCHEMA = IntSchema(0, 360)
 def hue_field(name: str) -> RPGField:
 	return RPGField(name, HUE_SCHEMA)
 
-COLOR_SCHEMA = RPGObjSchema('Color', 'Color', [
-	RPGField('red', IntSchema(0, 255)),
-	RPGField('green', IntSchema(0, 255)),
-	RPGField('blue', IntSchema(0, 255)),
-	RPGField('alpha', IntSchema(0, 255)),
-])
-
 AUDIO_FILE_SCHEMA = RPGObjSchema('AudioFile', 'RPG::AudioFile', [
 	str_field('name'), *int_fields('volume pitch')
 ])
@@ -488,7 +549,7 @@ ANIMATION_TIMING_SCHEMA = RPGObjSchema(
 		int_field('frame'),
 		audio_field('se'),
 		enum_field('flash_scope', AnimationTimingFlashScope),
-		RPGField('flash_color', COLOR_SCHEMA),
+		RPGField('flash_color', ColorSchema()),
 		int_field('flash_duration'),
 		enum_field('condition', AnimationTimingCondition),
 	]
@@ -714,8 +775,7 @@ SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
 STATE_SCHEMA = RPGObjSchema('State', 'RPG::State', [
 	id_field(),
 	str_field('name'),
-	fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
-	fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
+	fk_field('animation_id', lambda: ANIMATIONS_SCHEMA, True),
 	enum_field('restriction', StateRestriction),
 	*bool_fields('nonresistance zero_hp cant_get_exp cant_evade slip_damage'),
 	RPGField('rating', IntSchema(0, 10)),
@@ -791,21 +851,11 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
 	RPGField('title_name', StrSchema()),
 	RPGField('gameover_name', StrSchema()),
 	RPGField('battle_transition', StrSchema()),
-	RPGField('title_bgm', AUDIO_FILE_SCHEMA),
-	RPGField('battle_bgm', AUDIO_FILE_SCHEMA),
-	RPGField('battle_end_me', AUDIO_FILE_SCHEMA),
-	RPGField('gameover_me', AUDIO_FILE_SCHEMA),
-	RPGField('decision_se', AUDIO_FILE_SCHEMA),
-	RPGField('cancel_se', AUDIO_FILE_SCHEMA),
-	RPGField('buzzer_se', AUDIO_FILE_SCHEMA),
-	RPGField('equip_se', AUDIO_FILE_SCHEMA),
-	RPGField('shop_se', AUDIO_FILE_SCHEMA),
-	RPGField('save_se', AUDIO_FILE_SCHEMA),
-	RPGField('load_se', AUDIO_FILE_SCHEMA),
-	RPGField('battle_start_se', AUDIO_FILE_SCHEMA),
-	RPGField('escape_se', AUDIO_FILE_SCHEMA),
-	RPGField('actor_collapse_se', AUDIO_FILE_SCHEMA),
-	RPGField('enemy_collapse_se', AUDIO_FILE_SCHEMA),
+	*audio_fields('''
+		title_bgm battle_bgm battle_end_me gameover_me cursor_se decision_se
+		cancel_se buzzer_se equip_se shop_se save_se load_se battle_start_se
+		escape_se actor_collapse_se enemy_collapse_se
+	'''),
 	RPGField('words', SYSTEM_WORDS_SCHEMA),
 	RPGField('start_map_id', FKSchema(lambda: MAPS_SCHEMA)),
 	RPGField('start_x', IntSchema()),
@@ -817,7 +867,8 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
 	RPGField('battleback_name', StrSchema()),
 	RPGField('battler_name', StrSchema()),
 	RPGField('battler_hue', HUE_SCHEMA),
-	RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA))
+	RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA)),
+	RPGField('_', IntSchema()),
 ])
 
 TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
@@ -922,7 +973,7 @@ ITEMS_SCHEMA: ListSchema = ListSchema(
 MAPS_SCHEMA: MultipleFilesSchema = MultipleFilesSchema(
 	re.compile(r'Map(\d{3}).rxdata'),
 	'map',
-	[DBName('id_', 'id')],
+	[FileKey(IntSchema(), 'id_', 'id')],
 	MAP_SCHEMA
 )
 

@@ -2,11 +2,11 @@ from dataclasses import dataclass, field
 from typing import Iterator, Self
 from rpgxp import schema
 
-def obj_subschemas(s: schema.DataSchema) -> Iterator[schema.ObjSchema]:
+def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.ObjSchema]:
 	match s:
 		case (
-			schema.BoolSchema() | schema.IntSchema() | schema.StrSchema()
-			| schema.ZlibSchema() | schema.NDArraySchema()
+			schema.BoolSchema() | schema.IntSchema() | schema.FloatSchema()
+			| schema.StrSchema() | schema.ZlibSchema() | schema.NDArraySchema()
 			| schema.EnumSchema() | schema.FKSchema()
 		):
 			pass
@@ -22,7 +22,7 @@ def obj_subschemas(s: schema.DataSchema) -> Iterator[schema.ObjSchema]:
 			yield from obj_subschemas(s.value_schema)
 		case schema.SingleFileSchema(_, content_schema):
 			yield from obj_subschemas(content_schema)
-		case schema.MultipleFilesSchema(_, _, _, content_schema):			
+		case schema.MultipleFilesSchema(_, _, _, content_schema):
 			yield from obj_subschemas(content_schema)
 		case _:
 			assert False, type(s)
@@ -33,6 +33,8 @@ def schema_to_type(s: schema.DataSchema) -> str:
 			return 'bool'
 		case schema.IntSchema():
 			return 'int'
+		case schema.FloatSchema():
+			return 'float'
 		case schema.StrSchema() | schema.ZlibSchema():
 			return 'str'
 		case schema.NDArraySchema():
@@ -52,9 +54,9 @@ def schema_to_type(s: schema.DataSchema) -> str:
 			return f'list[{schema_to_type(item_schema)}]'
 		case schema.SetSchema(_, item_schema):
 			return f'set[{schema_to_type(item_schema)}]'
-		case schema.DictSchema(_, _, key_schema, value_schema):
-			key_type = schema_to_type(key_schema)
-			value_type = schema_to_type(value_schema)
+		case schema.DictSchema():
+			key_type = schema_to_type(s.key_schema)
+			value_type = schema_to_type(s.value_schema)
 			return f'dict[{key_type}, {value_type}]'
 		case schema.SingleFileSchema(_, content_schema):
 			return schema_to_type(content_schema)
@@ -103,7 +105,7 @@ class Module:
 	def __str__(self) -> str:
 		return '\n\n'.join(map(str, self.members))
 
-def generate_module():
+def generate_module() -> str:
 	result = Module()
 	classes_declared = set()
 
@@ -126,7 +128,7 @@ def generate_module():
 		str(result),
 	])
 
-def run():
+def run() -> None:
 	import importlib.resources
 	import subprocess
 

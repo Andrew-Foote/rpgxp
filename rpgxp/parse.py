@@ -1,19 +1,18 @@
-import dataclasses
 from enum import Enum
-import inspect
-import itertools as it
-from typing import Annotated, Any, cast, get_args, get_origin
+from pathlib import Path
+import re
+import struct
+from typing import Any
 import zlib
 import numpy as np
 import ruby_marshal_parser as marshal
-from rpgxp.schema import RPG, RPGListItem, SchemaError, TupleLike, ZlibCompressed
-
+from rpgxp import schema
+from rpgxp.generated import schema as gschema
 
 class ParseError(Exception):
 	pass
 
-
-def parse_bool(node: marshal.Node, constraints: tuple=()) -> bool:
+def parse_bool(node: marshal.Node) -> bool:
 	content = node.body_content
 
 	match content:
@@ -27,108 +26,33 @@ def parse_bool(node: marshal.Node, constraints: tuple=()) -> bool:
 				f'{type(content).__name__}'
 			)
 
-	match constraints:
-		case []:
-			return result
-		case _:
-			raise ParseError(
-				f"invalid constraint {constraints} for type 'bool'"
-			)
+	return result
 
-
-def parse_int(node: marshal.Node, constraints: tuple=()) -> int:
+def parse_int(int_schema: schema.IntSchema, node: marshal.Node) -> int:
 	if not isinstance(node.body_content, marshal.Fixnum):
 		raise ParseError(f'expected a fixnum')
 
 	result = node.body_content.value
 
-	match constraints:
-		case []:
-			pass
-		case [v] if isinstance(v, type) and issubclass(v, (RPG, RPGListItem)):
-			pass
-		case [v] if isinstance(v, range):
-			if not result in v:
-				raise ParseError(f'expected fixnum in range {v}, got {result}')
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'int'"
-			)
-
-	return result		
-
-
-def parse_str(node: marshal.Node, constraints: tuple=()) -> str:
-	if not isinstance(node.body_content, marshal.String):
-		raise ParseError(f'expected a string')
-
-	match constraints:
-		case []:
-			return node.decoded_text
-		case [ZlibCompressed(encoding)]:
-			return zlib.decompress(node.body_content.text).decode(encoding)
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'str'"
-			)
-
-
-def parse_list[T](
-	item_type: type[T], node: marshal.Node, constraints: tuple=()
-) -> list[T]:
-
-	if not isinstance(node.body_content, marshal.Array):
-		raise ParseError(f'expected an array')
-
-	items = node.body_content.items
-	result = [parse(item_type, item) for item in items]
-
-	match constraints:
-		case []:
-			pass
-		case [v] if isinstance(v, int):
-			length = len(result)
-
-			if length != v:
-				raise ParseError(
-					f'expected array of length {v}, got {length} items'
-				)
-		case [first, rest] if (
-			isinstance(first, tuple)
-			and all(isinstance(v, type) for v in first)
-			and isinstance(rest, type)
-		):
-			min_length = len(first)
-			length = len(result)
-
-			if length < min_length:
-				raise ParseError(
-					f'expected array of length at least {min_length}, got '
-					f'{length} items'
-				)
-
-			for i, item, expected_type in zip(it.count(), result, first):
-				if not isinstance(item, expected_type):
-					raise ParseError(
-						f'expected {i}th item of array to be a '
-						f'{expected_type.__name__}, got {type(item).__name__}'
-					)
-
-			i = len(first)
-
-			for j, item in enumerate(result[i:], start=i):
-				if not isinstance(item, rest):
-					raise ParseError(
-						f'expected {j}th item of array to be a '
-						f'{rest.__name__}, got {type(item).__name__}'
-					)
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'list'"
-			)
+	if not int_schema.matches(result):
+		raise ParseError(f"fixnum doesn't match schema")
 
 	return result
 
+def parse_str(node: marshal.Node) -> str:
+	if not isinstance(node.body_content, marshal.String):
+		raise ParseError(f'expected a string')
+
+	return node.decoded_text
+
+def parse_zlib(node: marshal.Node, encoding: str) -> str:
+	if not isinstance(node.body_content, marshal.String):
+		raise ParseError(f'expected a string')
+
+	compressed = node.body_content.text
+	decompressed = zlib.decompress(compressed)
+	decoded = decompressed.decode(encoding)
+	return decoded
 
 def parse_array_from_table_data(
 	data: bytes, expected_dimcount: int | None=None
@@ -186,7 +110,7 @@ def parse_array_from_table_data(
     # next to each other.
     return np.ndarray(shape=dimensions, dtype='h', buffer=tiledata, order='F')
 
-def parse_array(node: marshal.Node, constraints: tuple=()) -> np.ndarray:
+def parse_ndarray(dimcount: int, node: marshal.Node) -> np.ndarray:
 	node_content = node.body_content
 
 	if not (
@@ -195,81 +119,13 @@ def parse_array(node: marshal.Node, constraints: tuple=()) -> np.ndarray:
 	):
 		raise ParseError(f"expected a user data object of type 'Table'")
 
-	match constraints:
-		case []:
-			expected_dimcount = None
-		case [v] if isinstance(v, int):
-			expected_dimcount = v
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'np.ndarray'"
-			)
+	return parse_array_from_table_data(node_content.data, dimcount)
 
-	result = parse_array_from_table_data(node_content.data, expected_dimcount)
-	return result		
+def parse_enum[T: Enum](enum_class: type[T], node: marshal.Node) -> T:
+	return enum_class(parse_int(schema.IntSchema(), node))
 
-
-def parse_enum[T: Enum](
-	enum_type: type[T], node: marshal.Node, constraints: tuple=()
-) -> T:
-
-	result = enum_type(parse_int(node))
-
-	match constraints:
-		case []:
-			return result
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'Enum'"
-			)
-
-
-def as_ivar_name(attr_name: str) -> str:
-	return '@' + attr_name.rstrip('_')
-
-def parse_rpg_object[T: RPG](
-	cls: type[T], node: marshal.Node, constraints: tuple=()
-) -> T:
-
-	if not isinstance(node.body_content, marshal.Object):
-		raise ParseError(f'expected an object')
-
-	rpg_class_name = f'RPG::{cls.__name__}'
-
-	if node.body_content.class_name != rpg_class_name:
-		raise ParseError(f'expected an {rpg_class_name} object')
-
-	attrs = inspect.get_annotations(cls)
-	expected_ivars = {as_ivar_name(attr_name) for attr_name in attrs.keys()}
-	actual_ivars = set(node.inst_vars.keys())
-
-	if expected_ivars != actual_ivars:
-		raise ParseError(
-			f'expected set of instance variables ({expected_ivars}) different '
-			f'from actual ({actual_ivars})'
-		)
-
-	attr_values = {}
-
-	for attr_name, attr_type in attrs.items():
-		ivar_name = as_ivar_name(attr_name)
-		ivar_value = node.inst_vars[ivar_name]
-		attr_value = parse(attr_type, ivar_value)
-		attr_values[attr_name] = attr_value 
-
-	result = cls(**attr_values)
-
-	match constraints:
-		case []:
-			return result
-		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'RPG'"
-			)
-
-
-def parse_tuple_like[T: TupleLike](
-	cls: type[T], node: marshal.Node, constraints: tuple=()
+def parse_array_obj[T](
+	klass: type[T], fields: list[schema.Field], node: marshal.Node
 ) -> T:
 
 	content = node.body_content
@@ -277,54 +133,302 @@ def parse_tuple_like[T: TupleLike](
 	if not isinstance(content, marshal.Array):
 		raise ParseError(f'expected an array')
 
-	attrs = dataclasses.fields(cls)
-
-	if len(attrs) != len(content.items):
+	if len(content.items) != len(fields):
 		raise ParseError(
-			f'expected an array of length {len(attrs)}, got '
+			f'expected an array of length {len(fields)}, got '
 			f'{len(content.items)}'
 		)
 
 	attr_values = {}
 
-	for attr, item in zip(attrs, content.items):
-		attr_values[attr.name] = parse(attr.type, item)
+	for attr, item in zip(fields, content.items):
+		attr_values[attr.name] = parse(attr.schema, item)
 
-	result = cls(**attr_values)
+	return klass(**attr_values)
 
-	match constraints:
-		case []:
+def as_ivar_name(attr_name: str) -> str:
+	return '@' + attr_name
+
+def parse_rpg_obj[T](
+	cls: type[T], rpg_class_name: str, fields: list[schema.RPGField],
+	node: marshal.Node
+) -> T:
+
+	content = node.body_content
+
+	if not isinstance(content, marshal.Object):
+		raise ParseError(
+			f"expected '{rpg_class_name}' object, got node of type "
+			f"'{type(content).__name__}'"
+		)
+
+	class_name = node.body_content.class_name
+
+	if class_name != rpg_class_name:
+		raise ParseError(
+			f"expected '{rpg_class_name}' object, got '{class_name}'"
+		)
+
+	expected_ivars = {as_ivar_name(field.rpg_name) for field in fields}
+	actual_ivars = set(node.inst_vars.keys())
+
+	if (
+		expected_ivars != actual_ivars and
+
+		# temp exemption for event command lists
+		actual_ivars - expected_ivars != {'@list'}
+	):
+		raise ParseError(
+			f'expected set of instance variables different from actual; '
+			f'expected - actual = {expected_ivars - actual_ivars}; '
+			f'actual - expected = {actual_ivars - expected_ivars}'
+		)
+
+	attr_values = {}
+
+	for field in fields:
+		attr_name = field.name
+		ivar_name = as_ivar_name(field.rpg_name)
+		ivar_value = node.inst_vars[ivar_name]
+		attr_value = parse(field.schema, ivar_value)
+		attr_values[attr_name] = attr_value 
+
+	return cls(**attr_values)
+
+def parse_color_from_data(data: bytes) -> Color:
+	r, g, b, a = struct.unpack('<dddd', data)
+	return gschema.Color(r, g, b, a)
+
+def parse_color(node: marshal.Node) -> Color:
+	node_content = node.body_content
+
+	if not (
+		isinstance(node_content, marshal.UserData)
+		and node_content.class_name == 'Color'
+	):
+		raise ParseError(f"expected a user data object of type 'Color'")
+
+	return parse_color_from_data(node_content.data)
+
+def parse_list(
+	item_schema: schema.DataSchema, node: marshal.Node, *,
+	first_item_behavior: schema.FirstItem,
+	length_schema: schema.IntSchema,
+	index_behavior: schema.IndexBehavior
+) -> list:
+
+	if not isinstance(node.body_content, marshal.Array):
+		raise ParseError(f'expected an array')
+
+	items = iter(node.body_content.items)
+
+	match first_item_behavior:
+		case schema.FirstItem.REGULAR:
+			start = 0
+		case schema.FirstItem.NULL:
+			first_item = next(items)
+			start = 1
+
+			if not isinstance(first_item.body_content, marshal.Nil):
+				raise ParseError(f'expected nil as first item of array')
+		case schema.FirstItem.BLANK:
+			first_item = next(items)
+			start = 1
+
+			if (
+				not isinstance(first_item.body_content, marshal.String)
+				or first_item.body_content.text
+			):
+				raise ParseError(f'expected empty string as first item of array')
+		case _:
+			assert False
+
+	result = []
+
+	if isinstance(index_behavior, schema.MatchIndexToField):
+		assert isinstance(item_schema, schema.ObjSchema)
+		match_to = index_behavior.match_to
+	else:
+		match_to = ''
+
+	for i, item in enumerate(items, start=start):
+		parsed_item = parse(item_schema, item)
+
+		if match_to:
+			match_field_value = getattr(parsed_item, match_to)
+
+			if i != match_field_value:
+				raise ParseError(
+					f"expected '{match_to}' value to be the same as the array "
+					f"index which is {i}, but instead it's {match_field_value}"
+				)
+
+		result.append(parsed_item)
+
+	if not length_schema.matches(len(result)):
+		raise ParseError(
+			f"array length {len(result)} doesn't match schema {length_schema}"
+		)
+
+	return result
+
+def parse_set(item_schema: schema.DataSchema, node: marshal.Node) -> set:
+	if not isinstance(node.body_content, marshal.Array):
+		raise ParseError(f'expected an array')
+
+	return {parse(item_schema, item) for item in node.body_content.items}
+
+def parse_dict(dict_schema: schema.DictSchema, node: marshal.Node) -> dict:
+	if not isinstance(node.body_content, (marshal.Hash, marshal.DefaultHash)):
+		raise ParseError(f'expected a hash')
+
+	result = {}
+
+	key_behavior = dict_schema.key
+
+	if isinstance(key_behavior, schema.MatchKeyToField):
+		assert isinstance(dict_schema.value_schema, schema.ObjSchema)
+		match_to = key_behavior.match_to
+	else:
+		match_to = ''
+
+	for key_node, value_node in node.body_content.items:
+		parsed_key = parse(dict_schema.key_schema, key_node)
+		parsed_value = parse(dict_schema.value_schema, value_node)
+
+		if match_to:
+			match_field_value = getattr(parsed_value, match_to)
+
+			if parsed_key != match_field_value:
+				raise ParseError(
+					f"expected '{match_to}' value to be the same as the hash "
+					f"key which is {parsed_key}, but instead it's "
+					f"{match_field_value}"
+				)
+
+		result[parsed_key] = parsed_value
+
+	return result
+
+def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
+	match data_schema:
+		case schema.BoolSchema():
+			return parse_bool(node)
+		case schema.IntSchema(lb, ub):
+			return parse_int(data_schema, node)
+		case schema.StrSchema():
+			return parse_str(node)
+		case schema.ZlibSchema(encoding):
+			return parse_zlib(node, encoding)
+		case schema.NDArraySchema(dimcount):
+			return parse_ndarray(dimcount, node)
+		case schema.EnumSchema(enum_class):
+			return parse_enum(enum_class, node)
+		case schema.FKSchema(foreign_schema_thunk, nullable):
+			foreign_schema = foreign_schema_thunk()
+			foreign_pk_schema: schema.DataSchema
+
+			match foreign_schema:
+				case schema.ListSchema():
+					foreign_pk_schema = schema.IntSchema(lb=0)
+				case schema.DictSchema():
+					foreign_pk_schema = foreign_schema.key_schema
+				case schema.MultipleFilesSchema():
+					assert len(foreign_schema.keys) == 1
+					foreign_pk_schema = schema.IntSchema()
+				case _:
+					raise ParseError(
+						f"unexpected schema type "
+						f"'{type(foreign_schema).__name__}' for foreign schema"
+					)
+
+			return parse(foreign_pk_schema, node)
+		case schema.ArrayObjSchema(class_name, fields):
+			klass = getattr(gschema, class_name)
+			return parse_array_obj(klass, fields, node)
+		case schema.RPGObjSchema(class_name, rpg_class_name, fields):
+			klass = getattr(gschema, class_name)
+			return parse_rpg_obj(klass, rpg_class_name, fields, node)
+		case schema.RPGSingletonObjSchema(class_name, _, rpg_class_name, fields):
+			klass = getattr(gschema, class_name)
+			return parse_rpg_obj(klass, rpg_class_name, fields, node)
+		case schema.ColorSchema():
+			return parse_color(node)
+		case schema.ListSchema(
+			_, item_schema,
+			first_item=first_item,
+			length_schema=length_schema,
+			index=index_behavior
+		):
+			return parse_list(
+				item_schema, node,
+				first_item_behavior=first_item,
+				length_schema=length_schema,
+				index_behavior=index_behavior
+			)
+		case schema.SetSchema(_, item_schema):
+			return parse_set(item_schema, node)
+		case schema.DictSchema(_, key_behavior, value_schema, _):
+			return parse_dict(data_schema, node)
+		case _:
+			assert False
+
+def parse_file(file_schema: schema.FileSchema, data_root: Path) -> Any:
+	match file_schema:
+		case schema.SingleFileSchema(filename, content_schema):
+			print(f'parsing {filename}')
+			path = data_root / file_schema.filename
+			data = marshal.parse_file(path)
+			assert data.content is not None
+			return parse(content_schema, data.content)
+		case schema.MultipleFilesSchema(pattern, _, _, content_schema):
+			result: dict[tuple[str, ...], Any] = {}
+
+			for path in sorted(data_root.iterdir(), key=lambda p: p.name):
+				m = re.match(pattern, path.name)
+
+				if m is None:
+					continue
+
+				print(f'parsing {path.name}')
+
+				keys = m.groups()
+				data = marshal.parse_file(path)
+				assert data.content is not None
+				result[keys] = parse(content_schema, data.content)
+
 			return result
 		case _:
-			raise SchemaError(
-				f"invalid constraint {constraints} for type 'TupleLike'"
-			)
+			assert False
 
+def parse_filename(target_filename: str, data_root: Path) -> Any:
+	for file_schema in schema.FILES:
+		match file_schema:
+			case schema.SingleFileSchema(filename, content_schema):
+				if filename == target_filename:
+					path = data_root / file_schema.filename
+					data = marshal.parse_file(path)
+					assert data.content is not None
+					return parse(content_schema, data.content)
+			case schema.MultipleFilesSchema(pattern, _, _, content_schema):
+				if re.match(pattern, filename) is not None:
+					data = marshal.parse_file(path)
+					assert data.content is not None
+					return parse(content_schema, data.content)
+			case _:
+				assert False
 
-# mypy can't handle this function unfortunately
-def parse[T](type_: type[T], node: marshal.Node) -> T: 
-	if get_origin(type_) is Annotated: 
-		constraints = type_.__metadata__ # type: ignore
-		type_ = type_.__origin__ # type: ignore
-	else:
-		constraints = ()
+if __name__ == '__main__':
+	import argparse
 
-	if type_ is bool:
-		return parse_bool(node, constraints) # type: ignore
-	elif type_ is int:
-		return parse_int(node, constraints) # type: ignore
-	elif type_ is str:
-		return parse_str(node, constraints) # type: ignore
-	elif get_origin(type_) in (list, set):
-		item_type, = get_args(type_)
-		return parse_list(item_type, node, constraints) # type: ignore
-	elif type_ is np.ndarray:
-		return parse_array(node, constraints) # type: ignore
-	elif issubclass(type_, Enum):
-		return parse_enum(type_, node, constraints) # type: ignore
-	elif issubclass(type_, RPG):
-		return parse_rpg_object(type_, node, constraints) # type: ignore
-	elif issubclass(type_, TupleLike):
-		return parse_tuple_like(type_, node, constraints) # type: ignore
-	else:
-		raise SchemaError(f'invalid type {type_}')
+	arg_parser = argparse.ArgumentParser(
+	    prog='RPG Maker XP Data Parser',
+	    description='Parses RPG Maker XP data files'
+	)
+
+	arg_parser.add_argument('data_root', type=Path)
+	arg_parser.add_argument('filename', type=str)
+	parsed_args = arg_parser.parse_args()
+	data_root = parsed_args.data_root
+	filename = parsed_args.filename
+	result = parse_filename(filename, data_root)

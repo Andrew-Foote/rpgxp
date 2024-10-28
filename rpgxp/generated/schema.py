@@ -61,10 +61,10 @@ class AudioFile:
 
 @dataclass
 class Color:
-    red: int
-    green: int
-    blue: int
-    alpha: int
+    red: float
+    green: float
+    blue: float
+    alpha: float
 
 @dataclass
 class Armor:
@@ -287,8 +287,7 @@ class Skill:
 class State:
     id_: int
     name: str
-    animation1_id: Optional[list[Animation]]
-    animation2_id: Optional[list[Animation]]
+    animation_id: Optional[list[Animation]]
     restriction: StateRestriction
     nonresistance: bool
     zero_hp: bool
@@ -330,6 +329,7 @@ class System:
     battle_bgm: AudioFile
     battle_end_me: AudioFile
     gameover_me: AudioFile
+    cursor_se: AudioFile
     decision_se: AudioFile
     cancel_se: AudioFile
     buzzer_se: AudioFile
@@ -351,6 +351,7 @@ class System:
     battler_name: str
     battler_hue: int
     edit_map_id: Optional[dict[tuple[str], Map]]
+    _: int
 
 @dataclass
 class SystemWords:
