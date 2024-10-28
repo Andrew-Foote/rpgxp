@@ -77,17 +77,11 @@ class ForeignKeyConstraint(TableConstraint):
 		])
 
 @dataclass
-class PendingFK:
-	field_name: str
-	schema: schema.FKSchema
-	pk: bool=False
-
-@dataclass
 class TableSchema:
 	name: str
 	
 	members: list[
-		ColumnSchema | TableConstraint | PendingFK
+		ColumnSchema | TableConstraint
 	] = field(default_factory=lambda: [])
 	
 	singleton: bool=False
@@ -102,15 +96,10 @@ class TableSchema:
 			if isinstance(member, TableConstraint):
 				yield member
 
-	def pending_fks(self) -> Iterator[PendingFK]:
-		for member in self.members:
-			if isinstance(member, PendingFK):
-				yield member
-
-	def pk(self) -> list[ColumnSchema | PendingFK]:
+	def pk(self) -> list[ColumnSchema]:
 		result = [
 			m for m in self.members
-			if isinstance(m, (ColumnSchema, PendingFK)) and m.pk
+			if isinstance(m, ColumnSchema) and m.pk
 		]
 
 		if not result:
@@ -121,7 +110,7 @@ class TableSchema:
 
 	def make_all_pks(self) -> None:
 		for member in self.members:
-			if isinstance(member, (ColumnSchema, PendingFK)):
+			if isinstance(member, ColumnSchema):
 				member.pk = True
 
 	def make_all_nullable(self) -> None:
@@ -184,10 +173,6 @@ class TableSchema:
 					column_decls[column_index] += ' ' + member.inline_string()
 				else:
 					constraint_decls.append(str(member))
-			elif isinstance(member, PendingFK):
-				raise ValueError(
-					"can't stringify table schema with unresolved FKs"
-				)
 
 		if not pk_columns:
 			raise schema.SchemaError(f'table {self.name} has no primary key')

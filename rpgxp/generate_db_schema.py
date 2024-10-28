@@ -306,48 +306,12 @@ class DBSchema:
 
 		return result
 
-	def resolve_fks(self) -> None:
-		for table in self.tables():
-			for i, member in enumerate(table.members):
-				if not isinstance(member, sql.PendingFK):
-					continue
-				
-				field_name = member.field_name
-				schema = member.schema
-				foreign_schema = schema.foreign_schema_thunk()
-				nullable = schema.nullable
-				foreign_table_name = foreign_schema.table_name
-				foreign_table = self.get_table(foreign_table_name)
-				foreign_pk = foreign_table.pk()
-				assert len(foreign_pk) == 1
-				pk_col = foreign_pk[0]
-				assert isinstance(pk_col, sql.ColumnSchema)
-
-				table.members[i:i + 1] = [
-					sql.ColumnSchema(
-						field_name, pk_col.type_, collate=pk_col.collate,
-						nullable=nullable, pk=member.pk
-					),
-					sql.ForeignKeyConstraint(
-						[field_name], foreign_table_name, [pk_col.name]
-					)
-				]
-
-				# we only need:
-				# field name (already known at time of creation)
-				# pk col type
-				# pk col collate
-				# nullability (already known at time of creation)
-				# if col is a pk (but not really)
-				# pk col name
-
 def generate_script() -> str:
 	result = DBSchema()
 
 	for file_schema in schema.FILES:
 		result.process_file_schema(file_schema)
 
-	result.resolve_fks()
 	return str(result.script)
 
 def run() -> None:
