@@ -368,29 +368,15 @@ def generate_script(
 
     return str(result.with_truncation())
 
-def run(data_root: Path, *, quick: bool=False) -> None:
+def run(data_root: Path, output_dir: Path, *, quick: bool=False) -> None:
     db_schema = generate_schema()
     script = generate_script(data_root, db_schema=db_schema, quick=quick)
 
-    with importlib.resources.path('rpgxp') as base_path:
-        with open(base_path / 'generated/db_data.sql', 'w') as f:
-            f.write(script)
+    with open(output_dir / 'db_data.sql', 'w') as f:
+        f.write(script)
 
-    connection = db.connect()
+    connection = db.connect(db.get_path(output_dir))
     connection.pragma('foreign_keys', False)
 
     with connection:
         connection.execute(script)
-
-if __name__ == '__main__':
-    import argparse
-
-    arg_parser = argparse.ArgumentParser(
-        prog='RPG Maker XP Data Parser',
-        description='Dumps RPG Maker XP data files to an SQLite database'
-    )
-
-    arg_parser.add_argument('data_root', type=Path)
-    parsed_args = arg_parser.parse_args()
-    data_root = parsed_args.data_root
-    run(data_root)

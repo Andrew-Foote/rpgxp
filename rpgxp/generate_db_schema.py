@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import importlib.resources
+from pathlib import Path
 from typing import Iterator, Self
 from rpgxp import schema, sql, db
 from rpgxp.util import *
@@ -314,18 +315,16 @@ def generate_schema() -> DBSchema:
 def generate_script() -> str:
     return str(generate_schema().script)
 
-def run() -> None:
+def run(output_dir: Path) -> None:
     script = generate_script()
 
     with importlib.resources.path('rpgxp') as base_path:
         with open(base_path / 'generated/db_schema.sql', 'w') as f:
             f.write(script)
 
-    connection = db.connect()
+    connection = db.connect(db.get_path(output_dir))
     connection.pragma('foreign_keys', False)
 
     with connection:
         connection.execute(script)
 
-if __name__ == '__main__':
-    run()

@@ -1,3 +1,4 @@
+import importlib.resources
 from pathlib import Path
 import subprocess
 
@@ -9,21 +10,25 @@ from rpgxp import (
 
 from rpgxp.script import foreign_key_report
 
-def run(data_root: Path, *, quick: bool=False):
+def run(data_root: Path, output_dir: Path, *, quick: bool=False):
 	print("Generating classes...")
 	generate_classes.run()
 
 	print("Typechecking the codebase...")
-	subprocess.run(['mypy'])
+	mypy_result = subprocess.run(['mypy'])
+
+	if mypy_result.returncode:
+		print("Typechecking failed.")
+		return
 
 	print("Generating the database schema...")
-	generate_db_schema.run()
+	generate_db_schema.run(output_dir)
 
 	print("Generating the database data...")
-	generate_db_data.run(data_root, quick=quick)
+	generate_db_data.run(data_root, output_dir, quick=quick)
 
 	print("Checking foreign keys...")
-	foreign_key_report.run()
+	foreign_key_report.run(output_dir)
 
 if __name__ == '__main__':
     import argparse
@@ -37,6 +42,11 @@ if __name__ == '__main__':
     )
 
     arg_parser.add_argument('data_root', type=Path)
+
+    with importlib.resources.path('rpgxp') as base_path:
+        arg_parser.add_argument(
+            'output_dir', type=Path, default=base_path / 'generated'
+        )
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(
     	"avoid processing everything so that the database is generated more "
@@ -45,4 +55,6 @@ if __name__ == '__main__':
     ))
 
     parsed_args = arg_parser.parse_args()
-    run(parsed_args.data_root, quick=parsed_args.quick)
+    run(parsed_args.data_root, parsed_args.output_dir, quick=parsed_args.quick)
+
+

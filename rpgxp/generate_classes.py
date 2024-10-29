@@ -140,7 +140,5 @@ def run() -> None:
 		with open(path, 'w') as f:
 			f.write(module)
 
-		subprocess.run(['mypy', str(path)])
-
 if __name__ == '__main__':
 	run()
