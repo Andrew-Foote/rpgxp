@@ -3,10 +3,9 @@ from dataclasses import dataclass, field
 import importlib.resources
 import io
 from pathlib import Path
+import random
 import re
 from typing import Any, Iterator, Self
-import apsw
-import apsw.bestpractice
 import numpy as np
 from rpgxp import db, parse, schema, sql
 from rpgxp.generate_db_schema import DBSchema, generate_schema
@@ -263,7 +262,8 @@ def process_table_schema(
     return result
 
 def process_file_schema(
-    file_schema: schema.FileSchema, data_root: Path, db_schema: DBSchema
+    file_schema: schema.FileSchema, *, data_root: Path, db_schema: DBSchema,
+    quick: bool=False
 ) -> sql.Script:
 
     match file_schema:
@@ -277,23 +277,24 @@ def process_file_schema(
         case schema.MultipleFilesSchema(pattern, table_name, keys, content_schema):
             result = sql.Script()
             rows: list[dict[str, Any]] = []
+            files: list[tuple[tuple, str]] = []
 
-            for i, path in enumerate(sorted(data_root.iterdir(), key=lambda p: p.name)):
-                # uncomment for quicker generation when testing
-                # if not i % 35 == 0:
-                #     continue
-
+            for path in sorted(data_root.iterdir(), key=lambda p: p.name):
                 filename = path.name
                 m = re.match(pattern, filename)
 
-                if m is None:
-                    continue
+                if m is not None:
+                    files.append((m.groups(), filename))
 
+            if quick:
+                files = random.sample(files, 25)
+
+            for key_values, filename in files:
                 print(f'processing {filename}')
-                key_values = m.groups()
-                assert len(keys) == len(key_values)
 
                 row: dict[str, Any] = {}
+
+                assert len(keys) == len(key_values)
 
                 for key, key_value in zip(keys, key_values):
                     match key.schema:
@@ -354,17 +355,22 @@ def process_file_schema(
         case _:
             assert False
 
-def generate_script(data_root: Path, db_schema: DBSchema) -> str:
+def generate_script(
+    data_root: Path, *, db_schema: DBSchema, quick: bool=False
+) -> str:
     result = sql.Script()
 
     for file_schema in schema.FILES:
-        result += process_file_schema(file_schema, data_root, db_schema)
+        
+        result += process_file_schema(
+            file_schema, data_root=data_root, db_schema=db_schema, quick=quick
+        )
 
     return str(result.with_truncation())
 
-def run(data_root: Path) -> None:
+def run(data_root: Path, *, quick: bool=False) -> None:
     db_schema = generate_schema()
-    script = generate_script(data_root, db_schema)
+    script = generate_script(data_root, db_schema=db_schema, quick=quick)
 
     with importlib.resources.path('rpgxp') as base_path:
         with open(base_path / 'generated/db_data.sql', 'w') as f:
@@ -375,9 +381,6 @@ def run(data_root: Path) -> None:
 
     with connection:
         connection.execute(script)
-
-    connection.pragma('foreign_keys', True)
-    print(db.foreign_key_report(connection))
 
 if __name__ == '__main__':
     import argparse

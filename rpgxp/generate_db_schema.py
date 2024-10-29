@@ -2,10 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import importlib.resources
 from typing import Iterator, Self
-import apsw
-import apsw.bestpractice
-from rpgxp import schema
-from rpgxp import sql
+from rpgxp import schema, sql, db
 from rpgxp.util import *
 
 @dataclass
@@ -324,14 +321,11 @@ def run() -> None:
         with open(base_path / 'generated/db_schema.sql', 'w') as f:
             f.write(script)
 
-        apsw.bestpractice.apply(apsw.bestpractice.recommended)
-        connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
-        connection.pragma('foreign_keys', False)
+    connection = db.connect()
+    connection.pragma('foreign_keys', False)
 
-        with connection:
-            connection.execute(script)
-
-        connection.pragma('foreign_keys', True)
+    with connection:
+        connection.execute(script)
 
 if __name__ == '__main__':
     run()

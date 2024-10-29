@@ -44,16 +44,40 @@ def foreign_key_report(connection: apsw.Connection) -> str:
 			f'REFERENCES "{parent}" ({ref_cols_csv})',
 		])
 
-		violator = connection.execute('\n'.join([
+		violator_resultset = connection.execute(
 			f'SELECT {fk_cols_csv} FROM "{table}" WHERE "rowid" = {rowid}'
-		])).fetchall()
+		).fetchall()
 
-		assert len(violator) == 1
+		assert len(violator_resultset) == 1
+		violator, = violator_resultset
+
+		pk_cols_resultset = connection.execute(
+			f'SELECT "name" from pragma_table_info(\'{table}\') WHERE "pk" = 1'
+		).fetchall()
+
+		pk_cols = []
+
+		for col, in pk_cols_resultset:
+			assert isinstance(col, str)
+			pk_cols.append(col)
+
+		pk_cols_csv = ', '.join([f'"{col}"' for col in pk_cols])
+
+		pk_vals_resultset = connection.execute(
+			f'SELECT {pk_cols_csv} from "{table}" WHERE "rowid" = {rowid}'
+		).fetchall()
+
+		assert len(pk_vals_resultset) == 1
+		pk_vals, = pk_vals_resultset
 
 		reports.append('\n'.join([
-			f'Table: {table}',
-			f'Foreign key: {fk_string}',
-			f'Row values: {violator[0]}',
+			f'Foreign key violation in table "{table}"',
+			f'  At row with primary key values {pk_vals}',
+			f'  FK declaration: {fk_string}',
+			f'  FK column values in violating row: {violator}',
 		]))
+
+	if not reports:
+		return "No foreign key constraint violations found."
 
 	return '\n\n'.join(reports)
