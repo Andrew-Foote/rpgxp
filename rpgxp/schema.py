@@ -925,7 +925,7 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
     RPGField('battleback_name', StrSchema()),
     RPGField('battler_name', StrSchema()),
     RPGField('battler_hue', HUE_SCHEMA),
-    RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA, strict=False)),
+    RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA)),
     RPGField('_', IntSchema()),
 ])
 
