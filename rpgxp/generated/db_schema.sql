@@ -129,7 +129,7 @@ INSERT INTO "armor_kind" ("id", "name") VALUES
 DROP TABLE IF EXISTS "armor_guard_element";
 CREATE TABLE "armor_guard_element" (
     "armor_id" INTEGER NOT NULL REFERENCES "armor" ("id"),
-    "element_id" INTEGER NOT NULL,
+    "element_id" INTEGER REFERENCES "element" ("id"),
     PRIMARY KEY ("armor_id", "element_id")
 ) STRICT;
 
@@ -723,19 +723,19 @@ CREATE TABLE "party_member" (
 
 DROP TABLE IF EXISTS "element";
 CREATE TABLE "element" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
+    "id" INTEGER NOT NULL CHECK ("id" >= 1) PRIMARY KEY,
     "name" TEXT NOT NULL
 ) STRICT;
 
 DROP TABLE IF EXISTS "switch";
 CREATE TABLE "switch" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
+    "id" INTEGER NOT NULL CHECK ("id" >= 1) PRIMARY KEY,
     "name" TEXT NOT NULL
 ) STRICT;
 
 DROP TABLE IF EXISTS "variable";
 CREATE TABLE "variable" (
-    "index" INTEGER NOT NULL CHECK ("index" >= 1) PRIMARY KEY,
+    "id" INTEGER NOT NULL CHECK ("id" >= 1) PRIMARY KEY,
     "name" TEXT NOT NULL
 ) STRICT;
 

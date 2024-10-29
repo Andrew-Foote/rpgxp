@@ -10,25 +10,35 @@ from rpgxp import (
 
 from rpgxp.script import foreign_key_report
 
-def run(data_root: Path, output_dir: Path, *, quick: bool=False):
-	print("Generating classes...")
-	generate_classes.run()
+def run(
+	data_root: Path, output_dir: Path, *,
+	modules_list: list[str], quick: bool
+):
+	modules = set(modules_list)
 
-	print("Typechecking the codebase...")
-	mypy_result = subprocess.run(['mypy'])
+	if 'class' in modules:
+		print("Generating classes...")
+		generate_classes.run()
 
-	if mypy_result.returncode:
-		print("Typechecking failed.")
-		return
+	if 'type' in modules:
+		print("Typechecking the codebase...")
+		mypy_result = subprocess.run(['mypy'])
 
-	print("Generating the database schema...")
-	generate_db_schema.run(output_dir)
+		if mypy_result.returncode:
+			print("Typechecking failed.")
+			return
 
-	print("Generating the database data...")
-	generate_db_data.run(data_root, output_dir, quick=quick)
+	if 'schema' in modules:
+		print("Generating the database schema...")
+		generate_db_schema.run(output_dir)
 
-	print("Checking foreign keys...")
-	foreign_key_report.run(output_dir)
+	if 'data' in modules:
+		print("Generating the database data...")
+		generate_db_data.run(data_root, output_dir, quick=quick)
+
+	if 'fk' in modules:
+		print("Checking foreign keys...")
+		foreign_key_report.run(output_dir)
 
 if __name__ == '__main__':
     import argparse
@@ -45,8 +55,13 @@ if __name__ == '__main__':
 
     with importlib.resources.path('rpgxp') as base_path:
         arg_parser.add_argument(
-            'output_dir', type=Path, default=base_path / 'generated'
+            '-o', '--output_dir', type=Path, default=base_path / 'generated',
+           	help='The directory where the SQLite database will be stored'
         )
+
+    arg_parser.add_argument('-m', '--modules', nargs='*', help=(
+    	'Modules to run'
+    ), default='class type schema data fk'.split())
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(
     	"avoid processing everything so that the database is generated more "
@@ -55,6 +70,11 @@ if __name__ == '__main__':
     ))
 
     parsed_args = arg_parser.parse_args()
-    run(parsed_args.data_root, parsed_args.output_dir, quick=parsed_args.quick)
+    
+    run(
+    	parsed_args.data_root, parsed_args.output_dir,
+    	modules_list=parsed_args.modules,
+    	quick=parsed_args.quick
+    )
 
 

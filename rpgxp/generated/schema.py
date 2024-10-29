@@ -82,7 +82,7 @@ class Armor:
     dex_plus: int
     agi_plus: int
     int_plus: int
-    guard_element_set: set[int]
+    guard_element_set: set[Optional[int]]
     guard_state_set: set[Optional[int]]
 
 @dataclass

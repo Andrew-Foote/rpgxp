@@ -630,7 +630,7 @@ ARMOR_SCHEMA = RPGObjSchema('Armor', 'RPG::Armor', [
     fk_field('auto_state_id', lambda: STATES_SCHEMA, True),
     *int_fields('price pdef mdef eva str_plus dex_plus agi_plus int_plus'),
     RPGField('guard_element_set', SetSchema(
-        'armor_guard_element', IntSchema(), 'element_id'
+        'armor_guard_element', FKSchema(lambda: ELEMENTS_SCHEMA), 'element_id'
     )),
     RPGField('guard_state_set', SetSchema(
         'armor_guard_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
@@ -890,21 +890,30 @@ SYSTEM_TEST_BATTLER_SCHEMA = RPGObjSchema(
     ]
 )
 
+ELEMENTS_SCHEMA: ListSchema = ListSchema(
+    'element', StrSchema(), FirstItem.BLANK, item_name='name',
+    index=AddIndexColumn('id')
+)
+
+SWITCHES_SCHEMA: ListSchema = ListSchema(
+    'switch', StrSchema(), FirstItem.NULL, item_name='name',
+    index=AddIndexColumn('id')
+)
+
+VARIABLES_SCHEMA: ListSchema = ListSchema(
+    'variable', StrSchema(), FirstItem.NULL, item_name='name',
+    index=AddIndexColumn('id')
+)
+
 SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
     RPGField('magic_number', IntSchema()),
     RPGField('party_members', ListSchema(
         'party_member', FKSchema(lambda: ACTORS_SCHEMA, nullable=False),
         item_name='actor_id'
     )),
-    RPGField('elements', ListSchema(
-        'element', StrSchema(), FirstItem.BLANK, item_name='name'
-    )),
-    RPGField('switches', ListSchema(
-        'switch', StrSchema(), FirstItem.NULL, item_name='name'
-    )),
-    RPGField('variables', ListSchema(
-        'variable', StrSchema(), FirstItem.NULL, item_name='name'
-    )),
+    RPGField('elements', ELEMENTS_SCHEMA),
+    RPGField('switches', SWITCHES_SCHEMA),
+    RPGField('variables', VARIABLES_SCHEMA),
     RPGField('windowskin_name', StrSchema()),
     RPGField('title_name', StrSchema()),
     RPGField('gameover_name', StrSchema()),

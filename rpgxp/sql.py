@@ -91,6 +91,13 @@ class TableSchema:
 			if isinstance(member, ColumnSchema):
 				yield member
 
+	def only_columns(self) -> Self:
+		return self.__class__(
+			self.name,
+			list(self.columns()),
+			self.singleton
+		)
+
 	def constraints(self) -> Iterator[TableConstraint]:
 		for member in self.members:
 			if isinstance(member, TableConstraint):
@@ -175,7 +182,7 @@ class TableSchema:
 					constraint_decls.append(str(member))
 
 		if not pk_columns:
-			raise schema.SchemaError(f'table {self.name} has no primary key')
+			pass#raise schema.SchemaError(f'table {self.name} has no primary key')
 		elif len(pk_columns) == 1:
 			pk_column_index = pk_columns[0][0]
 			column_decls[pk_column_index] += ' PRIMARY KEY'

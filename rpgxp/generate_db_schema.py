@@ -224,11 +224,11 @@ class DBSchema:
                     ))
                 elif lb is not None:
                     result.members.append(sql.CheckConstraint(
-                        f'"{field_name} >= {lb}'
+                        f'"{field_name}" >= {lb}'
                     ))
                 elif ub is not None:
                     result.members.append(sql.CheckConstraint(
-                        f'"{field_name} <= {ub}'
+                        f'"{field_name}" <= {ub}'
                     ))
             case schema.FloatSchema(lb, ub):
                 result.members.append(sql.ColumnSchema(field_name, 'REAL'))
@@ -239,11 +239,11 @@ class DBSchema:
                     ))
                 elif lb is not None:
                     result.members.append(sql.CheckConstraint(
-                        f'"{field_name} >= {lb}'
+                        f'"{field_name}" >= {lb}'
                     ))
                 elif ub is not None:
                     result.members.append(sql.CheckConstraint(
-                        f'"{field_name} <= {ub}'
+                        f'"{field_name}" <= {ub}'
                     ))
             case schema.StrSchema() | schema.ZlibSchema():
                 result.members.append(sql.ColumnSchema(field_name, 'TEXT'))
@@ -275,9 +275,11 @@ class DBSchema:
                 pk_db_name = foreign_schema.pk_db_name()
                 pk_schema = foreign_schema.pk_schema()
 
+                # ok we don't need to process the whole pk schema,
+                # just the column part (constraints apply to the pk not the refing column)
                 result += self.process_field(
                     table_schema, field_name, pk_schema
-                )
+                ).only_columns()
 
                 if nullable:
                     result.make_all_nullable()
@@ -315,12 +317,19 @@ def generate_schema() -> DBSchema:
 def generate_script() -> str:
     return str(generate_schema().script)
 
-def run(output_dir: Path) -> None:
+def write_script() -> None:
     script = generate_script()
 
     with importlib.resources.path('rpgxp') as base_path:
         with open(base_path / 'generated/db_schema.sql', 'w') as f:
             f.write(script)
+
+def run(output_dir: Path) -> None:
+    write_script()
+
+    with importlib.resources.path('rpgxp') as base_path:
+        with open(base_path / 'generated/db_schema.sql', 'r') as f:
+            script = f.read()
 
     connection = db.connect(db.get_path(output_dir))
     connection.pragma('foreign_keys', False)
