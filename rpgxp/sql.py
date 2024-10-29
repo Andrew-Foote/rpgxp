@@ -189,8 +189,12 @@ class TableSchema:
 			f'DROP TABLE IF EXISTS "{self.name}";',
 			f'CREATE TABLE "{self.name}" (',
 		    f'    {decls_csv}',
-		    ') WITHOUT ROWID, STRICT;'
+		    ') STRICT;'
 		])
+		
+		# one reason to not do WITHOUT ROWID here is that the foreign_key_check
+		# pragma doesn't identify the rows that failed the check by any means
+		# other than their rowids
 
 	def __add__(self, other: Self) -> Self:
 		if other.name != self.name:
@@ -210,6 +214,9 @@ class TableSchema:
 		return self
 
 def format_sql_value(value: Any, type_) -> str:
+	if value is None:
+		return 'NULL'
+
 	match type_:
 		case 'TEXT':
 			assert isinstance(value, str)

@@ -326,9 +326,12 @@ def run() -> None:
 
         apsw.bestpractice.apply(apsw.bestpractice.recommended)
         connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
+        connection.pragma('foreign_keys', False)
 
         with connection:
             connection.execute(script)
+
+        connection.pragma('foreign_keys', True)
 
 if __name__ == '__main__':
     run()

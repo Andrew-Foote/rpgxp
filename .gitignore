@@ -11,3 +11,5 @@ scratch/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+rpgxp/generated/db_data.sql

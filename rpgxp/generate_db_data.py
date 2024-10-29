@@ -8,7 +8,7 @@ from typing import Any, Iterator, Self
 import apsw
 import apsw.bestpractice
 import numpy as np
-from rpgxp import parse, schema, sql
+from rpgxp import db, parse, schema, sql
 from rpgxp.generate_db_schema import DBSchema, generate_schema
 
 def process_field(
@@ -43,6 +43,17 @@ def process_field(
         case schema.FKSchema(foreign_schema_thunk, nullable):
             foreign_schema = foreign_schema_thunk()
             foreign_pk_schema = foreign_schema.pk_schema()
+
+            if nullable:
+                # could add something to configure what values stand for null
+                # but cba
+                match foreign_pk_schema:
+                    case schema.IntSchema():
+                        if field_value == 0:
+                            field_value = None
+                    case schema.StrSchema():
+                        if field_value == '':
+                            field_value = None
 
             row_result, script_result = process_field(
                 field_value, col_name, foreign_pk_schema,
@@ -269,7 +280,7 @@ def process_file_schema(
 
             for i, path in enumerate(sorted(data_root.iterdir(), key=lambda p: p.name)):
                 # uncomment for quicker generation when testing
-                # if not i % 15 == 0:
+                # if not i % 35 == 0:
                 #     continue
 
                 filename = path.name
@@ -359,12 +370,14 @@ def run(data_root: Path) -> None:
         with open(base_path / 'generated/db_data.sql', 'w') as f:
             f.write(script)
 
-        apsw.bestpractice.apply(apsw.bestpractice.recommended)
-        connection = apsw.Connection(str(base_path / 'generated/rpgxp.sqlite'))
-        connection.pragma('foreign_keys', False)
+    connection = db.connect()
+    connection.pragma('foreign_keys', False)
 
-        with connection:
-            connection.execute(script)
+    with connection:
+        connection.execute(script)
+
+    connection.pragma('foreign_keys', True)
+    print(db.foreign_key_report(connection))
 
 if __name__ == '__main__':
     import argparse
