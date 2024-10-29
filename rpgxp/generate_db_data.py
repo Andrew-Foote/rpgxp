@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import importlib.resources
 import io
 from pathlib import Path
+import re
 from typing import Any, Iterator, Self
 import apsw
 import apsw.bestpractice
@@ -73,8 +74,6 @@ def process_field(
             # the relevant parent refs are { map_id : <mapid> }
             # which'll have to be passeed in from above
 
-            print('faz', parent_refs)
-
             script_result = process_table_schema(
                 field_schema, field_value,
                 db_schema, parent_refs
@@ -139,7 +138,6 @@ def process_table_schema(
                         result += script_result
 
                         parent_refs_for_row = parent_refs | {f'{table_name}_{pk_col_name}': index}
-                        print(parent_refs_for_row)
                     case _:
                         assert False
 
@@ -185,7 +183,7 @@ def process_table_schema(
                         row3 |= row_result
                         result += script_result
 
-                        parent_refs_for_row |= {f'{table_name}_{key_col_name}': key}
+                        parent_refs_for_row = parent_refs | {f'{table_name}_{key_col_name}': key}
                     case schema.MatchKeyToField(pk_field_name):
                         pk_field = value_schema.get_field(pk_field_name)
                         pk_field_name2 = pk_field.name
@@ -199,7 +197,7 @@ def process_table_schema(
                         row3 |= row_result
                         result += script_result
 
-                        parent_refs_for_row |= {f'{table_name}_{pk_col_name2}': key}
+                        parent_refs_for_row = parent_refs | {f'{table_name}_{pk_col_name2}': key}
                     case _:
                         assert False
 
@@ -265,15 +263,90 @@ def process_file_schema(
             return process_table_schema(
                 content_schema, parsed_content, db_schema, {}
             )
-        case schema.MultipleFilesSchema(pattern, _, _, content_schema):
-            return sql.Script([])
+        case schema.MultipleFilesSchema(pattern, table_name, keys, content_schema):
+            result = sql.Script()
+            rows: list[dict[str, Any]] = []
+
+            for i, path in enumerate(sorted(data_root.iterdir(), key=lambda p: p.name)):
+                # uncomment for quicker generation when testing
+                # if not i % 15 == 0:
+                #     continue
+
+                filename = path.name
+                m = re.match(pattern, filename)
+
+                if m is None:
+                    continue
+
+                print(f'processing {filename}')
+                key_values = m.groups()
+                assert len(keys) == len(key_values)
+
+                row = {}
+
+                for key, key_value in zip(keys, key_values):
+                    match key.schema:
+                        case schema.BoolSchema():
+                            key_value = bool(key_value)
+                        case schema.IntSchema():
+                            key_value = int(key_value)
+                        case schema.FloatSchema():
+                            key_value = float(key_value)
+                        case _:
+                            raise RuntimeError('bad')
+
+                    row_result, script_result = process_field(
+                        key_value, key.db_name, key.schema, {}, db_schema
+                    )
+
+                    row |= row_result
+                    result += script_result
+
+                data = parse.parse_filename(filename, data_root)
+
+                parent_refs = {
+                    f'{table_name}_{key_name}': key_value
+                    for key_name, key_value in row.items()
+                }
+
+                row_result, script_result = process_field(
+                    data, '', content_schema, parent_refs, db_schema
+                )
+
+                row |= row_result
+                result += script_result
+                rows.append(row)
+
+            if rows:
+                columns = tuple(db_schema.get_table(table_name).columns())
+                column_names = tuple(col.name for col in columns)
+                column_types = tuple(col.type_ for col in columns)
+
+                array_rows: list[tuple] = []
+
+                for row in rows:
+                    array_row = []
+
+                    for column in column_names:
+                        if column not in row:
+                            raise RuntimeError(f'{column} not in {row}')
+
+                        array_row.append(row[column])
+
+                    array_rows.append(tuple(array_row))
+
+                result.statements.append(sql.InsertStatement(
+                    table_name, column_names, column_types, array_rows
+                ))
+
+            return result
         case _:
             assert False
 
 def generate_script(data_root: Path, db_schema: DBSchema) -> str:
     result = sql.Script()
 
-    for file_schema in schema.FILES[:2]:
+    for file_schema in schema.FILES:
         result += process_file_schema(file_schema, data_root, db_schema)
 
     return str(result.with_truncation())

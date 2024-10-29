@@ -387,16 +387,17 @@ def parse_file(file_schema: schema.FileSchema, data_root: Path) -> Any:
 			assert False
 
 def parse_filename(target_filename: str, data_root: Path) -> Any:
+	path = data_root / target_filename
+
 	for file_schema in schema.FILES:
 		match file_schema:
 			case schema.SingleFileSchema(filename, content_schema):
 				if filename == target_filename:
-					path = data_root / file_schema.filename
 					data = marshal.parse_file(path)
 					assert data.content is not None
 					return parse(content_schema, data.content)
 			case schema.MultipleFilesSchema(pattern, _, _, content_schema):
-				if re.match(pattern, filename) is not None:
+				if re.match(pattern, target_filename) is not None:
 					data = marshal.parse_file(path)
 					assert data.content is not None
 					return parse(content_schema, data.content)
