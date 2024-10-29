@@ -293,7 +293,7 @@ def process_file_schema(
                 key_values = m.groups()
                 assert len(keys) == len(key_values)
 
-                row = {}
+                row: dict[str, Any] = {}
 
                 for key, key_value in zip(keys, key_values):
                     match key.schema:

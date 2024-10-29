@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Iterator, Self
+from typing import Any, Iterator, Self
 from rpgxp import schema
 
 @dataclass
@@ -213,7 +213,7 @@ class TableSchema:
 		self.members = combined.members
 		return self
 
-def format_sql_value(value: Any, type_) -> str:
+def format_sql_value(value: Any, type_: str) -> str:
 	if value is None:
 		return 'NULL'
 
@@ -267,7 +267,7 @@ class DeleteStatement:
 
 @dataclass
 class Script:
-	statements: list[TableSchema | InsertStatement]=field(default_factory=lambda: [])
+	statements: list[TableSchema | InsertStatement | DeleteStatement]=field(default_factory=lambda: [])
 
 	def __str__(self) -> str:
 		return '\n\n'.join(map(str, self.statements))
@@ -292,9 +292,9 @@ class Script:
 					tables_with_inserts.append(table)
 					seen.add(table)
 
-		deletes = []
+		deletes = self.__class__([])
 
 		for table in tables_with_inserts:
-			deletes.append(DeleteStatement(table))
+			deletes.statements.append(DeleteStatement(table))
 
-		return self.__class__(deletes) + self
+		return deletes + self

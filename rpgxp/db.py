@@ -13,6 +13,11 @@ def foreign_key_report(connection: apsw.Connection) -> str:
 	reports = []
 
 	for table, rowid, parent, fkid in raw_check:
+		assert isinstance(table, str)
+		assert isinstance(rowid, int)
+		assert isinstance(parent, str)
+		assert isinstance(fkid, int)
+
 		fk = connection.execute('\n'.join([
 			f"SELECT * FROM pragma_foreign_key_list('{table}')",
 			f'WHERE "id" = {fkid}',
@@ -23,7 +28,10 @@ def foreign_key_report(connection: apsw.Connection) -> str:
 		fk_cols = []
 		ref_cols = []
 
-		for id_, seq, table_, from_, to, _, _, _ in fk:
+		for _, _, table_, from_, to, _, _, _ in fk:
+			assert isinstance(table, str)
+			assert isinstance(from_, str)
+			assert isinstance(to, str)
 			assert table_ == parent
 			fk_cols.append(from_)
 			ref_cols.append(to)
