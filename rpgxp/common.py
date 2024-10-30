@@ -2,6 +2,119 @@ from enum import Enum
 import struct
 from typing import Self
 
+class SelfSwitch(Enum):
+    A = 'A'
+    B = 'B'
+    C = 'C'
+    D = 'D'
+
+class ChoicesCancelType(Enum):
+    DISALLOW = 0
+    CHOICE1 = 1
+    CHOICE2 = 2
+    CHOICE3 = 3
+    CHOICE4 = 4
+    BRANCH = 5
+
+class TextPosition(Enum):
+    TOP = 0
+    MIDDLE = 1
+    BOTTOM = 2
+
+class SwitchState(Enum):
+    ON = 0
+    OFF = 1
+
+class Comparison(Enum):
+    EQ = 0
+    GE = 1
+    LE = 2
+    GT = 3
+    LT = 4
+    NE = 5
+
+class Direction(Enum):
+    DOWN = 2
+    LEFT = 4
+    RIGHT = 6
+    UP = 8
+
+class BoundType(Enum):
+    LOWER = 0
+    UPPER = 1
+
+class Button(Enum):
+    # values are a guess based on the order in the RMXP UI
+    DOWN = 0
+    LEFT = 1
+    RIGHT = 2
+    UP = 3
+    A = 4
+    B = 5
+    C = 6
+    X = 7
+    Y = 8
+    Z = 9
+    L = 10
+    R = 11
+
+class ConditionType(Enum):
+    SWITCH = 0 # [switch id, 0=on/1=off]
+    VARIABLE = 1 # [variable1id, 0forconstant?, variable2id, operator]
+    SELF_SWITCH = 2
+    TIMER = 3
+    ACTOR = 4
+    ENEMY = 5
+    CHARACTER = 6
+    GOLD = 7
+    ITEM = 8
+    WEAPON = 9
+    ARMOR = 10
+    BUTTON = 11
+    SCRIPT = 12
+
+class AssignType(Enum):
+    SUBSTITUTE = 0
+    ADD = 1
+    SUBTRACT = 2
+    MULTIPLY = 3
+    DIVIDE = 4
+    REMAINDER = 5
+    
+class OperandType(Enum):
+    INVARIANT = 0
+    FROM_VARIABLE = 1
+    RANDOM_NUMBER = 2
+    ITEM = 3
+    ACTOR = 4
+    ENEMY = 5
+    CHARACTER = 6
+    OTHER = 7
+    
+class OperandSubtype(Enum):
+    MAP_ID = 0
+    PARTY_SIZE = 1
+    GOLD = 2
+    STEP_COUNT = 3
+    PLAY_TIME = 4
+    TIMER = 5
+    SAVE_COUNT = 6
+
+class AppointType(Enum):
+    DIRECT = 0
+    VARIABLE = 1
+    EXCHANGE = 2
+
+class Weather(Enum):
+    NONE = 0 
+    RAIN = 1
+    STORM = 2
+    SNOW = 3
+
+class DiffType(Enum):
+    INCREASE = 0
+    DECREASE = 1
+
 class AnimationPosition(Enum):
     TOP = 0
     MIDDLE = 1
@@ -69,12 +182,6 @@ class ParameterType(Enum):
     DEXTERITY = 4
     AGILITY = 5
     INTELLIGENCE = 6
-
-class Direction(Enum):
-    DOWN = 2
-    LEFT = 4
-    RIGHT = 6
-    UP = 8
 
 class MoveType(Enum):
     FIXED = 0

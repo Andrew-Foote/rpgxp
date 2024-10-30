@@ -1,24 +1,18 @@
 import importlib.resources
 from pathlib import Path
 import subprocess
-
-from rpgxp import (
-	generate_classes,
-	generate_db_schema,
-	generate_db_data
-)
-
 from rpgxp.script import foreign_key_report
 
 def run(
-	data_root: Path, output_dir: Path, *,
+	data_root: Path | None, output_dir: Path, *,
 	modules_list: list[str], quick: bool
 ):
 	modules = set(modules_list)
 
 	if 'class' in modules:
 		print("Generating classes...")
-		generate_classes.run()
+		module = importlib.import_module('rpgxp.generate_classes')
+		module.run()
 
 	if 'type' in modules:
 		print("Typechecking the codebase...")
@@ -30,15 +24,21 @@ def run(
 
 	if 'schema' in modules:
 		print("Generating the database schema...")
-		generate_db_schema.run(output_dir)
+		module = importlib.import_module('rpgxp.generate_db_schema')
+		module.run(output_dir)
 
 	if 'data' in modules:
+		if data_root is None:
+			raise ValueError('data_root must be set')
+
 		print("Generating the database data...")
-		generate_db_data.run(data_root, output_dir, quick=quick)
+		module = importlib.import_module('rpgxp.generate_db_data')
+		module.run(data_root, output_dir, quick=quick)
 
 	if 'fk' in modules:
 		print("Checking foreign keys...")
-		foreign_key_report.run(output_dir)
+		module = importlib.import_module('rpgxp.script.foreign_key_report')
+		module.run(output_dir)
 
 if __name__ == '__main__':
     import argparse
@@ -51,7 +51,10 @@ if __name__ == '__main__':
         )
     )
 
-    arg_parser.add_argument('data_root', type=Path)
+    arg_parser.add_argument(
+    	'-d', '--data_root', type=Path, default=None,
+    	help="The path to the game's Data directory"
+    )
 
     with importlib.resources.path('rpgxp') as base_path:
         arg_parser.add_argument(

@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from enum import Enum
 import functools as ft
 import re
-from typing import Callable, Iterator, Literal, Sequence
+from string import Template
+from typing import Any, Callable, Iterator, Literal, Sequence
 from rpgxp.common import *
 
 class SchemaError(Exception):
@@ -281,6 +282,83 @@ class ColorSchema(ObjSchema):
             RPGField('blue', FloatSchema(0, 255)),
             RPGField('alpha', FloatSchema(0, 255)),
         ]
+
+@dataclass(frozen=True)
+class Variant(ABC):
+    @property
+    @abstractmethod
+    def discriminant_value(self) -> Any:
+        ...
+
+    @property
+    @abstractmethod
+    def name(self) -> Any:
+        ...
+
+@dataclass(frozen=True)
+class SimpleVariant(Variant):
+    _discriminant_value: Any
+    _name: str
+    fields: list[Field]
+
+    @property
+    def discriminant_value(self) -> Any:
+        return self._discriminant_value
+
+    @property
+    def name(self) -> Any:
+        return self._name
+
+@dataclass(frozen=True)
+class ComplexVariant(Variant):
+    _discriminant_value: Any
+    _name: str
+    fields: list[Field]
+    subdiscriminant_name: str
+    variants: list[Variant]
+
+    @property
+    def discriminant_value(self) -> Any:
+        return self._discriminant_value
+
+    @property
+    def name(self) -> Any:
+        return self._name
+
+    @property
+    def subdiscriminant(self) -> Field:
+        for field in self.fields:
+            if field.name == self.subdiscriminant_name:
+                return field
+
+        raise RuntimeError(
+            f"no field named '{self.subdiscriminant_name}'"
+        )
+
+
+@dataclass(frozen=True)
+class RPGVariantObjSchema(ObjSchema):
+    _class_name: str
+    rpg_class_name: str
+    _fields: list[RPGField]
+    discriminant_name: str
+    variants: list[Variant]
+
+    @property
+    def class_name(self) -> str:
+        return self._class_name
+
+    @property
+    def fields(self) -> list[RPGField]:
+        return self._fields   
+
+    @property
+    def discriminant(self) -> RPGField:
+        for field in self.fields:
+            if field.name == self.discriminant_name:
+                return field
+
+        raise RuntimeError(f"no field named '{self.discriminant_name}'")
 
 class FirstItem(Enum):
     REGULAR = 0
@@ -570,6 +648,10 @@ AUDIO_FILE_SCHEMA = RPGObjSchema('AudioFile', 'RPG::AudioFile', [
     str_field('name'), *int_fields('volume pitch')
 ])
 
+ELEMENT_SCHEMA = FKSchema(lambda: ELEMENTS_SCHEMA)
+SWITCH_SCHEMA = FKSchema(lambda: SWITCHES_SCHEMA)
+VARIABLE_SCHEMA = FKSchema(lambda: VARIABLES_SCHEMA)
+
 ACTOR_SCHEMA = RPGObjSchema('Actor', 'RPG::Actor', [
     id_field(),
     str_field('name'),
@@ -657,11 +739,343 @@ CLASS_SCHEMA = RPGObjSchema('Class', 'RPG::Class', [
     RPGField('learnings', ListSchema('class_learning', CLASS_LEARNING_SCHEMA)),
 ])
 
+MOVE_COMMAND_SCHEMA = RPGVariantObjSchema('MoveCommand', 'RPG::MoveCommand', [
+    RPGField('code', IntSchema())
+], 'code', [
+    SimpleVariant(0, 'Blank', []),
+    SimpleVariant(1, 'MoveDown', []),
+    SimpleVariant(2, 'MoveLeft', []),
+    SimpleVariant(3, 'MoveRight', []),
+    SimpleVariant(4, 'MoveUp', []),
+    SimpleVariant(5, 'MoveLowerLeft', []),
+    SimpleVariant(6, 'MoveLowerRight', []),
+    SimpleVariant(7, 'MoveUpperLeft', []),
+    SimpleVariant(8, 'MoveUpperRight', []),
+    SimpleVariant(9, 'MoveAtRandom', []),
+    SimpleVariant(10, 'MoveTowardPlayer', []),
+    SimpleVariant(11, 'MoveAwayFromPlayer', []),
+    SimpleVariant(12, 'StepForward', []),
+    SimpleVariant(13, 'StepBackward', []),
+    SimpleVariant(14, 'Jump', [
+        Field('x', IntSchema()),
+        Field('y', IntSchema())
+    ]),
+    SimpleVariant(15, 'Wait', [Field('duration', IntSchema())]),
+    SimpleVariant(16, 'TurnDown', []),
+    SimpleVariant(17, 'TurnLeft', []),
+    SimpleVariant(18, 'TurnRight', []),
+    SimpleVariant(19, 'TurnUp', []),
+    SimpleVariant(20, 'Turn90Right', []),
+    SimpleVariant(21, 'Turn90Left', []),
+    SimpleVariant(22, 'Turn180', []),
+    SimpleVariant(23, 'Turn90RightOrLeft', []),
+    SimpleVariant(24, 'TurnAtRandom', []),
+    SimpleVariant(25, 'TurnTowardPlayer', []),
+    SimpleVariant(26, 'TurnAwayFromPlayer', []),
+    SimpleVariant(27, 'SwitchOn', [Field('switch_id', SWITCH_SCHEMA)]),
+    SimpleVariant(28, 'SwitchOff', [Field('switch_id', SWITCH_SCHEMA)]),
+    SimpleVariant(29, 'ChangeSpeed', [Field('speed', EnumSchema(MoveSpeed))]),
+    SimpleVariant(30, 'ChangeFreq', [
+        Field('freq', EnumSchema(MoveFrequency))
+    ]),
+    SimpleVariant(31, 'MoveAnimationOn', []),
+    SimpleVariant(32, 'MoveAnimationOff', []),
+    SimpleVariant(33, 'StopAnimationOn', []),
+    SimpleVariant(34, 'StopAnimationOff', []),
+    SimpleVariant(35, 'DirectionFixOn', []),
+    SimpleVariant(36, 'DirectionFixOff', []),
+    SimpleVariant(37, 'ThroughOn', []),
+    SimpleVariant(38, 'ThroughOff', []),
+    SimpleVariant(39, 'AlwaysOnTopOn', []),
+    SimpleVariant(40, 'AlwaysOnTopOff', []),
+    SimpleVariant(41, 'Graphic', [
+        Field('character_name', StrSchema()),
+        Field('character_hue', HUE_SCHEMA),
+        Field('direction', EnumSchema(Direction)),
+        Field('pattern', IntSchema())
+    ]),
+    SimpleVariant(42, 'ChangeOpacity', [Field('opacity', IntSchema())]),
+    SimpleVariant(43, 'ChangeBlending', [Field('blend_type', IntSchema())]),
+    SimpleVariant(44, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
+    SimpleVariant(45, 'Script', [Field('line', StrSchema())]),
+])
+
+MOVE_ROUTE_SCHEMA = RPGObjSchema('MoveRoute', 'RPG::MoveRoute', [
+    *bool_fields('repeat skippable'),
+    RPGField(
+        'list_', ListSchema(
+            'event_page_move_command', MOVE_COMMAND_SCHEMA
+        ),
+        rpg_name='list', _db_name='list'
+    )
+])
+
+EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
+    'EventCommand', 'RPG::EventCommand',
+    [
+        RPGField('code', IntSchema()),
+        RPGField('indent', IntSchema(lb=0)),
+    ], 'code', [
+        SimpleVariant(0, 'Blank', []),
+        SimpleVariant(101, 'ShowText', [Field('text', StrSchema())]),
+        SimpleVariant(101, 'ShowChoices', [
+            Field('choices', ListSchema(
+                Template('$parent_choice'), StrSchema(),
+                item_name='choice'
+            )),
+            Field('cancel_type', EnumSchema(ChoicesCancelType)),
+        ]),
+        SimpleVariant(103, 'InputNumber', [
+            Field('variable_id', VARIABLE_SCHEMA),
+            Field('max_digits', IntSchema())
+        ]),
+        SimpleVariant(104, 'ChangeTextOptions', [
+            Field('position', EnumSchema(TextPosition)),
+            Field('no_frame', BoolSchema()),
+        ]),
+        SimpleVariant(105, 'ButtonInputProcessing', [
+            Field('variable_id', VARIABLE_SCHEMA),
+        ]),
+
+        # units = frames / 2,
+        SimpleVariant(106, 'Wait', [Field('duration', IntSchema())]),
+
+        SimpleVariant(108, 'Comment', [Field('text', StrSchema())]),
+        ComplexVariant(111, 'ConditionalBranch', [
+            Field('subcode', IntSchema()),
+        ], 'subcode', [
+            SimpleVariant(0, 'Switch', [
+                Field('switch_id', SWITCH_SCHEMA),
+                Field('state', EnumSchema(SwitchState)),
+            ]),
+            SimpleVariant(1, 'Variable', [
+                Field('variable_id', IntSchema()),
+                Field('value_is_variable', BoolSchema()),
+                Field('value', IntSchema()),
+                Field('comparison', EnumSchema(Comparison))
+            ]),
+            SimpleVariant(2, 'SelfSwitch', [
+                Field('self_switch_ch', EnumSchema(SelfSwitch)), 
+                Field('state', EnumSchema(SwitchState)),
+            ]),
+            SimpleVariant(3, 'Timer', [
+                # guessing at field layout
+                Field('mins', IntSchema()),
+                Field('secs', IntSchema()),
+                Field('bound_type', EnumSchema(BoundType))
+            ]),
+            # don't know field layouts for these two
+            SimpleVariant(4, 'Actor', []),
+            SimpleVariant(5, 'Enemy', []),
+            # branch based on a character sprite's direction
+            SimpleVariant(6, 'Character', [
+                # -1 = player, 0 = current event, otherwise an event id
+                Field('character_reference', IntSchema()),
+                Field('direction', EnumSchema(Direction))
+            ]),
+            SimpleVariant(7, 'Gold', [
+                Field('amount', IntSchema()),
+                Field('bound_type', EnumSchema(BoundType)),
+            ]),
+            SimpleVariant(8, 'Item', []),
+            SimpleVariant(9, 'Weapon', []),
+            SimpleVariant(10, 'Armor', []),
+            SimpleVariant(11, 'Button', [Field('button', IntSchema())]),
+            SimpleVariant(12, 'Script', [Field('expr', StrSchema())]),
+        ]),
+        SimpleVariant(112, 'Loop', []),
+        SimpleVariant(113, 'BreakLoop', []),
+        SimpleVariant(115, 'ExitEventProcessing', []),
+        SimpleVariant(116, 'EraseEvent', []),
+        SimpleVariant(117, 'CallCommonEvent', [
+            Field('common_event_id', FKSchema(lambda: COMMON_EVENTS_SCHEMA))
+        ]),
+        SimpleVariant(118, 'Label', [Field('id', StrSchema())]),
+        SimpleVariant(119, 'JumpToLabel', [Field('id', StrSchema())]),
+        SimpleVariant(121, 'ControlSwitches', [
+            # this is an inclusive range of switch IDs to set at once
+            Field('switch_id_lo', IntSchema()),
+            Field('switch_id_hi', IntSchema()),
+            Field('state', EnumSchema(SwitchState))
+        ]),
+        ComplexVariant(122, 'ControlVariables', [
+            Field('variable_id_hi', IntSchema()),
+            Field('variable_id_lo', IntSchema()),
+            Field('assign_type', EnumSchema(AssignType)),
+            Field('operand_type', EnumSchema(OperandType)),
+        ], 'operand_type', [
+            SimpleVariant(0, 'InvariantOperand', [
+                Field('value', IntSchema())
+            ]),
+            SimpleVariant(1, 'VariableOperand', [
+                Field('variable_id', VARIABLE_SCHEMA)
+            ]),
+            SimpleVariant(2, 'RandomNumberOperand', [
+                Field('lb', IntSchema()),
+                Field('ub', IntSchema()),
+            ]),
+            SimpleVariant(6, 'CharacterOperand', [
+                Field('attr_value', IntSchema()),
+                Field('attr_code', IntSchema()),
+            ]),
+        ]),
+        SimpleVariant(123, 'ControlSelfSwitch', [
+            Field('self_switch_ch', EnumSchema(SelfSwitch)),
+            Field('state', EnumSchema(SwitchState)),
+        ]),
+        SimpleVariant(125, 'ChangeGold', [
+            Field('diff_type', EnumSchema(DiffType)),
+            Field('with_variable', BoolSchema()),
+            Field('amount', IntSchema()),
+        ]),
+        SimpleVariant(132, 'ChangeBattleBGM', [
+            Field('audio', AUDIO_FILE_SCHEMA),
+        ]),
+        SimpleVariant(201, 'TransferPlayer', [
+            Field('with_variables', BoolSchema()),
+            Field('map_id', IntSchema()),
+            Field('x', IntSchema()), Field('y', IntSchema()),
+            Field('direction', EnumSchema(Direction)),
+            Field('no_fade', BoolSchema()),
+        ]),
+        SimpleVariant(202, 'SetEventLocation', [
+            Field('event_id', IntSchema()), # 0 for this event
+            Field('appoint_type', EnumSchema(AppointType)),
+            Field('x', IntSchema()), Field('y', IntSchema()),
+            Field('direction', EnumSchema(Direction)),
+        ]),
+        SimpleVariant(203, 'ScrollMap', [
+            Field('direction', EnumSchema(Direction)),
+            Field('distance', IntSchema()),
+            Field('speed', IntSchema()),
+        ]),
+        ComplexVariant(204, 'ChangeMapSettings', [
+            Field('subcode', IntSchema())
+        ], 'subcode', [
+            SimpleVariant(0, 'Panorama', [
+                Field('name', StrSchema()),
+                Field('hue', HUE_SCHEMA),
+            ]),
+            SimpleVariant(1, 'Fog', [
+                Field('name', StrSchema()),
+                Field('hue', IntSchema()),
+                Field('opacity', IntSchema()),
+                Field('blend_type', IntSchema()),
+                Field('zoom', IntSchema()),
+                Field('sx', IntSchema()),
+                Field('sy', IntSchema()),
+            ]),
+            SimpleVariant(2, 'BattleBack', [
+                Field('name', StrSchema())
+            ]),
+        ]),
+        # SimpleVariant(206, 'ChangeFogOpacity', [
+        #     Field('opacity', IntSchema()),
+        #     Field('duration', IntSchema())
+        # ]),
+        # SimpleVariant(207, 'ShowAnimation', [
+        #     # -1 for player, 0 for this event
+        #     Field('event_id', IntSchema()),
+        #     Field('animation_id', IntSchema())
+        # ]),
+        # SimpleVariant(208, 'ChangeTransparentFlag', [
+        #     Field('is_normal', BoolSchema())
+        # ]),
+        # SimpleVariant(209, 'SetMoveRoute', [
+        #     # can be -1 for player
+        #     ('target_event_id', IntSchema()),
+        #     ('move_route', MOVE_ROUTE_SCHEMA),
+        # ]),
+        # SimpleVariant(210, 'WaitForMoveCompletion', []),
+        # SimpleVariant(221, 'PrepareForTransition', []),
+        # SimpleVariant(222, 'ExecuteTransition', [
+        #     Field('name', StrSchema())
+        # ]),
+        # SimpleVariant(223, 'ChangeScreenColorTone', [
+        #     Field('tone', COLOR_SCHEMA),
+        #     Field('duration', IntSchema()) # units = frames / 2
+        # ]),
+        # SimpleVariant(224, 'ScreenFlash', [
+        #     Field('color', COLOR_SCHEMA),
+        #     Field('duration', IntSchema()), # units = frames / 2
+        # ]),
+        # SimpleVariant(225, 'ScreenShake', [
+        #     Field('power', IntSchema()),
+        #     Field('speed', IntSchema()),
+        #     Field('duration', IntSchema()),
+        # ]),
+        SimpleVariant(231, 'ShowPicture', [
+            Field('number', IntSchema()), Field('name', StrSchema()),
+            Field('origin', IntSchema()),
+            Field('appoint_with_vars', BoolSchema()),
+            Field('x', IntSchema()), Field('y', IntSchema()),
+            Field('zoom_x', IntSchema()), Field('zoom_y', IntSchema()),
+            Field('opacity', IntSchema()), Field('blend_type', IntSchema())
+        ]),
+        SimpleVariant(232, 'MovePicture', [
+            Field('number', IntSchema()), Field('duration', IntSchema()),
+            Field('origin', IntSchema()),
+            Field('appoint_with_vars', BoolSchema()),
+            Field('x', IntSchema()), Field('y', IntSchema()),
+            Field('zoom_x', IntSchema()), Field('zoom_y', IntSchema()),
+            Field('opacity', IntSchema()), Field('blend_type', IntSchema()),
+        ]),
+        SimpleVariant(235, 'ErasePicture', [Field('number', IntSchema())]),
+        SimpleVariant(236, 'SetWeatherEffects', [
+            Field('type', EnumSchema(Weather)),
+            Field('power', IntSchema()),
+            Field('duration', IntSchema())
+        ]),
+        SimpleVariant(241, 'PlayBGM', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(242, 'FadeOutBGM', [Field('seconds', IntSchema())]),
+        SimpleVariant(245, 'PlayBGS', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(246, 'FadeOutBGS', [Field('seconds', IntSchema())]),
+        SimpleVariant(247, 'MemorizeBGMOrBGS', []),
+        SimpleVariant(249, 'PlayME', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(250, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(251, 'StopSE', []),
+        SimpleVariant(314, 'RecoverAll', [
+            # 0 for all party
+            Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
+        ]), 
+        SimpleVariant(340, 'AbortBattle', []),
+        SimpleVariant(351, 'CallMenuScreen', []),
+        SimpleVariant(352, 'CallSaveScreen', []),
+        SimpleVariant(353, 'GameOver', []),
+        SimpleVariant(354, 'ReturnToTitleScreen', []),
+        SimpleVariant(355, 'Script', [Field('line', StrSchema())]),
+        SimpleVariant(401, 'ContinueShowText', [
+            Field('text', StrSchema()),
+        ]),
+        SimpleVariant(402, 'ShowChoicesWhenChoice', [
+            Field('choice_index', IntSchema()),
+            Field('choice_text', StrSchema()),
+        ]),
+        SimpleVariant(403, 'ShowChoicesWhenCancel', []),
+        SimpleVariant(404, 'ShowChoicesBranchEnd', []),
+        SimpleVariant(408, 'ContinueComment', [
+            Field('text', StrSchema()),
+        ]),
+        SimpleVariant(411, 'Else', []),
+        SimpleVariant(412, 'ConditionalBranchEnd', []),
+        SimpleVariant(413, 'RepeatAbove', []),
+        SimpleVariant(509, 'ContinueSetMoveRoute', [
+            Field('command', MOVE_COMMAND_SCHEMA),
+        ]),
+        SimpleVariant(655, 'ContinueScript', [
+            Field('line', StrSchema()),
+        ]),
+    ]
+)
+
 COMMON_EVENT_SCHEMA = RPGObjSchema('CommonEvent', 'RPG::CommonEvent', [
     id_field(),
     str_field('name'),
     enum_field('trigger', CommonEventTrigger),
-    int_field('switch_id'),
+    RPGField('switch_id', SWITCH_SCHEMA),
+    RPGField('list_', ListSchema(
+        'common_event_command', EVENT_COMMAND_SCHEMA
+    ), rpg_name='list', _db_name='list'),
 ])
 
 ENEMY_ACTION_SCHEMA = RPGObjSchema('EnemyAction', 'RPG::Enemy::Action', [
@@ -670,8 +1084,8 @@ ENEMY_ACTION_SCHEMA = RPGObjSchema('EnemyAction', 'RPG::Enemy::Action', [
     fk_field('skill_id', lambda: SKILLS_SCHEMA, True),
     *int_fields('''
         condition_turn_a condition_turn_b condition_hp condition_level
-        condition_switch_id
     '''),
+    RPGField('condition_switch_id', SWITCH_SCHEMA),
     RPGField('rating', IntSchema(1, 10)),
 ])
 
@@ -713,7 +1127,7 @@ ITEM_SCHEMA = RPGObjSchema('Item', 'RPG::Item', [
         hit pdef_f mdef_f variance
     '''),
     RPGField('element_set', SetSchema(
-        'item_element', IntSchema(), 'element_id'
+        'item_element', ELEMENT_SCHEMA, 'element_id'
     )),
     RPGField('plus_state_set', SetSchema(
         'item_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
@@ -730,8 +1144,11 @@ EVENT_PAGE_CONDITION_SCHEMA = RPGObjSchema(
         *bool_fields('''
             switch1_valid switch2_valid variable_valid self_switch_valid
         '''),
-        *int_fields('switch1_id switch2_id variable_id variable_value'),
-        str_field('self_switch_ch'),
+        RPGField('switch1_id', SWITCH_SCHEMA),
+        RPGField('switch2_id', SWITCH_SCHEMA),
+        RPGField('variable_id', VARIABLE_SCHEMA),
+        int_field('variable_value'),
+        enum_field('self_switch_ch', SelfSwitch),
     ]
 )
 
@@ -748,10 +1165,6 @@ EVENT_PAGE_GRAPHIC_SCHEMA = RPGObjSchema(
     ]
 )
 
-MOVE_ROUTE_SCHEMA = RPGObjSchema('MoveRoute', 'RPG::MoveRoute', [
-    *bool_fields('repeat skippable'),
-])
-
 EVENT_PAGE_SCHEMA = RPGObjSchema('EventPage', 'RPG::Event::Page', [
     RPGField('condition', EVENT_PAGE_CONDITION_SCHEMA),
     RPGField('graphic', EVENT_PAGE_GRAPHIC_SCHEMA),
@@ -761,6 +1174,9 @@ EVENT_PAGE_SCHEMA = RPGObjSchema('EventPage', 'RPG::Event::Page', [
     RPGField('move_route', MOVE_ROUTE_SCHEMA),
     *bool_fields('walk_anime step_anime direction_fix through always_on_top'),
     enum_field('trigger', EventPageTrigger),
+    RPGField('list_', ListSchema(
+        'event_page_command', EVENT_COMMAND_SCHEMA
+    ), rpg_name='list', _db_name='list'),
 ])
 
 EVENT_SCHEMA = RPGObjSchema('Event', 'RPG::Event', [
@@ -819,7 +1235,7 @@ SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
         variance
     '''),
     RPGField('element_set', SetSchema(
-        'skill_element', IntSchema(), 'element_id'
+        'skill_element', ELEMENT_SCHEMA, 'element_id'
     )),
     RPGField('plus_state_set', SetSchema(
         'skill_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
@@ -843,7 +1259,7 @@ STATE_SCHEMA = RPGObjSchema('State', 'RPG::State', [
     bool_field('battle_only'),
     *int_fields('hold_turn auto_release_prob shock_release_prob'),
     RPGField('guard_element_set', SetSchema(
-        'state_guard_element', IntSchema(), 'element_id'
+        'state_guard_element', ELEMENT_SCHEMA, 'element_id'
     )),
     RPGField('plus_state_set', SetSchema(
         'state_plus_state', FKSchema(lambda: STATES_SCHEMA), 'plus_state_id'
@@ -971,13 +1387,17 @@ TROOP_PAGE_CONDITION_SCHEMA = RPGObjSchema(
         RPGField('enemy_index', IntSchema(0, 7)),
         int_field('enemy_hp'),
         fk_field('actor_id', lambda: ACTORS_SCHEMA, True),
-        *int_fields('actor_hp switch_id'),
+        int_field('actor_hp'),
+        RPGField('switch_id', SWITCH_SCHEMA),
     ]
 )
 
 TROOP_PAGE_SCHEMA = RPGObjSchema('TroopPage', 'RPG::Troop::Page', [
     RPGField('condition', TROOP_PAGE_CONDITION_SCHEMA),
     enum_field('span', TroopPageSpan),
+    RPGField('list_', ListSchema(
+        'troop_page_command', EVENT_COMMAND_SCHEMA
+    ), rpg_name='list', _db_name='list'),
 ])
 
 TROOP_SCHEMA = RPGObjSchema('Troop', 'RPG::Troop', [
@@ -994,7 +1414,7 @@ WEAPON_SCHEMA = RPGObjSchema('Weapon', 'RPG::Weapon', [
     fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
     *int_fields('price atk pdef mdef str_plus dex_plus agi_plus int_plus'),
     RPGField('element_set', SetSchema(
-        'weapon_element', IntSchema(), 'element_id'
+        'weapon_element', ELEMENT_SCHEMA, 'element_id'
     )),
     RPGField('plus_state_set', SetSchema(
         'weapon_plus_state', FKSchema(lambda: STATES_SCHEMA), 'state_id'
