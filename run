@@ -1,1 +1,1 @@
-env/bin/python -m rpgxp.script.run "$@"
+.venv/bin/python -m rpgxp.script.run "$@"

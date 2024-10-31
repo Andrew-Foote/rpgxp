@@ -1,1 +1,1 @@
-env/bin/python -m apsw rpgxp/generated/rpgxp.sqlite
+.venv/bin/python -m apsw rpgxp/generated/rpgxp.sqlite

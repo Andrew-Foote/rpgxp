@@ -16,7 +16,7 @@ def run(
 
 	if 'type' in modules:
 		print("Typechecking the codebase...")
-		mypy_result = subprocess.run(['mypy'])
+		mypy_result = subprocess.run(['sh', 'typecheck'])
 
 		if mypy_result.returncode:
 			print("Typechecking failed.")
