@@ -189,8 +189,7 @@ class EventCommand_ConditionalBranch_SelfSwitch(EventCommand_ConditionalBranch):
 class EventCommand_ConditionalBranch_Timer(EventCommand_ConditionalBranch):
     code = 111
     subcode = 3
-    mins: int
-    secs: int
+    value: int
     bound_type: BoundType
 
 @dataclass(frozen=True)
@@ -329,10 +328,20 @@ class EventCommand_ControlSelfSwitch(EventCommand):
     state: SwitchState
 
 @dataclass(frozen=True)
-class EventCommand_ControlTimer(EventCommand):
+class EventCommand_ControlTimer(EventCommand, ABC):
     code = 124
-    stop: bool
-    new_value: int
+    subcode: ClassVar[int]
+
+@dataclass(frozen=True)
+class EventCommand_ControlTimer_Start(EventCommand_ControlTimer):
+    code = 124
+    subcode = 0
+    initial_value: int
+
+@dataclass(frozen=True)
+class EventCommand_ControlTimer_Stop(EventCommand_ControlTimer):
+    code = 124
+    subcode = 1
 
 @dataclass(frozen=True)
 class EventCommand_ChangeGold(EventCommand):
@@ -409,9 +418,9 @@ class EventCommand_ChangeMapSettings_BattleBack(EventCommand_ChangeMapSettings):
 
 @dataclass(frozen=True)
 class EventCommand_ChangeFogColorTone(EventCommand):
-    code = 234
-    duration: int
+    code = 205
     tone: Tone
+    duration: int
 
 @dataclass(frozen=True)
 class EventCommand_ChangeFogOpacity(EventCommand):
@@ -564,6 +573,13 @@ class EventCommand_StopSE(EventCommand):
     code = 251
 
 @dataclass(frozen=True)
+class EventCommand_BattleProcessing(EventCommand):
+    code = 301
+    opponent_troop_id: Optional[int]
+    can_escape: bool
+    can_continue_when_loser: bool
+
+@dataclass(frozen=True)
 class EventCommand_RecoverAll(EventCommand):
     code = 314
     actor_id: Optional[int]
@@ -633,6 +649,22 @@ class EventCommand_RepeatAbove(EventCommand):
 class EventCommand_ContinueSetMoveRoute(EventCommand):
     code = 509
     command: MoveCommand
+
+@dataclass(frozen=True)
+class EventCommand_IfWin(EventCommand):
+    code = 601
+
+@dataclass(frozen=True)
+class EventCommand_IfEscape(EventCommand):
+    code = 602
+
+@dataclass(frozen=True)
+class EventCommand_IfLose(EventCommand):
+    code = 603
+
+@dataclass(frozen=True)
+class EventCommand_BattleProcessingEnd(EventCommand):
+    code = 604
 
 @dataclass(frozen=True)
 class EventCommand_ContinueScript(EventCommand):

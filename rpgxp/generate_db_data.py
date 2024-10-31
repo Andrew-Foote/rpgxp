@@ -301,6 +301,9 @@ def process_file_schema(
                 files = random.sample(files, 25)
 
             for key_values, filename in files:
+                # if filename != 'Map593.rxdata':
+                #     continue
+
                 print(f'processing {filename}')
 
                 row: dict[str, Any] = {}

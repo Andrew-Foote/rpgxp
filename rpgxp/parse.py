@@ -262,6 +262,16 @@ def parse_rpg_variant_obj[T](
 	i = 0
 
 	while True:
+		if isinstance(variant, schema.SimpleVariant):
+			fieldcount = i + len(variant.fields)
+			paramcount = len(parameters)
+
+			if fieldcount != paramcount:
+				raise ParseError(
+					f'expected {fieldcount} parameters for {subclass_name}, '
+					f'got {paramcount}: {parameters_node}'
+				)
+
 		for vfield in variant.fields:
 			attr_name = vfield.name
 			attr_value = parse(vfield.schema, parameters[i])
@@ -269,11 +279,6 @@ def parse_rpg_variant_obj[T](
 			i += 1
 
 		if isinstance(variant, schema.SimpleVariant):
-			assert i == len(parameters), (
-				f'expected {i} parameters, got {len(parameters)}: '
-				f'{parameters_node}'
-			)
-
 			return subclass(**attr_values)
 
 		assert isinstance(variant, schema.ComplexVariant)

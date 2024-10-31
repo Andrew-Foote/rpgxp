@@ -902,9 +902,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('state', EnumSchema(SwitchState)),
             ]),
             SimpleVariant(3, 'Timer', [
-                # guessing at field layout
-                Field('mins', IntSchema()),
-                Field('secs', IntSchema()),
+                Field('value', IntSchema()),
                 Field('bound_type', EnumSchema(BoundType))
             ]),
             # don't know field layouts for these two
@@ -969,9 +967,13 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('self_switch_ch', EnumSchema(SelfSwitch)),
             Field('state', EnumSchema(SwitchState)),
         ]),
-        SimpleVariant(124, 'ControlTimer', [
-            Field('stop', IntBoolSchema()),
-            Field('new_value', IntSchema()),
+        ComplexVariant(124, 'ControlTimer', [
+            Field('subcode', IntSchema()),
+        ], 'subcode', [
+            SimpleVariant(0, 'Start', [
+                Field('initial_value', IntSchema()),
+            ]),
+            SimpleVariant(1, 'Stop', []),
         ]),
         SimpleVariant(125, 'ChangeGold', [
             Field('diff_type', EnumSchema(DiffType)),
@@ -1022,9 +1024,9 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('name', StrSchema())
             ]),
         ]),
-        SimpleVariant(234, 'ChangeFogColorTone', [
-            Field('duration', IntSchema()),
+        SimpleVariant(205, 'ChangeFogColorTone', [
             Field('tone', ToneSchema()),
+            Field('duration', IntSchema()),
         ]),
         SimpleVariant(206, 'ChangeFogOpacity', [
             Field('opacity', IntSchema()),
@@ -1101,10 +1103,15 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(249, 'PlayME', [Field('audio', AUDIO_FILE_SCHEMA)]),
         SimpleVariant(250, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
         SimpleVariant(251, 'StopSE', []),
+        SimpleVariant(301, 'BattleProcessing', [
+            Field('opponent_troop_id', FKSchema(lambda: TROOPS_SCHEMA)),
+            Field('can_escape', BoolSchema()),
+            Field('can_continue_when_loser', BoolSchema()),
+        ]),
         SimpleVariant(314, 'RecoverAll', [
             # 0 for all party
             Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
-        ]), 
+        ]),
         SimpleVariant(340, 'AbortBattle', []),
         SimpleVariant(351, 'CallMenuScreen', []),
         SimpleVariant(352, 'CallSaveScreen', []),
@@ -1129,6 +1136,10 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(509, 'ContinueSetMoveRoute', [
             Field('command', MOVE_COMMAND_SCHEMA),
         ]),
+        SimpleVariant(601, 'IfWin', []),
+        SimpleVariant(602, 'IfEscape', []),
+        SimpleVariant(603, 'IfLose', []),
+        SimpleVariant(604, 'BattleProcessingEnd', []),
         SimpleVariant(655, 'ContinueScript', [
             Field('line', StrSchema()),
         ]),
