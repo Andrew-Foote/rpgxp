@@ -711,6 +711,14 @@ CREATE TABLE "common_event_command_change_battle_bgm" (
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "common_event_command_change_menu_access";
+CREATE TABLE "common_event_command_change_menu_access" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "common_event_command_transfer_player";
 CREATE TABLE "common_event_command_transfer_player" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
@@ -796,6 +804,18 @@ CREATE TABLE "common_event_command_change_map_settings" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_fog_color_tone";
+CREATE TABLE "common_event_command_change_fog_color_tone" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -1482,8 +1502,15 @@ CREATE TABLE "common_event_command_fade_out_bgs" (
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
-DROP TABLE IF EXISTS "common_event_command_memorize_bgmor_bgs";
-CREATE TABLE "common_event_command_memorize_bgmor_bgs" (
+DROP TABLE IF EXISTS "common_event_command_memorize_bgaudio";
+CREATE TABLE "common_event_command_memorize_bgaudio" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_restore_bgaudio";
+CREATE TABLE "common_event_command_restore_bgaudio" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     PRIMARY KEY ("common_event_id", "index")
@@ -3218,6 +3245,17 @@ CREATE TABLE "event_page_command_change_battle_bgm" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_change_menu_access";
+CREATE TABLE "event_page_command_change_menu_access" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_transfer_player";
 CREATE TABLE "event_page_command_transfer_player" (
     "map_id" INTEGER NOT NULL,
@@ -3312,6 +3350,21 @@ CREATE TABLE "event_page_command_change_map_settings" (
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_fog_color_tone";
+CREATE TABLE "event_page_command_change_fog_color_tone" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -4113,8 +4166,18 @@ CREATE TABLE "event_page_command_fade_out_bgs" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
-DROP TABLE IF EXISTS "event_page_command_memorize_bgmor_bgs";
-CREATE TABLE "event_page_command_memorize_bgmor_bgs" (
+DROP TABLE IF EXISTS "event_page_command_memorize_bgaudio";
+CREATE TABLE "event_page_command_memorize_bgaudio" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_restore_bgaudio";
+CREATE TABLE "event_page_command_restore_bgaudio" (
     "map_id" INTEGER NOT NULL,
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
@@ -5631,6 +5694,16 @@ CREATE TABLE "troop_page_command_change_battle_bgm" (
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "troop_page_command_change_menu_access";
+CREATE TABLE "troop_page_command_change_menu_access" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "troop_page_command_transfer_player";
 CREATE TABLE "troop_page_command_transfer_player" (
     "troop_id" INTEGER NOT NULL,
@@ -5718,6 +5791,20 @@ CREATE TABLE "troop_page_command_change_map_settings" (
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_fog_color_tone";
+CREATE TABLE "troop_page_command_change_fog_color_tone" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -6452,8 +6539,17 @@ CREATE TABLE "troop_page_command_fade_out_bgs" (
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
 
-DROP TABLE IF EXISTS "troop_page_command_memorize_bgmor_bgs";
-CREATE TABLE "troop_page_command_memorize_bgmor_bgs" (
+DROP TABLE IF EXISTS "troop_page_command_memorize_bgaudio";
+CREATE TABLE "troop_page_command_memorize_bgaudio" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_restore_bgaudio";
+CREATE TABLE "troop_page_command_restore_bgaudio" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),

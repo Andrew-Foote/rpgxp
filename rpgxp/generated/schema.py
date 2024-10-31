@@ -347,6 +347,11 @@ class EventCommand_ChangeBattleBGM(EventCommand):
     audio: AudioFile
 
 @dataclass(frozen=True)
+class EventCommand_ChangeMenuAccess(EventCommand):
+    code = 135
+    enabled: bool
+
+@dataclass(frozen=True)
 class EventCommand_TransferPlayer(EventCommand):
     code = 201
     with_variables: bool
@@ -401,6 +406,12 @@ class EventCommand_ChangeMapSettings_BattleBack(EventCommand_ChangeMapSettings):
     code = 204
     subcode = 2
     name: str
+
+@dataclass(frozen=True)
+class EventCommand_ChangeFogColorTone(EventCommand):
+    code = 234
+    duration: int
+    tone: Tone
 
 @dataclass(frozen=True)
 class EventCommand_ChangeFogOpacity(EventCommand):
@@ -531,8 +542,12 @@ class EventCommand_FadeOutBGS(EventCommand):
     seconds: int
 
 @dataclass(frozen=True)
-class EventCommand_MemorizeBGMOrBGS(EventCommand):
+class EventCommand_MemorizeBGAudio(EventCommand):
     code = 247
+
+@dataclass(frozen=True)
+class EventCommand_RestoreBGAudio(EventCommand):
+    code = 248
 
 @dataclass(frozen=True)
 class EventCommand_PlayME(EventCommand):
@@ -623,6 +638,13 @@ class EventCommand_ContinueSetMoveRoute(EventCommand):
 class EventCommand_ContinueScript(EventCommand):
     code = 655
     line: str
+
+@dataclass(frozen=True)
+class Tone:
+    red: float
+    green: float
+    blue: float
+    grey: float
 
 @dataclass(frozen=True)
 class MoveRoute:
@@ -832,13 +854,6 @@ class MoveCommand_PlaySE(MoveCommand):
 class MoveCommand_Script(MoveCommand):
     code = 45
     line: str
-
-@dataclass(frozen=True)
-class Tone:
-    red: float
-    green: float
-    blue: float
-    grey: float
 
 @dataclass(frozen=True)
 class Enemy:

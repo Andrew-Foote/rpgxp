@@ -240,12 +240,12 @@ def parse_rpg_variant_obj[T](
 		attr_values[attr_name] = attr_value
 
 	discriminant_value = attr_values.pop(discriminant_name)
-	parameters_node = node.inst_vars['@parameters'].body_content
+	parameters_node = node.inst_vars['@parameters']
 
-	if not isinstance(parameters_node, marshal.Array):
+	if not isinstance(parameters_node.body_content, marshal.Array):
 		raise ParseError(f'expected array of parameters')
 
-	parameters = parameters_node.items
+	parameters = parameters_node.body_content.items
 
 	for poss_variant in variants:
 		if poss_variant.discriminant_value == discriminant_value:
@@ -269,7 +269,11 @@ def parse_rpg_variant_obj[T](
 			i += 1
 
 		if isinstance(variant, schema.SimpleVariant):
-			assert i == len(parameters)
+			assert i == len(parameters), (
+				f'expected {i} parameters, got {len(parameters)}: '
+				f'{parameters_node}'
+			)
+
 			return subclass(**attr_values)
 
 		assert isinstance(variant, schema.ComplexVariant)

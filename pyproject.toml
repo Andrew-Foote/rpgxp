@@ -6,7 +6,7 @@ authors = [
 ]
 description = "Processes data from games made with RPG Maker XP."
 readme = "README.md"
-requires-python = ">=3.14.0a1+"
+requires-python = ">=3.14.0a1"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -18,3 +18,11 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/Andrew-Foote/rpgxp"
 Issues = "https://github.com/Andrew-Foote/rpgxp/issues"
+
+[project.optional-dependencies]
+test = [
+    "mypy",
+]
+
+[tool.mypy]
+packages = ["rpgxp"]

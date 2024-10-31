@@ -981,6 +981,9 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(132, 'ChangeBattleBGM', [
             Field('audio', AUDIO_FILE_SCHEMA),
         ]),
+        SimpleVariant(135, 'ChangeMenuAccess', [
+            Field('enabled', IntBoolSchema())
+        ]),
         SimpleVariant(201, 'TransferPlayer', [
             Field('with_variables', IntBoolSchema()),
             Field('target_map_id', IntSchema()),
@@ -1018,6 +1021,10 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             SimpleVariant(2, 'BattleBack', [
                 Field('name', StrSchema())
             ]),
+        ]),
+        SimpleVariant(234, 'ChangeFogColorTone', [
+            Field('duration', IntSchema()),
+            Field('tone', ToneSchema()),
         ]),
         SimpleVariant(206, 'ChangeFogOpacity', [
             Field('opacity', IntSchema()),
@@ -1089,7 +1096,8 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(242, 'FadeOutBGM', [Field('seconds', IntSchema())]),
         SimpleVariant(245, 'PlayBGS', [Field('audio', AUDIO_FILE_SCHEMA)]),
         SimpleVariant(246, 'FadeOutBGS', [Field('seconds', IntSchema())]),
-        SimpleVariant(247, 'MemorizeBGMOrBGS', []),
+        SimpleVariant(247, 'MemorizeBGAudio', []),
+        SimpleVariant(248, 'RestoreBGAudio', []),
         SimpleVariant(249, 'PlayME', [Field('audio', AUDIO_FILE_SCHEMA)]),
         SimpleVariant(250, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
         SimpleVariant(251, 'StopSE', []),
