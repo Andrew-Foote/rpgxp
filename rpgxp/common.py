@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import Enum, StrEnum
 import struct
 from typing import Self
 
-class SelfSwitch(Enum):
+class SelfSwitch(StrEnum):
     A = 'A'
     B = 'B'
     C = 'C'
@@ -34,6 +34,7 @@ class Comparison(Enum):
     NE = 5
 
 class Direction(Enum):
+    NONE = 0
     DOWN = 2
     LEFT = 4
     RIGHT = 6
@@ -91,7 +92,7 @@ class OperandType(Enum):
     CHARACTER = 6
     OTHER = 7
     
-class OperandSubtype(Enum):
+class OtherOperandType(Enum):
     MAP_ID = 0
     PARTY_SIZE = 1
     GOLD = 2

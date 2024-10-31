@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 import re
 import struct
@@ -21,6 +21,8 @@ def parse_bool(node: marshal.Node) -> bool:
 		case marshal.False_():
 			result = False
 		case _:
+			breakpoint()
+
 			raise ParseError(
 				'expected node of type True_ or False_, got '
 				f'{type(content).__name__}'
@@ -30,7 +32,11 @@ def parse_bool(node: marshal.Node) -> bool:
 
 def parse_int(int_schema: schema.IntSchema, node: marshal.Node) -> int:
 	if not isinstance(node.body_content, marshal.Fixnum):
-		raise ParseError(f'expected a fixnum')
+		breakpoint()
+
+		raise ParseError(
+			f'expected Fixnum, got {type(node.body_content).__name__}'
+		)
 
 	result = node.body_content.value
 
@@ -121,8 +127,11 @@ def parse_ndarray(dimcount: int, node: marshal.Node) -> np.ndarray:
 
 	return parse_array_from_table_data(node_content.data, dimcount)
 
-def parse_enum[T: Enum](enum_class: type[T], node: marshal.Node) -> T:
-	return enum_class(parse_int(schema.IntSchema(), node))
+def parse_enum(enum_class: type[Enum], node: marshal.Node) -> Enum:
+	if issubclass(enum_class, StrEnum):
+		return enum_class(parse_str(node))
+	else:
+		return enum_class(parse_int(schema.IntSchema(), node))
 
 def parse_array_obj[T](
 	klass: type[T], fields: list[schema.Field], node: marshal.Node
@@ -172,12 +181,7 @@ def parse_rpg_obj[T](
 	expected_ivars = {as_ivar_name(field.rpg_name) for field in fields}
 	actual_ivars = set(node.inst_vars.keys())
 
-	if (
-		expected_ivars != actual_ivars and
-
-		# temp exemption for event command lists
-		actual_ivars - expected_ivars != {'@list'}
-	):
+	if expected_ivars != actual_ivars:
 		raise ParseError(
 			f'expected set of instance variables different from actual; '
 			f'expected - actual = {expected_ivars - actual_ivars}; '
@@ -195,6 +199,95 @@ def parse_rpg_obj[T](
 
 	return cls(**attr_values)
 
+def parse_rpg_variant_obj[T](
+	cls: type[T], rpg_class_name: str, fields: list[schema.RPGField],
+	discriminant_name: str, variants: list[schema.Variant], node: marshal.Node
+) -> T:
+
+	content = node.body_content
+
+	if not isinstance(content, marshal.Object):
+		raise ParseError(
+			f"expected '{rpg_class_name}' object, got node of type "
+			f"'{type(content).__name__}'"
+		)
+
+	class_name = content.class_name
+
+	if class_name != rpg_class_name:
+		raise ParseError(
+			f"expected '{rpg_class_name}' object, got '{class_name}'"
+		)
+
+	expected_ivars = {as_ivar_name(field.rpg_name) for field in fields}
+	expected_ivars.add('@parameters')
+	actual_ivars = set(node.inst_vars.keys())
+
+	if expected_ivars != actual_ivars:
+		raise ParseError(
+			f'expected set of instance variables different from actual; '
+			f'expected - actual = {expected_ivars - actual_ivars}; '
+			f'actual - expected = {actual_ivars - expected_ivars}'
+		)
+
+	attr_values = {}
+
+	for field in fields:
+		attr_name = field.name
+		ivar_name = as_ivar_name(field.rpg_name)
+		ivar_value = node.inst_vars[ivar_name]
+		attr_value = parse(field.schema, ivar_value)
+		attr_values[attr_name] = attr_value
+
+	discriminant_value = attr_values.pop(discriminant_name)
+	parameters_node = node.inst_vars['@parameters'].body_content
+
+	if not isinstance(parameters_node, marshal.Array):
+		raise ParseError(f'expected array of parameters')
+
+	parameters = parameters_node.items
+
+	for poss_variant in variants:
+		if poss_variant.discriminant_value == discriminant_value:
+			variant = poss_variant
+			break
+	else:
+		assert False, (
+			f'discriminant value {discriminant_value} not handled for class '
+			f'{class_name}'
+		)
+
+	subclass_name = f'{cls.__name__}_{variant.name}'
+	subclass = getattr(gschema, subclass_name)
+	i = 0
+
+	while True:
+		for vfield in variant.fields:
+			attr_name = vfield.name
+			attr_value = parse(vfield.schema, parameters[i])
+			attr_values[attr_name] = attr_value
+			i += 1
+
+		if isinstance(variant, schema.SimpleVariant):
+			assert i == len(parameters)
+			return subclass(**attr_values)
+
+		assert isinstance(variant, schema.ComplexVariant)
+		discriminant_value = attr_values.pop(variant.subdiscriminant_name)
+
+		for subvariant in variant.variants:
+			if subvariant.discriminant_value == discriminant_value:
+				variant = subvariant
+				break
+		else:
+			assert False, (
+				f'discriminant value {discriminant_value} not handled for '
+				f'class {subclass_name}'
+			)
+
+		subclass_name = f'{subclass_name}_{variant.name}'
+		subclass = getattr(gschema, subclass_name)
+
 def parse_color_from_data(data: bytes) -> gschema.Color:
 	r, g, b, a = struct.unpack('<dddd', data)
 	return gschema.Color(r, g, b, a)
@@ -209,6 +302,21 @@ def parse_color(node: marshal.Node) -> gschema.Color:
 		raise ParseError(f"expected a user data object of type 'Color'")
 
 	return parse_color_from_data(node_content.data)
+
+def parse_tone_from_data(data: bytes) -> gschema.Tone:
+	r, g, b, gray = struct.unpack('<dddd', data)
+	return gschema.Tone(r, g, b, gray)
+
+def parse_tone(node: marshal.Node) -> gschema.Tone:
+	node_content = node.body_content
+
+	if not (
+		isinstance(node_content, marshal.UserData)
+		and node_content.class_name == 'Tone'
+	):
+		raise ParseError(f"expected a user data object of type 'Tone'")
+
+	return parse_tone_from_data(node_content.data)
 
 def parse_list(
 	item_schema: schema.DataSchema, node: marshal.Node, *,
@@ -314,6 +422,16 @@ def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
 	match data_schema:
 		case schema.BoolSchema():
 			return parse_bool(node)
+		case schema.IntBoolSchema():
+			value = parse_int(schema.IntSchema(), node)
+
+			match value:
+				case 0:
+					return False
+				case 1:
+					return True
+				case _:
+					assert False
 		case schema.IntSchema(lb, ub):
 			return parse_int(data_schema, node)
 		case schema.StrSchema():
@@ -337,8 +455,19 @@ def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
 		case schema.RPGSingletonObjSchema(class_name, _, rpg_class_name, fields):
 			klass = getattr(gschema, class_name)
 			return parse_rpg_obj(klass, rpg_class_name, fields, node)
+		case schema.RPGVariantObjSchema(
+			class_name, rpg_class_name, fields, discriminant_name, variants
+		):
+			klass = getattr(gschema, class_name)
+			
+			return parse_rpg_variant_obj(
+				klass, rpg_class_name, fields, discriminant_name, variants,
+				node
+			)
 		case schema.ColorSchema():
 			return parse_color(node)
+		case schema.ToneSchema():
+			return parse_tone(node)
 		case schema.ListSchema(
 			_, item_schema,
 			first_item=first_item,
@@ -356,7 +485,7 @@ def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
 		case schema.DictSchema(_, key_behavior, value_schema, _):
 			return parse_dict(data_schema, node)
 		case _:
-			assert False
+			assert False, type(data_schema)
 
 def parse_file(file_schema: schema.FileSchema, data_root: Path) -> Any:
 	match file_schema:

@@ -188,7 +188,7 @@ CREATE TABLE "common_event" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "trigger" INTEGER NOT NULL REFERENCES "common_event_trigger" ("id"),
-    "switch_id" INTEGER NOT NULL
+    "switch_id" INTEGER REFERENCES "switch" ("id")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_trigger";
@@ -201,6 +201,1786 @@ INSERT INTO "common_event_trigger" ("id", "name") VALUES
     (0, 'NONE'),
     (1, 'AUTORUN'),
     (2, 'PARALLEL');
+
+DROP TABLE IF EXISTS "common_event_command";
+CREATE TABLE "common_event_command" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    "indent" INTEGER NOT NULL CHECK ("indent" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_blank";
+CREATE TABLE "common_event_command_blank" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_text";
+CREATE TABLE "common_event_command_show_text" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_choices_choice";
+CREATE TABLE "common_event_command_show_choices_choice" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_show_choices_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_show_choices_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_show_choices_index") REFERENCES "common_event_command_show_choices" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "choices_cancel_type";
+CREATE TABLE "choices_cancel_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "choices_cancel_type" ("id", "name") VALUES
+    (0, 'DISALLOW'),
+    (1, 'CHOICE1'),
+    (2, 'CHOICE2'),
+    (3, 'CHOICE3'),
+    (4, 'CHOICE4'),
+    (5, 'BRANCH');
+
+DROP TABLE IF EXISTS "common_event_command_show_choices";
+CREATE TABLE "common_event_command_show_choices" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "cancel_type" INTEGER NOT NULL REFERENCES "choices_cancel_type" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_input_number";
+CREATE TABLE "common_event_command_input_number" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    "max_digits" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "text_position";
+CREATE TABLE "text_position" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "text_position" ("id", "name") VALUES
+    (0, 'TOP'),
+    (1, 'MIDDLE'),
+    (2, 'BOTTOM');
+
+DROP TABLE IF EXISTS "common_event_command_change_text_options";
+CREATE TABLE "common_event_command_change_text_options" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "position" INTEGER NOT NULL REFERENCES "text_position" ("id"),
+    "no_frame" INTEGER NOT NULL CHECK ("no_frame" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_button_input_processing";
+CREATE TABLE "common_event_command_button_input_processing" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_wait";
+CREATE TABLE "common_event_command_wait" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_comment";
+CREATE TABLE "common_event_command_comment" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "switch_state";
+CREATE TABLE "switch_state" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "switch_state" ("id", "name") VALUES
+    (0, 'ON'),
+    (1, 'OFF');
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_switch";
+CREATE TABLE "common_event_command_conditional_branch_switch" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "comparison";
+CREATE TABLE "comparison" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "comparison" ("id", "name") VALUES
+    (0, 'EQ'),
+    (1, 'GE'),
+    (2, 'LE'),
+    (3, 'GT'),
+    (4, 'LT'),
+    (5, 'NE');
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_variable";
+CREATE TABLE "common_event_command_conditional_branch_variable" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "variable_id" INTEGER NOT NULL,
+    "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
+    "value" INTEGER NOT NULL,
+    "comparison" INTEGER NOT NULL REFERENCES "comparison" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "self_switch";
+CREATE TABLE "self_switch" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "self_switch" ("id", "name") VALUES
+    ('A', 'A'),
+    ('B', 'B'),
+    ('C', 'C'),
+    ('D', 'D');
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_self_switch";
+CREATE TABLE "common_event_command_conditional_branch_self_switch" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "bound_type";
+CREATE TABLE "bound_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "bound_type" ("id", "name") VALUES
+    (0, 'LOWER'),
+    (1, 'UPPER');
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_timer";
+CREATE TABLE "common_event_command_conditional_branch_timer" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "mins" INTEGER NOT NULL,
+    "secs" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor";
+CREATE TABLE "common_event_command_conditional_branch_actor" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_enemy";
+CREATE TABLE "common_event_command_conditional_branch_enemy" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "direction";
+CREATE TABLE "direction" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "direction" ("id", "name") VALUES
+    (0, 'NONE'),
+    (2, 'DOWN'),
+    (4, 'LEFT'),
+    (6, 'RIGHT'),
+    (8, 'UP');
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_character";
+CREATE TABLE "common_event_command_conditional_branch_character" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "character_reference" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_gold";
+CREATE TABLE "common_event_command_conditional_branch_gold" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_item";
+CREATE TABLE "common_event_command_conditional_branch_item" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_weapon";
+CREATE TABLE "common_event_command_conditional_branch_weapon" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_armor";
+CREATE TABLE "common_event_command_conditional_branch_armor" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_button";
+CREATE TABLE "common_event_command_conditional_branch_button" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "button" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_script";
+CREATE TABLE "common_event_command_conditional_branch_script" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "expr" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch";
+CREATE TABLE "common_event_command_conditional_branch" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_loop";
+CREATE TABLE "common_event_command_loop" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_break_loop";
+CREATE TABLE "common_event_command_break_loop" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_exit_event_processing";
+CREATE TABLE "common_event_command_exit_event_processing" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_erase_event";
+CREATE TABLE "common_event_command_erase_event" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_call_common_event";
+CREATE TABLE "common_event_command_call_common_event" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "called_event_id" INTEGER REFERENCES "common_event" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_label";
+CREATE TABLE "common_event_command_label" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_jump_to_label";
+CREATE TABLE "common_event_command_jump_to_label" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_switches";
+CREATE TABLE "common_event_command_control_switches" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id_lo" INTEGER NOT NULL,
+    "switch_id_hi" INTEGER NOT NULL,
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "assign_type";
+CREATE TABLE "assign_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "assign_type" ("id", "name") VALUES
+    (0, 'SUBSTITUTE'),
+    (1, 'ADD'),
+    (2, 'SUBTRACT'),
+    (3, 'MULTIPLY'),
+    (4, 'DIVIDE'),
+    (5, 'REMAINDER');
+
+DROP TABLE IF EXISTS "common_event_command_control_variables_invariant";
+CREATE TABLE "common_event_command_control_variables_invariant" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "value" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_variables_variable";
+CREATE TABLE "common_event_command_control_variables_variable" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_variables_random_number";
+CREATE TABLE "common_event_command_control_variables_random_number" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "lb" INTEGER NOT NULL,
+    "ub" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_variables_character";
+CREATE TABLE "common_event_command_control_variables_character" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "attr_value" INTEGER NOT NULL,
+    "attr_code" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "other_operand_type";
+CREATE TABLE "other_operand_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "other_operand_type" ("id", "name") VALUES
+    (0, 'MAP_ID'),
+    (1, 'PARTY_SIZE'),
+    (2, 'GOLD'),
+    (3, 'STEP_COUNT'),
+    (4, 'PLAY_TIME'),
+    (5, 'TIMER'),
+    (6, 'SAVE_COUNT');
+
+DROP TABLE IF EXISTS "common_event_command_control_variables_other";
+CREATE TABLE "common_event_command_control_variables_other" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_variables";
+CREATE TABLE "common_event_command_control_variables" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_self_switch";
+CREATE TABLE "common_event_command_control_self_switch" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_control_timer";
+CREATE TABLE "common_event_command_control_timer" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "stop" INTEGER NOT NULL CHECK ("stop" in (0, 1)),
+    "new_value" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "diff_type";
+CREATE TABLE "diff_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "diff_type" ("id", "name") VALUES
+    (0, 'INCREASE'),
+    (1, 'DECREASE');
+
+DROP TABLE IF EXISTS "common_event_command_change_gold";
+CREATE TABLE "common_event_command_change_gold" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "diff_type" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "with_variable" INTEGER NOT NULL CHECK ("with_variable" in (0, 1)),
+    "amount" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_battle_bgm";
+CREATE TABLE "common_event_command_change_battle_bgm" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_transfer_player";
+CREATE TABLE "common_event_command_transfer_player" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "with_variables" INTEGER NOT NULL CHECK ("with_variables" in (0, 1)),
+    "target_map_id" INTEGER NOT NULL,
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "no_fade" INTEGER NOT NULL CHECK ("no_fade" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "appoint_type";
+CREATE TABLE "appoint_type" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "appoint_type" ("id", "name") VALUES
+    (0, 'DIRECT'),
+    (1, 'VARIABLE'),
+    (2, 'EXCHANGE');
+
+DROP TABLE IF EXISTS "common_event_command_set_event_location";
+CREATE TABLE "common_event_command_set_event_location" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "appoint_type" INTEGER NOT NULL REFERENCES "appoint_type" ("id"),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_scroll_map";
+CREATE TABLE "common_event_command_scroll_map" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "distance" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_map_settings_panorama";
+CREATE TABLE "common_event_command_change_map_settings_panorama" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_map_settings_fog";
+CREATE TABLE "common_event_command_change_map_settings_fog" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    "zoom" INTEGER NOT NULL,
+    "sx" INTEGER NOT NULL,
+    "sy" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_map_settings_battle_back";
+CREATE TABLE "common_event_command_change_map_settings_battle_back" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_map_settings";
+CREATE TABLE "common_event_command_change_map_settings" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_fog_opacity";
+CREATE TABLE "common_event_command_change_fog_opacity" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_animation";
+CREATE TABLE "common_event_command_show_animation" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "animation_id" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_transparent_flag";
+CREATE TABLE "common_event_command_change_transparent_flag" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "is_normal" INTEGER NOT NULL CHECK ("is_normal" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command";
+CREATE TABLE "common_event_command_set_move_route_move_command" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_blank";
+CREATE TABLE "common_event_command_set_move_route_move_command_blank" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_down";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_down" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_right";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_right" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_up";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_up" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_lower_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_lower_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_lower_right";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_lower_right" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_upper_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_upper_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_upper_right";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_upper_right" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_at_random";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_at_random" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_toward_player";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_toward_player" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_away_from_player";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_away_from_player" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_step_forward";
+CREATE TABLE "common_event_command_set_move_route_move_command_step_forward" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_step_backward";
+CREATE TABLE "common_event_command_set_move_route_move_command_step_backward" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_jump";
+CREATE TABLE "common_event_command_set_move_route_move_command_jump" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_wait";
+CREATE TABLE "common_event_command_set_move_route_move_command_wait" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_down";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_down" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_right";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_right" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_up";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_up" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn90_right";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn90_right" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn90_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn90_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn180";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn180" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn90_right_or_left";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn90_right_or_left" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_at_random";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_at_random" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_toward_player";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_toward_player" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_turn_away_from_player";
+CREATE TABLE "common_event_command_set_move_route_move_command_turn_away_from_player" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_switch_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_switch_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_switch_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_switch_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "move_speed";
+CREATE TABLE "move_speed" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "move_speed" ("id", "name") VALUES
+    (1, 'SLOWEST'),
+    (2, 'SLOWER'),
+    (3, 'SLOW'),
+    (4, 'FAST'),
+    (5, 'FASTER'),
+    (6, 'FASTEST');
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_change_speed";
+CREATE TABLE "common_event_command_set_move_route_move_command_change_speed" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "move_frequency";
+CREATE TABLE "move_frequency" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "move_frequency" ("id", "name") VALUES
+    (1, 'LOWEST'),
+    (2, 'LOWER'),
+    (3, 'LOW'),
+    (4, 'HIGH'),
+    (5, 'HIGHER'),
+    (6, 'HIGHEST');
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_change_freq";
+CREATE TABLE "common_event_command_set_move_route_move_command_change_freq" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_animation_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_animation_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_move_animation_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_move_animation_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_stop_animation_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_stop_animation_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_stop_animation_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_stop_animation_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_direction_fix_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_direction_fix_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_direction_fix_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_direction_fix_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_through_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_through_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_through_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_through_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_always_on_top_on";
+CREATE TABLE "common_event_command_set_move_route_move_command_always_on_top_on" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_always_on_top_off";
+CREATE TABLE "common_event_command_set_move_route_move_command_always_on_top_off" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_graphic";
+CREATE TABLE "common_event_command_set_move_route_move_command_graphic" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_change_opacity";
+CREATE TABLE "common_event_command_set_move_route_move_command_change_opacity" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_change_blending";
+CREATE TABLE "common_event_command_set_move_route_move_command_change_blending" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_play_se";
+CREATE TABLE "common_event_command_set_move_route_move_command_play_se" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_script";
+CREATE TABLE "common_event_command_set_move_route_move_command_script" (
+    "common_event_id" INTEGER NOT NULL,
+    "common_event_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_set_move_route";
+CREATE TABLE "common_event_command_set_move_route" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "move_route_repeat" INTEGER NOT NULL CHECK ("move_route_repeat" in (0, 1)),
+    "move_route_skippable" INTEGER NOT NULL CHECK ("move_route_skippable" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_wait_for_move_completion";
+CREATE TABLE "common_event_command_wait_for_move_completion" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_prepare_for_transition";
+CREATE TABLE "common_event_command_prepare_for_transition" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_execute_transition";
+CREATE TABLE "common_event_command_execute_transition" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_screen_color_tone";
+CREATE TABLE "common_event_command_change_screen_color_tone" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_screen_flash";
+CREATE TABLE "common_event_command_screen_flash" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "color_red" REAL NOT NULL CHECK ("color_red" BETWEEN 0 AND 255),
+    "color_green" REAL NOT NULL CHECK ("color_green" BETWEEN 0 AND 255),
+    "color_blue" REAL NOT NULL CHECK ("color_blue" BETWEEN 0 AND 255),
+    "color_alpha" REAL NOT NULL CHECK ("color_alpha" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_screen_shake";
+CREATE TABLE "common_event_command_screen_shake" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "power" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_picture";
+CREATE TABLE "common_event_command_show_picture" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_move_picture";
+CREATE TABLE "common_event_command_move_picture" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_rotate_picture";
+CREATE TABLE "common_event_command_rotate_picture" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_picture_color_tone";
+CREATE TABLE "common_event_command_change_picture_color_tone" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_erase_picture";
+CREATE TABLE "common_event_command_erase_picture" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "weather";
+CREATE TABLE "weather" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "weather" ("id", "name") VALUES
+    (0, 'NONE'),
+    (1, 'RAIN'),
+    (2, 'STORM'),
+    (3, 'SNOW');
+
+DROP TABLE IF EXISTS "common_event_command_set_weather_effects";
+CREATE TABLE "common_event_command_set_weather_effects" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "type" INTEGER NOT NULL REFERENCES "weather" ("id"),
+    "power" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_play_bgm";
+CREATE TABLE "common_event_command_play_bgm" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_fade_out_bgm";
+CREATE TABLE "common_event_command_fade_out_bgm" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_play_bgs";
+CREATE TABLE "common_event_command_play_bgs" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_fade_out_bgs";
+CREATE TABLE "common_event_command_fade_out_bgs" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_memorize_bgmor_bgs";
+CREATE TABLE "common_event_command_memorize_bgmor_bgs" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_play_me";
+CREATE TABLE "common_event_command_play_me" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_play_se";
+CREATE TABLE "common_event_command_play_se" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_stop_se";
+CREATE TABLE "common_event_command_stop_se" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_recover_all";
+CREATE TABLE "common_event_command_recover_all" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_abort_battle";
+CREATE TABLE "common_event_command_abort_battle" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_call_menu_screen";
+CREATE TABLE "common_event_command_call_menu_screen" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_call_save_screen";
+CREATE TABLE "common_event_command_call_save_screen" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_game_over";
+CREATE TABLE "common_event_command_game_over" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_return_to_title_screen";
+CREATE TABLE "common_event_command_return_to_title_screen" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_script";
+CREATE TABLE "common_event_command_script" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_show_text";
+CREATE TABLE "common_event_command_continue_show_text" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_choices_when_choice";
+CREATE TABLE "common_event_command_show_choices_when_choice" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice_index" INTEGER NOT NULL,
+    "choice_text" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_choices_when_cancel";
+CREATE TABLE "common_event_command_show_choices_when_cancel" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_show_choices_branch_end";
+CREATE TABLE "common_event_command_show_choices_branch_end" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_comment";
+CREATE TABLE "common_event_command_continue_comment" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_else";
+CREATE TABLE "common_event_command_else" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_end";
+CREATE TABLE "common_event_command_conditional_branch_end" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_repeat_above";
+CREATE TABLE "common_event_command_repeat_above" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_blank";
+CREATE TABLE "common_event_command_continue_set_move_route_blank" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_down";
+CREATE TABLE "common_event_command_continue_set_move_route_move_down" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_left";
+CREATE TABLE "common_event_command_continue_set_move_route_move_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_right";
+CREATE TABLE "common_event_command_continue_set_move_route_move_right" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_up";
+CREATE TABLE "common_event_command_continue_set_move_route_move_up" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_lower_left";
+CREATE TABLE "common_event_command_continue_set_move_route_move_lower_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_lower_right";
+CREATE TABLE "common_event_command_continue_set_move_route_move_lower_right" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_upper_left";
+CREATE TABLE "common_event_command_continue_set_move_route_move_upper_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_upper_right";
+CREATE TABLE "common_event_command_continue_set_move_route_move_upper_right" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_at_random";
+CREATE TABLE "common_event_command_continue_set_move_route_move_at_random" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_toward_player";
+CREATE TABLE "common_event_command_continue_set_move_route_move_toward_player" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_away_from_player";
+CREATE TABLE "common_event_command_continue_set_move_route_move_away_from_player" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_step_forward";
+CREATE TABLE "common_event_command_continue_set_move_route_step_forward" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_step_backward";
+CREATE TABLE "common_event_command_continue_set_move_route_step_backward" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_jump";
+CREATE TABLE "common_event_command_continue_set_move_route_jump" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_wait";
+CREATE TABLE "common_event_command_continue_set_move_route_wait" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_down";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_down" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_left";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_right";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_right" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_up";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_up" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn90_right";
+CREATE TABLE "common_event_command_continue_set_move_route_turn90_right" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn90_left";
+CREATE TABLE "common_event_command_continue_set_move_route_turn90_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn180";
+CREATE TABLE "common_event_command_continue_set_move_route_turn180" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn90_right_or_left";
+CREATE TABLE "common_event_command_continue_set_move_route_turn90_right_or_left" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_at_random";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_at_random" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_toward_player";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_toward_player" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_turn_away_from_player";
+CREATE TABLE "common_event_command_continue_set_move_route_turn_away_from_player" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_switch_on";
+CREATE TABLE "common_event_command_continue_set_move_route_switch_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_switch_off";
+CREATE TABLE "common_event_command_continue_set_move_route_switch_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_change_speed";
+CREATE TABLE "common_event_command_continue_set_move_route_change_speed" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_change_freq";
+CREATE TABLE "common_event_command_continue_set_move_route_change_freq" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_animation_on";
+CREATE TABLE "common_event_command_continue_set_move_route_move_animation_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_move_animation_off";
+CREATE TABLE "common_event_command_continue_set_move_route_move_animation_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_stop_animation_on";
+CREATE TABLE "common_event_command_continue_set_move_route_stop_animation_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_stop_animation_off";
+CREATE TABLE "common_event_command_continue_set_move_route_stop_animation_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_direction_fix_on";
+CREATE TABLE "common_event_command_continue_set_move_route_direction_fix_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_direction_fix_off";
+CREATE TABLE "common_event_command_continue_set_move_route_direction_fix_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_through_on";
+CREATE TABLE "common_event_command_continue_set_move_route_through_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_through_off";
+CREATE TABLE "common_event_command_continue_set_move_route_through_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_always_on_top_on";
+CREATE TABLE "common_event_command_continue_set_move_route_always_on_top_on" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_always_on_top_off";
+CREATE TABLE "common_event_command_continue_set_move_route_always_on_top_off" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_graphic";
+CREATE TABLE "common_event_command_continue_set_move_route_graphic" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_change_opacity";
+CREATE TABLE "common_event_command_continue_set_move_route_change_opacity" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_change_blending";
+CREATE TABLE "common_event_command_continue_set_move_route_change_blending" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_play_se";
+CREATE TABLE "common_event_command_continue_set_move_route_play_se" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_script";
+CREATE TABLE "common_event_command_continue_set_move_route_script" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_set_move_route";
+CREATE TABLE "common_event_command_continue_set_move_route" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "command_code" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_script";
+CREATE TABLE "common_event_command_continue_script" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
 
 DROP TABLE IF EXISTS "enemy";
 CREATE TABLE "enemy" (
@@ -241,7 +2021,7 @@ CREATE TABLE "enemy_action" (
     "condition_turn_b" INTEGER NOT NULL,
     "condition_hp" INTEGER NOT NULL,
     "condition_level" INTEGER NOT NULL,
-    "condition_switch_id" INTEGER NOT NULL,
+    "condition_switch_id" INTEGER REFERENCES "switch" ("id"),
     "rating" INTEGER NOT NULL CHECK ("rating" BETWEEN 1 AND 10),
     PRIMARY KEY ("enemy_id", "index")
 ) STRICT;
@@ -342,7 +2122,7 @@ INSERT INTO "parameter_type" ("id", "name") VALUES
 DROP TABLE IF EXISTS "item_element";
 CREATE TABLE "item_element" (
     "item_id" INTEGER NOT NULL REFERENCES "item" ("id"),
-    "element_id" INTEGER NOT NULL,
+    "element_id" INTEGER REFERENCES "element" ("id"),
     PRIMARY KEY ("item_id", "element_id")
 ) STRICT;
 
@@ -387,11 +2167,11 @@ CREATE TABLE "event_page" (
     "condition_switch2_valid" INTEGER NOT NULL CHECK ("condition_switch2_valid" in (0, 1)),
     "condition_variable_valid" INTEGER NOT NULL CHECK ("condition_variable_valid" in (0, 1)),
     "condition_self_switch_valid" INTEGER NOT NULL CHECK ("condition_self_switch_valid" in (0, 1)),
-    "condition_switch1_id" INTEGER NOT NULL,
-    "condition_switch2_id" INTEGER NOT NULL,
-    "condition_variable_id" INTEGER NOT NULL,
+    "condition_switch1_id" INTEGER REFERENCES "switch" ("id"),
+    "condition_switch2_id" INTEGER REFERENCES "switch" ("id"),
+    "condition_variable_id" INTEGER REFERENCES "variable" ("id"),
     "condition_variable_value" INTEGER NOT NULL,
-    "condition_self_switch_ch" TEXT NOT NULL,
+    "condition_self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
     "graphic_tile_id" INTEGER NOT NULL,
     "graphic_character_name" TEXT NOT NULL,
     "graphic_character_hue" INTEGER NOT NULL CHECK ("graphic_character_hue" BETWEEN 0 AND 360),
@@ -411,20 +2191,8 @@ CREATE TABLE "event_page" (
     "always_on_top" INTEGER NOT NULL CHECK ("always_on_top" in (0, 1)),
     "trigger" INTEGER NOT NULL REFERENCES "event_page_trigger" ("id"),
     PRIMARY KEY ("map_id", "event_id", "index"),
-    FOREIGN KEY ("map_id", "event_id")  REFERENCES "event" ("map_id", "id")
+    FOREIGN KEY ("map_id", "event_id") REFERENCES "event" ("map_id", "id")
 ) STRICT;
-
-DROP TABLE IF EXISTS "direction";
-CREATE TABLE "direction" (
-    "id" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL
-) STRICT;
-
-INSERT INTO "direction" ("id", "name") VALUES
-    (2, 'DOWN'),
-    (4, 'LEFT'),
-    (6, 'RIGHT'),
-    (8, 'UP');
 
 DROP TABLE IF EXISTS "move_type";
 CREATE TABLE "move_type" (
@@ -438,33 +2206,493 @@ INSERT INTO "move_type" ("id", "name") VALUES
     (2, 'APPROACH'),
     (3, 'CUSTOM');
 
-DROP TABLE IF EXISTS "move_frequency";
-CREATE TABLE "move_frequency" (
-    "id" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL
+DROP TABLE IF EXISTS "event_page_move_command";
+CREATE TABLE "event_page_move_command" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
-INSERT INTO "move_frequency" ("id", "name") VALUES
-    (1, 'LOWEST'),
-    (2, 'LOWER'),
-    (3, 'LOW'),
-    (4, 'HIGH'),
-    (5, 'HIGHER'),
-    (6, 'HIGHEST');
-
-DROP TABLE IF EXISTS "move_speed";
-CREATE TABLE "move_speed" (
-    "id" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL
+DROP TABLE IF EXISTS "event_page_move_command_blank";
+CREATE TABLE "event_page_move_command_blank" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
-INSERT INTO "move_speed" ("id", "name") VALUES
-    (1, 'SLOWEST'),
-    (2, 'SLOWER'),
-    (3, 'SLOW'),
-    (4, 'FAST'),
-    (5, 'FASTER'),
-    (6, 'FASTEST');
+DROP TABLE IF EXISTS "event_page_move_command_move_down";
+CREATE TABLE "event_page_move_command_move_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_left";
+CREATE TABLE "event_page_move_command_move_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_right";
+CREATE TABLE "event_page_move_command_move_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_up";
+CREATE TABLE "event_page_move_command_move_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_lower_left";
+CREATE TABLE "event_page_move_command_move_lower_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_lower_right";
+CREATE TABLE "event_page_move_command_move_lower_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_upper_left";
+CREATE TABLE "event_page_move_command_move_upper_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_upper_right";
+CREATE TABLE "event_page_move_command_move_upper_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_at_random";
+CREATE TABLE "event_page_move_command_move_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_toward_player";
+CREATE TABLE "event_page_move_command_move_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_away_from_player";
+CREATE TABLE "event_page_move_command_move_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_step_forward";
+CREATE TABLE "event_page_move_command_step_forward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_step_backward";
+CREATE TABLE "event_page_move_command_step_backward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_jump";
+CREATE TABLE "event_page_move_command_jump" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_wait";
+CREATE TABLE "event_page_move_command_wait" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_down";
+CREATE TABLE "event_page_move_command_turn_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_left";
+CREATE TABLE "event_page_move_command_turn_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_right";
+CREATE TABLE "event_page_move_command_turn_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_up";
+CREATE TABLE "event_page_move_command_turn_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn90_right";
+CREATE TABLE "event_page_move_command_turn90_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn90_left";
+CREATE TABLE "event_page_move_command_turn90_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn180";
+CREATE TABLE "event_page_move_command_turn180" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn90_right_or_left";
+CREATE TABLE "event_page_move_command_turn90_right_or_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_at_random";
+CREATE TABLE "event_page_move_command_turn_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_toward_player";
+CREATE TABLE "event_page_move_command_turn_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_turn_away_from_player";
+CREATE TABLE "event_page_move_command_turn_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_switch_on";
+CREATE TABLE "event_page_move_command_switch_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_switch_off";
+CREATE TABLE "event_page_move_command_switch_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_change_speed";
+CREATE TABLE "event_page_move_command_change_speed" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_change_freq";
+CREATE TABLE "event_page_move_command_change_freq" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_animation_on";
+CREATE TABLE "event_page_move_command_move_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_move_animation_off";
+CREATE TABLE "event_page_move_command_move_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_stop_animation_on";
+CREATE TABLE "event_page_move_command_stop_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_stop_animation_off";
+CREATE TABLE "event_page_move_command_stop_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_direction_fix_on";
+CREATE TABLE "event_page_move_command_direction_fix_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_direction_fix_off";
+CREATE TABLE "event_page_move_command_direction_fix_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_through_on";
+CREATE TABLE "event_page_move_command_through_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_through_off";
+CREATE TABLE "event_page_move_command_through_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_always_on_top_on";
+CREATE TABLE "event_page_move_command_always_on_top_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_always_on_top_off";
+CREATE TABLE "event_page_move_command_always_on_top_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_graphic";
+CREATE TABLE "event_page_move_command_graphic" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_change_opacity";
+CREATE TABLE "event_page_move_command_change_opacity" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_change_blending";
+CREATE TABLE "event_page_move_command_change_blending" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_play_se";
+CREATE TABLE "event_page_move_command_play_se" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_move_command_script";
+CREATE TABLE "event_page_move_command_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
 
 DROP TABLE IF EXISTS "event_page_trigger";
 CREATE TABLE "event_page_trigger" (
@@ -478,6 +2706,2113 @@ INSERT INTO "event_page_trigger" ("id", "name") VALUES
     (2, 'CONTACT_WITH_EVENT'),
     (3, 'AUTORUN'),
     (4, 'PARALLEL_PROCESSING');
+
+DROP TABLE IF EXISTS "event_page_command";
+CREATE TABLE "event_page_command" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    "indent" INTEGER NOT NULL CHECK ("indent" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_blank";
+CREATE TABLE "event_page_command_blank" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_text";
+CREATE TABLE "event_page_command_show_text" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_choices_choice";
+CREATE TABLE "event_page_command_show_choices_choice" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_show_choices_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_show_choices_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_show_choices_index") REFERENCES "event_page_command_show_choices" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_choices";
+CREATE TABLE "event_page_command_show_choices" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "cancel_type" INTEGER NOT NULL REFERENCES "choices_cancel_type" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_input_number";
+CREATE TABLE "event_page_command_input_number" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    "max_digits" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_text_options";
+CREATE TABLE "event_page_command_change_text_options" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "position" INTEGER NOT NULL REFERENCES "text_position" ("id"),
+    "no_frame" INTEGER NOT NULL CHECK ("no_frame" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_button_input_processing";
+CREATE TABLE "event_page_command_button_input_processing" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_wait";
+CREATE TABLE "event_page_command_wait" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_comment";
+CREATE TABLE "event_page_command_comment" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_switch";
+CREATE TABLE "event_page_command_conditional_branch_switch" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_variable";
+CREATE TABLE "event_page_command_conditional_branch_variable" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "variable_id" INTEGER NOT NULL,
+    "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
+    "value" INTEGER NOT NULL,
+    "comparison" INTEGER NOT NULL REFERENCES "comparison" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_self_switch";
+CREATE TABLE "event_page_command_conditional_branch_self_switch" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_timer";
+CREATE TABLE "event_page_command_conditional_branch_timer" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "mins" INTEGER NOT NULL,
+    "secs" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor";
+CREATE TABLE "event_page_command_conditional_branch_actor" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_enemy";
+CREATE TABLE "event_page_command_conditional_branch_enemy" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_character";
+CREATE TABLE "event_page_command_conditional_branch_character" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "character_reference" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_gold";
+CREATE TABLE "event_page_command_conditional_branch_gold" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_item";
+CREATE TABLE "event_page_command_conditional_branch_item" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_weapon";
+CREATE TABLE "event_page_command_conditional_branch_weapon" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_armor";
+CREATE TABLE "event_page_command_conditional_branch_armor" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_button";
+CREATE TABLE "event_page_command_conditional_branch_button" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "button" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_script";
+CREATE TABLE "event_page_command_conditional_branch_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "expr" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch";
+CREATE TABLE "event_page_command_conditional_branch" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_loop";
+CREATE TABLE "event_page_command_loop" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_break_loop";
+CREATE TABLE "event_page_command_break_loop" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_exit_event_processing";
+CREATE TABLE "event_page_command_exit_event_processing" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_erase_event";
+CREATE TABLE "event_page_command_erase_event" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_call_common_event";
+CREATE TABLE "event_page_command_call_common_event" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "called_event_id" INTEGER REFERENCES "common_event" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_label";
+CREATE TABLE "event_page_command_label" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_jump_to_label";
+CREATE TABLE "event_page_command_jump_to_label" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_switches";
+CREATE TABLE "event_page_command_control_switches" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id_lo" INTEGER NOT NULL,
+    "switch_id_hi" INTEGER NOT NULL,
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables_invariant";
+CREATE TABLE "event_page_command_control_variables_invariant" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "value" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables_variable";
+CREATE TABLE "event_page_command_control_variables_variable" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables_random_number";
+CREATE TABLE "event_page_command_control_variables_random_number" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "lb" INTEGER NOT NULL,
+    "ub" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables_character";
+CREATE TABLE "event_page_command_control_variables_character" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "attr_value" INTEGER NOT NULL,
+    "attr_code" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables_other";
+CREATE TABLE "event_page_command_control_variables_other" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_variables";
+CREATE TABLE "event_page_command_control_variables" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_self_switch";
+CREATE TABLE "event_page_command_control_self_switch" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_control_timer";
+CREATE TABLE "event_page_command_control_timer" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "stop" INTEGER NOT NULL CHECK ("stop" in (0, 1)),
+    "new_value" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_gold";
+CREATE TABLE "event_page_command_change_gold" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "diff_type" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "with_variable" INTEGER NOT NULL CHECK ("with_variable" in (0, 1)),
+    "amount" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_battle_bgm";
+CREATE TABLE "event_page_command_change_battle_bgm" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_transfer_player";
+CREATE TABLE "event_page_command_transfer_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "with_variables" INTEGER NOT NULL CHECK ("with_variables" in (0, 1)),
+    "target_map_id" INTEGER NOT NULL,
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "no_fade" INTEGER NOT NULL CHECK ("no_fade" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_event_location";
+CREATE TABLE "event_page_command_set_event_location" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "appoint_type" INTEGER NOT NULL REFERENCES "appoint_type" ("id"),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_scroll_map";
+CREATE TABLE "event_page_command_scroll_map" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "distance" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_map_settings_panorama";
+CREATE TABLE "event_page_command_change_map_settings_panorama" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_map_settings_fog";
+CREATE TABLE "event_page_command_change_map_settings_fog" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    "zoom" INTEGER NOT NULL,
+    "sx" INTEGER NOT NULL,
+    "sy" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_map_settings_battle_back";
+CREATE TABLE "event_page_command_change_map_settings_battle_back" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_map_settings";
+CREATE TABLE "event_page_command_change_map_settings" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_fog_opacity";
+CREATE TABLE "event_page_command_change_fog_opacity" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_animation";
+CREATE TABLE "event_page_command_show_animation" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "animation_id" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_transparent_flag";
+CREATE TABLE "event_page_command_change_transparent_flag" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "is_normal" INTEGER NOT NULL CHECK ("is_normal" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command";
+CREATE TABLE "event_page_command_set_move_route_move_command" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_blank";
+CREATE TABLE "event_page_command_set_move_route_move_command_blank" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_down";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_right";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_up";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_lower_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_lower_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_lower_right";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_lower_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_upper_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_upper_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_upper_right";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_upper_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_at_random";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_toward_player";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_away_from_player";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_step_forward";
+CREATE TABLE "event_page_command_set_move_route_move_command_step_forward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_step_backward";
+CREATE TABLE "event_page_command_set_move_route_move_command_step_backward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_jump";
+CREATE TABLE "event_page_command_set_move_route_move_command_jump" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_wait";
+CREATE TABLE "event_page_command_set_move_route_move_command_wait" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_down";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_right";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_up";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn90_right";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn90_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn90_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn90_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn180";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn180" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn90_right_or_left";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn90_right_or_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_at_random";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_toward_player";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_turn_away_from_player";
+CREATE TABLE "event_page_command_set_move_route_move_command_turn_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_switch_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_switch_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_switch_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_switch_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_change_speed";
+CREATE TABLE "event_page_command_set_move_route_move_command_change_speed" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_change_freq";
+CREATE TABLE "event_page_command_set_move_route_move_command_change_freq" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_animation_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_move_animation_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_move_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_stop_animation_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_stop_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_stop_animation_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_stop_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_direction_fix_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_direction_fix_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_direction_fix_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_direction_fix_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_through_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_through_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_through_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_through_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_always_on_top_on";
+CREATE TABLE "event_page_command_set_move_route_move_command_always_on_top_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_always_on_top_off";
+CREATE TABLE "event_page_command_set_move_route_move_command_always_on_top_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_graphic";
+CREATE TABLE "event_page_command_set_move_route_move_command_graphic" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_change_opacity";
+CREATE TABLE "event_page_command_set_move_route_move_command_change_opacity" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_change_blending";
+CREATE TABLE "event_page_command_set_move_route_move_command_change_blending" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_play_se";
+CREATE TABLE "event_page_command_set_move_route_move_command_play_se" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_script";
+CREATE TABLE "event_page_command_set_move_route_move_command_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "event_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_move_route";
+CREATE TABLE "event_page_command_set_move_route" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "move_route_repeat" INTEGER NOT NULL CHECK ("move_route_repeat" in (0, 1)),
+    "move_route_skippable" INTEGER NOT NULL CHECK ("move_route_skippable" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_wait_for_move_completion";
+CREATE TABLE "event_page_command_wait_for_move_completion" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_prepare_for_transition";
+CREATE TABLE "event_page_command_prepare_for_transition" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_execute_transition";
+CREATE TABLE "event_page_command_execute_transition" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_screen_color_tone";
+CREATE TABLE "event_page_command_change_screen_color_tone" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_screen_flash";
+CREATE TABLE "event_page_command_screen_flash" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "color_red" REAL NOT NULL CHECK ("color_red" BETWEEN 0 AND 255),
+    "color_green" REAL NOT NULL CHECK ("color_green" BETWEEN 0 AND 255),
+    "color_blue" REAL NOT NULL CHECK ("color_blue" BETWEEN 0 AND 255),
+    "color_alpha" REAL NOT NULL CHECK ("color_alpha" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_screen_shake";
+CREATE TABLE "event_page_command_screen_shake" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "power" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_picture";
+CREATE TABLE "event_page_command_show_picture" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_move_picture";
+CREATE TABLE "event_page_command_move_picture" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_rotate_picture";
+CREATE TABLE "event_page_command_rotate_picture" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_picture_color_tone";
+CREATE TABLE "event_page_command_change_picture_color_tone" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_erase_picture";
+CREATE TABLE "event_page_command_erase_picture" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_set_weather_effects";
+CREATE TABLE "event_page_command_set_weather_effects" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "type" INTEGER NOT NULL REFERENCES "weather" ("id"),
+    "power" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_play_bgm";
+CREATE TABLE "event_page_command_play_bgm" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_fade_out_bgm";
+CREATE TABLE "event_page_command_fade_out_bgm" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_play_bgs";
+CREATE TABLE "event_page_command_play_bgs" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_fade_out_bgs";
+CREATE TABLE "event_page_command_fade_out_bgs" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_memorize_bgmor_bgs";
+CREATE TABLE "event_page_command_memorize_bgmor_bgs" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_play_me";
+CREATE TABLE "event_page_command_play_me" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_play_se";
+CREATE TABLE "event_page_command_play_se" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_stop_se";
+CREATE TABLE "event_page_command_stop_se" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_recover_all";
+CREATE TABLE "event_page_command_recover_all" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_abort_battle";
+CREATE TABLE "event_page_command_abort_battle" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_call_menu_screen";
+CREATE TABLE "event_page_command_call_menu_screen" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_call_save_screen";
+CREATE TABLE "event_page_command_call_save_screen" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_game_over";
+CREATE TABLE "event_page_command_game_over" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_return_to_title_screen";
+CREATE TABLE "event_page_command_return_to_title_screen" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_script";
+CREATE TABLE "event_page_command_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_show_text";
+CREATE TABLE "event_page_command_continue_show_text" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_choices_when_choice";
+CREATE TABLE "event_page_command_show_choices_when_choice" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice_index" INTEGER NOT NULL,
+    "choice_text" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_choices_when_cancel";
+CREATE TABLE "event_page_command_show_choices_when_cancel" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_show_choices_branch_end";
+CREATE TABLE "event_page_command_show_choices_branch_end" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_comment";
+CREATE TABLE "event_page_command_continue_comment" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_else";
+CREATE TABLE "event_page_command_else" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_end";
+CREATE TABLE "event_page_command_conditional_branch_end" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_repeat_above";
+CREATE TABLE "event_page_command_repeat_above" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_blank";
+CREATE TABLE "event_page_command_continue_set_move_route_blank" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_down";
+CREATE TABLE "event_page_command_continue_set_move_route_move_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_left";
+CREATE TABLE "event_page_command_continue_set_move_route_move_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_right";
+CREATE TABLE "event_page_command_continue_set_move_route_move_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_up";
+CREATE TABLE "event_page_command_continue_set_move_route_move_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_lower_left";
+CREATE TABLE "event_page_command_continue_set_move_route_move_lower_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_lower_right";
+CREATE TABLE "event_page_command_continue_set_move_route_move_lower_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_upper_left";
+CREATE TABLE "event_page_command_continue_set_move_route_move_upper_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_upper_right";
+CREATE TABLE "event_page_command_continue_set_move_route_move_upper_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_at_random";
+CREATE TABLE "event_page_command_continue_set_move_route_move_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_toward_player";
+CREATE TABLE "event_page_command_continue_set_move_route_move_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_away_from_player";
+CREATE TABLE "event_page_command_continue_set_move_route_move_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_step_forward";
+CREATE TABLE "event_page_command_continue_set_move_route_step_forward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_step_backward";
+CREATE TABLE "event_page_command_continue_set_move_route_step_backward" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_jump";
+CREATE TABLE "event_page_command_continue_set_move_route_jump" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_wait";
+CREATE TABLE "event_page_command_continue_set_move_route_wait" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_down";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_down" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_left";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_right";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_up";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_up" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn90_right";
+CREATE TABLE "event_page_command_continue_set_move_route_turn90_right" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn90_left";
+CREATE TABLE "event_page_command_continue_set_move_route_turn90_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn180";
+CREATE TABLE "event_page_command_continue_set_move_route_turn180" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn90_right_or_left";
+CREATE TABLE "event_page_command_continue_set_move_route_turn90_right_or_left" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_at_random";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_at_random" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_toward_player";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_toward_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_turn_away_from_player";
+CREATE TABLE "event_page_command_continue_set_move_route_turn_away_from_player" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_switch_on";
+CREATE TABLE "event_page_command_continue_set_move_route_switch_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_switch_off";
+CREATE TABLE "event_page_command_continue_set_move_route_switch_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_change_speed";
+CREATE TABLE "event_page_command_continue_set_move_route_change_speed" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_change_freq";
+CREATE TABLE "event_page_command_continue_set_move_route_change_freq" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_animation_on";
+CREATE TABLE "event_page_command_continue_set_move_route_move_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_move_animation_off";
+CREATE TABLE "event_page_command_continue_set_move_route_move_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_stop_animation_on";
+CREATE TABLE "event_page_command_continue_set_move_route_stop_animation_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_stop_animation_off";
+CREATE TABLE "event_page_command_continue_set_move_route_stop_animation_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_direction_fix_on";
+CREATE TABLE "event_page_command_continue_set_move_route_direction_fix_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_direction_fix_off";
+CREATE TABLE "event_page_command_continue_set_move_route_direction_fix_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_through_on";
+CREATE TABLE "event_page_command_continue_set_move_route_through_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_through_off";
+CREATE TABLE "event_page_command_continue_set_move_route_through_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_always_on_top_on";
+CREATE TABLE "event_page_command_continue_set_move_route_always_on_top_on" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_always_on_top_off";
+CREATE TABLE "event_page_command_continue_set_move_route_always_on_top_off" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_graphic";
+CREATE TABLE "event_page_command_continue_set_move_route_graphic" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_change_opacity";
+CREATE TABLE "event_page_command_continue_set_move_route_change_opacity" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_change_blending";
+CREATE TABLE "event_page_command_continue_set_move_route_change_blending" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_play_se";
+CREATE TABLE "event_page_command_continue_set_move_route_play_se" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_script";
+CREATE TABLE "event_page_command_continue_set_move_route_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_set_move_route";
+CREATE TABLE "event_page_command_continue_set_move_route" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "command_code" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_continue_script";
+CREATE TABLE "event_page_command_continue_script" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
 
 DROP TABLE IF EXISTS "map";
 CREATE TABLE "map" (
@@ -547,7 +4882,7 @@ CREATE TABLE "skill" (
 DROP TABLE IF EXISTS "skill_element";
 CREATE TABLE "skill_element" (
     "skill_id" INTEGER NOT NULL REFERENCES "skill" ("id"),
-    "element_id" INTEGER NOT NULL,
+    "element_id" INTEGER REFERENCES "element" ("id"),
     PRIMARY KEY ("skill_id", "element_id")
 ) STRICT;
 
@@ -610,7 +4945,7 @@ INSERT INTO "state_restriction" ("id", "name") VALUES
 DROP TABLE IF EXISTS "state_guard_element";
 CREATE TABLE "state_guard_element" (
     "state_id" INTEGER NOT NULL REFERENCES "state" ("id"),
-    "element_id" INTEGER NOT NULL,
+    "element_id" INTEGER REFERENCES "element" ("id"),
     PRIMARY KEY ("state_id", "element_id")
 ) STRICT;
 
@@ -811,7 +5146,7 @@ CREATE TABLE "troop_page" (
     "condition_enemy_hp" INTEGER NOT NULL,
     "condition_actor_id" INTEGER REFERENCES "actor" ("id"),
     "condition_actor_hp" INTEGER NOT NULL,
-    "condition_switch_id" INTEGER NOT NULL,
+    "condition_switch_id" INTEGER REFERENCES "switch" ("id"),
     "span" INTEGER NOT NULL REFERENCES "troop_page_span" ("id"),
     PRIMARY KEY ("troop_id", "index")
 ) STRICT;
@@ -826,6 +5161,1930 @@ INSERT INTO "troop_page_span" ("id", "name") VALUES
     (0, 'BATTLE'),
     (1, 'TURN'),
     (2, 'MOMENT');
+
+DROP TABLE IF EXISTS "troop_page_command";
+CREATE TABLE "troop_page_command" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    "indent" INTEGER NOT NULL CHECK ("indent" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_blank";
+CREATE TABLE "troop_page_command_blank" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_text";
+CREATE TABLE "troop_page_command_show_text" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_choices_choice";
+CREATE TABLE "troop_page_command_show_choices_choice" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_show_choices_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_show_choices_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_show_choices_index") REFERENCES "troop_page_command_show_choices" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_choices";
+CREATE TABLE "troop_page_command_show_choices" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "cancel_type" INTEGER NOT NULL REFERENCES "choices_cancel_type" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_input_number";
+CREATE TABLE "troop_page_command_input_number" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    "max_digits" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_text_options";
+CREATE TABLE "troop_page_command_change_text_options" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "position" INTEGER NOT NULL REFERENCES "text_position" ("id"),
+    "no_frame" INTEGER NOT NULL CHECK ("no_frame" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_button_input_processing";
+CREATE TABLE "troop_page_command_button_input_processing" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_wait";
+CREATE TABLE "troop_page_command_wait" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_comment";
+CREATE TABLE "troop_page_command_comment" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_switch";
+CREATE TABLE "troop_page_command_conditional_branch_switch" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_variable";
+CREATE TABLE "troop_page_command_conditional_branch_variable" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "variable_id" INTEGER NOT NULL,
+    "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
+    "value" INTEGER NOT NULL,
+    "comparison" INTEGER NOT NULL REFERENCES "comparison" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_self_switch";
+CREATE TABLE "troop_page_command_conditional_branch_self_switch" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_timer";
+CREATE TABLE "troop_page_command_conditional_branch_timer" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "mins" INTEGER NOT NULL,
+    "secs" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor";
+CREATE TABLE "troop_page_command_conditional_branch_actor" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_enemy";
+CREATE TABLE "troop_page_command_conditional_branch_enemy" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_character";
+CREATE TABLE "troop_page_command_conditional_branch_character" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "character_reference" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_gold";
+CREATE TABLE "troop_page_command_conditional_branch_gold" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_item";
+CREATE TABLE "troop_page_command_conditional_branch_item" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_weapon";
+CREATE TABLE "troop_page_command_conditional_branch_weapon" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_armor";
+CREATE TABLE "troop_page_command_conditional_branch_armor" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_button";
+CREATE TABLE "troop_page_command_conditional_branch_button" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "button" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_script";
+CREATE TABLE "troop_page_command_conditional_branch_script" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "expr" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch";
+CREATE TABLE "troop_page_command_conditional_branch" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_loop";
+CREATE TABLE "troop_page_command_loop" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_break_loop";
+CREATE TABLE "troop_page_command_break_loop" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_exit_event_processing";
+CREATE TABLE "troop_page_command_exit_event_processing" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_erase_event";
+CREATE TABLE "troop_page_command_erase_event" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_call_common_event";
+CREATE TABLE "troop_page_command_call_common_event" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "called_event_id" INTEGER REFERENCES "common_event" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_label";
+CREATE TABLE "troop_page_command_label" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_jump_to_label";
+CREATE TABLE "troop_page_command_jump_to_label" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "id" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_switches";
+CREATE TABLE "troop_page_command_control_switches" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id_lo" INTEGER NOT NULL,
+    "switch_id_hi" INTEGER NOT NULL,
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables_invariant";
+CREATE TABLE "troop_page_command_control_variables_invariant" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "value" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables_variable";
+CREATE TABLE "troop_page_command_control_variables_variable" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "variable_id" INTEGER REFERENCES "variable" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables_random_number";
+CREATE TABLE "troop_page_command_control_variables_random_number" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "lb" INTEGER NOT NULL,
+    "ub" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables_character";
+CREATE TABLE "troop_page_command_control_variables_character" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "attr_value" INTEGER NOT NULL,
+    "attr_code" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables_other";
+CREATE TABLE "troop_page_command_control_variables_other" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_variables";
+CREATE TABLE "troop_page_command_control_variables" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "variable_id_hi" INTEGER NOT NULL,
+    "variable_id_lo" INTEGER NOT NULL,
+    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
+    "operand_type" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_self_switch";
+CREATE TABLE "troop_page_command_control_self_switch" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
+    "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_control_timer";
+CREATE TABLE "troop_page_command_control_timer" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "stop" INTEGER NOT NULL CHECK ("stop" in (0, 1)),
+    "new_value" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_gold";
+CREATE TABLE "troop_page_command_change_gold" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "diff_type" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "with_variable" INTEGER NOT NULL CHECK ("with_variable" in (0, 1)),
+    "amount" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_battle_bgm";
+CREATE TABLE "troop_page_command_change_battle_bgm" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_transfer_player";
+CREATE TABLE "troop_page_command_transfer_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "with_variables" INTEGER NOT NULL CHECK ("with_variables" in (0, 1)),
+    "target_map_id" INTEGER NOT NULL,
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "no_fade" INTEGER NOT NULL CHECK ("no_fade" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_event_location";
+CREATE TABLE "troop_page_command_set_event_location" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "appoint_type" INTEGER NOT NULL REFERENCES "appoint_type" ("id"),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_scroll_map";
+CREATE TABLE "troop_page_command_scroll_map" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "distance" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_map_settings_panorama";
+CREATE TABLE "troop_page_command_change_map_settings_panorama" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_map_settings_fog";
+CREATE TABLE "troop_page_command_change_map_settings_fog" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "hue" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    "zoom" INTEGER NOT NULL,
+    "sx" INTEGER NOT NULL,
+    "sy" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_map_settings_battle_back";
+CREATE TABLE "troop_page_command_change_map_settings_battle_back" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_map_settings";
+CREATE TABLE "troop_page_command_change_map_settings" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "subcode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_fog_opacity";
+CREATE TABLE "troop_page_command_change_fog_opacity" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_animation";
+CREATE TABLE "troop_page_command_show_animation" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "animation_id" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_transparent_flag";
+CREATE TABLE "troop_page_command_change_transparent_flag" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "is_normal" INTEGER NOT NULL CHECK ("is_normal" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command";
+CREATE TABLE "troop_page_command_set_move_route_move_command" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "code" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_blank";
+CREATE TABLE "troop_page_command_set_move_route_move_command_blank" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_down";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_down" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_right";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_up";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_up" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_lower_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_lower_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_lower_right";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_lower_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_upper_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_upper_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_upper_right";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_upper_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_at_random";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_at_random" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_toward_player";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_toward_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_away_from_player";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_away_from_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_step_forward";
+CREATE TABLE "troop_page_command_set_move_route_move_command_step_forward" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_step_backward";
+CREATE TABLE "troop_page_command_set_move_route_move_command_step_backward" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_jump";
+CREATE TABLE "troop_page_command_set_move_route_move_command_jump" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_wait";
+CREATE TABLE "troop_page_command_set_move_route_move_command_wait" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_down";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_down" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_right";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_up";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_up" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn90_right";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn90_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn90_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn90_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn180";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn180" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn90_right_or_left";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn90_right_or_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_at_random";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_at_random" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_toward_player";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_toward_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_turn_away_from_player";
+CREATE TABLE "troop_page_command_set_move_route_move_command_turn_away_from_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_switch_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_switch_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_switch_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_switch_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_change_speed";
+CREATE TABLE "troop_page_command_set_move_route_move_command_change_speed" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_change_freq";
+CREATE TABLE "troop_page_command_set_move_route_move_command_change_freq" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_animation_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_animation_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_move_animation_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_move_animation_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_stop_animation_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_stop_animation_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_stop_animation_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_stop_animation_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_direction_fix_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_direction_fix_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_direction_fix_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_direction_fix_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_through_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_through_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_through_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_through_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_always_on_top_on";
+CREATE TABLE "troop_page_command_set_move_route_move_command_always_on_top_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_always_on_top_off";
+CREATE TABLE "troop_page_command_set_move_route_move_command_always_on_top_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_graphic";
+CREATE TABLE "troop_page_command_set_move_route_move_command_graphic" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_change_opacity";
+CREATE TABLE "troop_page_command_set_move_route_move_command_change_opacity" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_change_blending";
+CREATE TABLE "troop_page_command_set_move_route_move_command_change_blending" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_play_se";
+CREATE TABLE "troop_page_command_set_move_route_move_command_play_se" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_script";
+CREATE TABLE "troop_page_command_set_move_route_move_command_script" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "troop_page_command_set_move_route_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_move_route";
+CREATE TABLE "troop_page_command_set_move_route" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "event_reference" INTEGER NOT NULL,
+    "move_route_repeat" INTEGER NOT NULL CHECK ("move_route_repeat" in (0, 1)),
+    "move_route_skippable" INTEGER NOT NULL CHECK ("move_route_skippable" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_wait_for_move_completion";
+CREATE TABLE "troop_page_command_wait_for_move_completion" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_prepare_for_transition";
+CREATE TABLE "troop_page_command_prepare_for_transition" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_execute_transition";
+CREATE TABLE "troop_page_command_execute_transition" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "name" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_screen_color_tone";
+CREATE TABLE "troop_page_command_change_screen_color_tone" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_screen_flash";
+CREATE TABLE "troop_page_command_screen_flash" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "color_red" REAL NOT NULL CHECK ("color_red" BETWEEN 0 AND 255),
+    "color_green" REAL NOT NULL CHECK ("color_green" BETWEEN 0 AND 255),
+    "color_blue" REAL NOT NULL CHECK ("color_blue" BETWEEN 0 AND 255),
+    "color_alpha" REAL NOT NULL CHECK ("color_alpha" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_screen_shake";
+CREATE TABLE "troop_page_command_screen_shake" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "power" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_picture";
+CREATE TABLE "troop_page_command_show_picture" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_move_picture";
+CREATE TABLE "troop_page_command_move_picture" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "origin" INTEGER NOT NULL,
+    "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    "zoom_x" INTEGER NOT NULL,
+    "zoom_y" INTEGER NOT NULL,
+    "opacity" INTEGER NOT NULL,
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_rotate_picture";
+CREATE TABLE "troop_page_command_rotate_picture" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "speed" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_picture_color_tone";
+CREATE TABLE "troop_page_command_change_picture_color_tone" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    "tone_red" REAL NOT NULL CHECK ("tone_red" BETWEEN -255 AND 255),
+    "tone_green" REAL NOT NULL CHECK ("tone_green" BETWEEN -255 AND 255),
+    "tone_blue" REAL NOT NULL CHECK ("tone_blue" BETWEEN -255 AND 255),
+    "tone_grey" REAL NOT NULL CHECK ("tone_grey" BETWEEN 0 AND 255),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_erase_picture";
+CREATE TABLE "troop_page_command_erase_picture" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "number" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_set_weather_effects";
+CREATE TABLE "troop_page_command_set_weather_effects" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "type" INTEGER NOT NULL REFERENCES "weather" ("id"),
+    "power" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_play_bgm";
+CREATE TABLE "troop_page_command_play_bgm" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_fade_out_bgm";
+CREATE TABLE "troop_page_command_fade_out_bgm" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_play_bgs";
+CREATE TABLE "troop_page_command_play_bgs" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_fade_out_bgs";
+CREATE TABLE "troop_page_command_fade_out_bgs" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "seconds" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_memorize_bgmor_bgs";
+CREATE TABLE "troop_page_command_memorize_bgmor_bgs" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_play_me";
+CREATE TABLE "troop_page_command_play_me" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_play_se";
+CREATE TABLE "troop_page_command_play_se" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_stop_se";
+CREATE TABLE "troop_page_command_stop_se" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_recover_all";
+CREATE TABLE "troop_page_command_recover_all" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_abort_battle";
+CREATE TABLE "troop_page_command_abort_battle" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_call_menu_screen";
+CREATE TABLE "troop_page_command_call_menu_screen" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_call_save_screen";
+CREATE TABLE "troop_page_command_call_save_screen" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_game_over";
+CREATE TABLE "troop_page_command_game_over" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_return_to_title_screen";
+CREATE TABLE "troop_page_command_return_to_title_screen" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_script";
+CREATE TABLE "troop_page_command_script" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_show_text";
+CREATE TABLE "troop_page_command_continue_show_text" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_choices_when_choice";
+CREATE TABLE "troop_page_command_show_choices_when_choice" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "choice_index" INTEGER NOT NULL,
+    "choice_text" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_choices_when_cancel";
+CREATE TABLE "troop_page_command_show_choices_when_cancel" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_show_choices_branch_end";
+CREATE TABLE "troop_page_command_show_choices_branch_end" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_comment";
+CREATE TABLE "troop_page_command_continue_comment" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "text" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_else";
+CREATE TABLE "troop_page_command_else" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_end";
+CREATE TABLE "troop_page_command_conditional_branch_end" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_repeat_above";
+CREATE TABLE "troop_page_command_repeat_above" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_blank";
+CREATE TABLE "troop_page_command_continue_set_move_route_blank" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_down";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_down" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_right";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_up";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_up" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_lower_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_lower_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_lower_right";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_lower_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_upper_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_upper_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_upper_right";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_upper_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_at_random";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_at_random" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_toward_player";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_toward_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_away_from_player";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_away_from_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_step_forward";
+CREATE TABLE "troop_page_command_continue_set_move_route_step_forward" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_step_backward";
+CREATE TABLE "troop_page_command_continue_set_move_route_step_backward" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_jump";
+CREATE TABLE "troop_page_command_continue_set_move_route_jump" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "x" INTEGER NOT NULL,
+    "y" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_wait";
+CREATE TABLE "troop_page_command_continue_set_move_route_wait" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "duration" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_down";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_down" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_right";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_up";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_up" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn90_right";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn90_right" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn90_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn90_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn180";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn180" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn90_right_or_left";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn90_right_or_left" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_at_random";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_at_random" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_toward_player";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_toward_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_turn_away_from_player";
+CREATE TABLE "troop_page_command_continue_set_move_route_turn_away_from_player" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_switch_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_switch_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_switch_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_switch_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "switch_id" INTEGER REFERENCES "switch" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_change_speed";
+CREATE TABLE "troop_page_command_continue_set_move_route_change_speed" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "speed" INTEGER NOT NULL REFERENCES "move_speed" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_change_freq";
+CREATE TABLE "troop_page_command_continue_set_move_route_change_freq" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "freq" INTEGER NOT NULL REFERENCES "move_frequency" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_animation_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_animation_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_move_animation_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_move_animation_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_stop_animation_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_stop_animation_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_stop_animation_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_stop_animation_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_direction_fix_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_direction_fix_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_direction_fix_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_direction_fix_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_through_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_through_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_through_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_through_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_always_on_top_on";
+CREATE TABLE "troop_page_command_continue_set_move_route_always_on_top_on" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_always_on_top_off";
+CREATE TABLE "troop_page_command_continue_set_move_route_always_on_top_off" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_graphic";
+CREATE TABLE "troop_page_command_continue_set_move_route_graphic" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "character_name" TEXT NOT NULL,
+    "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
+    "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
+    "pattern" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_change_opacity";
+CREATE TABLE "troop_page_command_continue_set_move_route_change_opacity" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "opacity" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_change_blending";
+CREATE TABLE "troop_page_command_continue_set_move_route_change_blending" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "blend_type" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_play_se";
+CREATE TABLE "troop_page_command_continue_set_move_route_play_se" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT NOT NULL,
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_script";
+CREATE TABLE "troop_page_command_continue_set_move_route_script" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route";
+CREATE TABLE "troop_page_command_continue_set_move_route" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "command_code" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_script";
+CREATE TABLE "troop_page_command_continue_script" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "line" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
 
 DROP TABLE IF EXISTS "weapon";
 CREATE TABLE "weapon" (
@@ -848,7 +7107,7 @@ CREATE TABLE "weapon" (
 DROP TABLE IF EXISTS "weapon_element";
 CREATE TABLE "weapon_element" (
     "weapon_id" INTEGER NOT NULL REFERENCES "weapon" ("id"),
-    "element_id" INTEGER NOT NULL,
+    "element_id" INTEGER REFERENCES "element" ("id"),
     PRIMARY KEY ("weapon_id", "element_id")
 ) STRICT;
 

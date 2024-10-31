@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Optional
+from typing import ClassVar, Optional
 import numpy as np
 from rpgxp.common import *
 
@@ -126,7 +126,7 @@ class EventCommand_ShowText(EventCommand):
 
 @dataclass(frozen=True)
 class EventCommand_ShowChoices(EventCommand):
-    code = 101
+    code = 102
     choices: list[str]
     cancel_type: ChoicesCancelType
 
@@ -158,7 +158,7 @@ class EventCommand_Comment(EventCommand):
     text: str
 
 @dataclass(frozen=True)
-class EventCommand_ConditionalBranch(ABC):
+class EventCommand_ConditionalBranch(EventCommand, ABC):
     code = 111
     subcode: ClassVar[int]
 
@@ -263,7 +263,7 @@ class EventCommand_EraseEvent(EventCommand):
 @dataclass(frozen=True)
 class EventCommand_CallCommonEvent(EventCommand):
     code = 117
-    common_event_id: Optional[int]
+    called_event_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_Label(EventCommand):
@@ -283,44 +283,56 @@ class EventCommand_ControlSwitches(EventCommand):
     state: SwitchState
 
 @dataclass(frozen=True)
-class EventCommand_ControlVariables(ABC):
+class EventCommand_ControlVariables(EventCommand, ABC):
     code = 122
     variable_id_hi: int
     variable_id_lo: int
     assign_type: AssignType
-    operand_type: ClassVar[OperandType]
+    operand_type: ClassVar[int]
 
 @dataclass(frozen=True)
-class EventCommand_ControlVariables_InvariantOperand(EventCommand_ControlVariables):
+class EventCommand_ControlVariables_Invariant(EventCommand_ControlVariables):
     code = 122
     operand_type = 0
     value: int
 
 @dataclass(frozen=True)
-class EventCommand_ControlVariables_VariableOperand(EventCommand_ControlVariables):
+class EventCommand_ControlVariables_Variable(EventCommand_ControlVariables):
     code = 122
     operand_type = 1
     variable_id: Optional[int]
 
 @dataclass(frozen=True)
-class EventCommand_ControlVariables_RandomNumberOperand(EventCommand_ControlVariables):
+class EventCommand_ControlVariables_RandomNumber(EventCommand_ControlVariables):
     code = 122
     operand_type = 2
     lb: int
     ub: int
 
 @dataclass(frozen=True)
-class EventCommand_ControlVariables_CharacterOperand(EventCommand_ControlVariables):
+class EventCommand_ControlVariables_Character(EventCommand_ControlVariables):
     code = 122
     operand_type = 6
     attr_value: int
     attr_code: int
 
 @dataclass(frozen=True)
+class EventCommand_ControlVariables_Other(EventCommand_ControlVariables):
+    code = 122
+    operand_type = 7
+    other_operand_type: OtherOperandType
+
+@dataclass(frozen=True)
 class EventCommand_ControlSelfSwitch(EventCommand):
     code = 123
     self_switch_ch: SelfSwitch
     state: SwitchState
+
+@dataclass(frozen=True)
+class EventCommand_ControlTimer(EventCommand):
+    code = 124
+    stop: bool
+    new_value: int
 
 @dataclass(frozen=True)
 class EventCommand_ChangeGold(EventCommand):
@@ -338,7 +350,7 @@ class EventCommand_ChangeBattleBGM(EventCommand):
 class EventCommand_TransferPlayer(EventCommand):
     code = 201
     with_variables: bool
-    map_id: int
+    target_map_id: int
     x: int
     y: int
     direction: Direction
@@ -347,7 +359,7 @@ class EventCommand_TransferPlayer(EventCommand):
 @dataclass(frozen=True)
 class EventCommand_SetEventLocation(EventCommand):
     code = 202
-    event_id: int
+    event_reference: int
     appoint_type: AppointType
     x: int
     y: int
@@ -361,7 +373,7 @@ class EventCommand_ScrollMap(EventCommand):
     speed: int
 
 @dataclass(frozen=True)
-class EventCommand_ChangeMapSettings(ABC):
+class EventCommand_ChangeMapSettings(EventCommand, ABC):
     code = 204
     subcode: ClassVar[int]
 
@@ -391,6 +403,61 @@ class EventCommand_ChangeMapSettings_BattleBack(EventCommand_ChangeMapSettings):
     name: str
 
 @dataclass(frozen=True)
+class EventCommand_ChangeFogOpacity(EventCommand):
+    code = 206
+    opacity: int
+    duration: int
+
+@dataclass(frozen=True)
+class EventCommand_ShowAnimation(EventCommand):
+    code = 207
+    event_reference: int
+    animation_id: int
+
+@dataclass(frozen=True)
+class EventCommand_ChangeTransparentFlag(EventCommand):
+    code = 208
+    is_normal: bool
+
+@dataclass(frozen=True)
+class EventCommand_SetMoveRoute(EventCommand):
+    code = 209
+    event_reference: int
+    move_route: MoveRoute
+
+@dataclass(frozen=True)
+class EventCommand_WaitForMoveCompletion(EventCommand):
+    code = 210
+
+@dataclass(frozen=True)
+class EventCommand_PrepareForTransition(EventCommand):
+    code = 221
+
+@dataclass(frozen=True)
+class EventCommand_ExecuteTransition(EventCommand):
+    code = 222
+    name: str
+
+@dataclass(frozen=True)
+class EventCommand_ChangeScreenColorTone(EventCommand):
+    code = 223
+    tone: Tone
+    duration: int
+
+@dataclass(frozen=True)
+class EventCommand_ScreenFlash(EventCommand):
+    code = 224
+    color: Color
+    duration: int
+
+@dataclass(frozen=True)
+class EventCommand_ScreenShake(EventCommand):
+    code = 225
+    power: int
+    speed: int
+    duration: int
+
+@dataclass(frozen=True)
 class EventCommand_ShowPicture(EventCommand):
     code = 231
     number: int
@@ -417,6 +484,19 @@ class EventCommand_MovePicture(EventCommand):
     zoom_y: int
     opacity: int
     blend_type: int
+
+@dataclass(frozen=True)
+class EventCommand_RotatePicture(EventCommand):
+    code = 233
+    number: int
+    speed: int
+
+@dataclass(frozen=True)
+class EventCommand_ChangePictureColorTone(EventCommand):
+    code = 234
+    number: int
+    tone: Tone
+    duration: int
 
 @dataclass(frozen=True)
 class EventCommand_ErasePicture(EventCommand):
@@ -543,6 +623,12 @@ class EventCommand_ContinueSetMoveRoute(EventCommand):
 class EventCommand_ContinueScript(EventCommand):
     code = 655
     line: str
+
+@dataclass(frozen=True)
+class MoveRoute:
+    repeat: bool
+    skippable: bool
+    list_: list[MoveCommand]
 
 @dataclass(frozen=True)
 class MoveCommand(ABC):
@@ -748,6 +834,13 @@ class MoveCommand_Script(MoveCommand):
     line: str
 
 @dataclass(frozen=True)
+class Tone:
+    red: float
+    green: float
+    blue: float
+    grey: float
+
+@dataclass(frozen=True)
 class Enemy:
     id_: int
     name: str
@@ -874,12 +967,6 @@ class EventPageGraphic:
     pattern: int
     opacity: int
     blend_type: int
-
-@dataclass(frozen=True)
-class MoveRoute:
-    repeat: bool
-    skippable: bool
-    list_: list[MoveCommand]
 
 @dataclass(frozen=True)
 class MapInfo:

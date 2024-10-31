@@ -30,12 +30,18 @@ class TableSchema(DataSchema, ABC):
 
     @property
     @abstractmethod
-    def table_name(self) -> str:
+    def table_name(self) -> Template:
         """The name of the database table corresponding to the object."""
 
 @dataclass(frozen=True)
 class BoolSchema(RowSchema):
     """A schema for a Boolean value (true or false)."""
+
+@dataclass(frozen=True)
+class IntBoolSchema(RowSchema):
+    """A schema for a Boolean value (true or false) which is represented in the
+    RPG Maker XP data structure by an integer, either 0 (for false) or 1 (for
+    true)."""
 
 @dataclass(frozen=True)
 class IntSchema(RowSchema):
@@ -259,8 +265,8 @@ class RPGSingletonObjSchema(ObjSchema, TableSchema):
         return self._class_name
 
     @property
-    def table_name(self) -> str:
-        return self._table_name
+    def table_name(self) -> Template:
+        return Template(self._table_name)
 
     @property
     def fields(self) -> list[RPGField]:
@@ -284,6 +290,23 @@ class ColorSchema(ObjSchema):
         ]
 
 @dataclass(frozen=True)
+class ToneSchema(ObjSchema):
+    """A schema for an RGSS 'Tone' object."""
+
+    @property
+    def class_name(self) -> str:
+        return 'Tone'
+
+    @property
+    def fields(self) -> list[FieldBase]:
+        return [
+            RPGField('red', FloatSchema(-255, 255)),
+            RPGField('green', FloatSchema(-255, 255)),
+            RPGField('blue', FloatSchema(-255, 255)),
+            RPGField('grey', FloatSchema(0, 255)),
+        ]
+
+@dataclass(frozen=True)
 class Variant(ABC):
     @property
     @abstractmethod
@@ -295,11 +318,16 @@ class Variant(ABC):
     def name(self) -> Any:
         ...
 
+    @property
+    @abstractmethod
+    def fields(self) -> list[Field]:
+        ...
+
 @dataclass(frozen=True)
 class SimpleVariant(Variant):
     _discriminant_value: Any
     _name: str
-    fields: list[Field]
+    _fields: list[Field]
 
     @property
     def discriminant_value(self) -> Any:
@@ -309,11 +337,15 @@ class SimpleVariant(Variant):
     def name(self) -> Any:
         return self._name
 
+    @property
+    def fields(self) -> list[Field]:
+        return self._fields
+
 @dataclass(frozen=True)
 class ComplexVariant(Variant):
     _discriminant_value: Any
     _name: str
-    fields: list[Field]
+    _fields: list[Field]
     subdiscriminant_name: str
     variants: list[Variant]
 
@@ -324,6 +356,10 @@ class ComplexVariant(Variant):
     @property
     def name(self) -> Any:
         return self._name
+
+    @property
+    def fields(self) -> list[Field]:
+        return self._fields
 
     @property
     def subdiscriminant(self) -> Field:
@@ -353,10 +389,12 @@ class RPGVariantObjSchema(ObjSchema):
         return self._fields   
 
     @property
-    def discriminant(self) -> RPGField:
+    def discriminant(self) -> Field:
         for field in self.fields:
             if field.name == self.discriminant_name:
-                return field
+                return Field(
+                    field.name, field.schema, field.db_name
+                )
 
         raise RuntimeError(f"no field named '{self.discriminant_name}'")
 
@@ -421,8 +459,8 @@ class ListSchema(RefableSchema):
     index: IndexBehavior=AddIndexColumn('index')
 
     @property
-    def table_name(self) -> str:
-        return self._table_name
+    def table_name(self) -> Template:
+        return Template(self._table_name)
 
     def __post_init__(self) -> None:
         if isinstance(self.index, MatchIndexToField):
@@ -456,8 +494,8 @@ class SetSchema(TableSchema):
     item_name: str=''
 
     @property
-    def table_name(self) -> str:
-        return self._table_name
+    def table_name(self) -> Template:
+        return Template(self._table_name)
 
 @dataclass(frozen=True)
 class KeyBehavior(ABC):
@@ -492,8 +530,8 @@ class DictSchema(RefableSchema):
     value_name: str=''
 
     @property
-    def table_name(self) -> str:
-        return self._table_name
+    def table_name(self) -> Template:
+        return Template(self._table_name)
 
     @property
     def key_schema(self) -> DataSchema:
@@ -582,8 +620,8 @@ class MultipleFilesSchema(FileSchema, RefableSchema):
     schema: ObjSchema
 
     @property
-    def table_name(self) -> str:
-        return self._table_name
+    def table_name(self) -> Template:
+        return Template(self._table_name)
 
     def pk_db_name(self) -> str:
         assert len(self.keys) == 1
@@ -804,7 +842,7 @@ MOVE_ROUTE_SCHEMA = RPGObjSchema('MoveRoute', 'RPG::MoveRoute', [
     *bool_fields('repeat skippable'),
     RPGField(
         'list_', ListSchema(
-            'event_page_move_command', MOVE_COMMAND_SCHEMA
+            '${prefix}move_command', MOVE_COMMAND_SCHEMA
         ),
         rpg_name='list', _db_name='list'
     )
@@ -818,9 +856,14 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
     ], 'code', [
         SimpleVariant(0, 'Blank', []),
         SimpleVariant(101, 'ShowText', [Field('text', StrSchema())]),
-        SimpleVariant(101, 'ShowChoices', [
+        SimpleVariant(102, 'ShowChoices', [
             Field('choices', ListSchema(
-                Template('$parent_choice'), StrSchema(),
+                # nah, instead of doing this templating,
+                # we should make EVENT_COMMAND_SCHEMA a function
+                # that takes a prefix as argument
+                # ... or we can just not allow fks to point to 
+                # ones where the templat ehas params
+                '${prefix}choice', StrSchema(),
                 item_name='choice'
             )),
             Field('cancel_type', EnumSchema(ChoicesCancelType)),
@@ -831,7 +874,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         ]),
         SimpleVariant(104, 'ChangeTextOptions', [
             Field('position', EnumSchema(TextPosition)),
-            Field('no_frame', BoolSchema()),
+            Field('no_frame', IntBoolSchema()),
         ]),
         SimpleVariant(105, 'ButtonInputProcessing', [
             Field('variable_id', VARIABLE_SCHEMA),
@@ -850,7 +893,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             ]),
             SimpleVariant(1, 'Variable', [
                 Field('variable_id', IntSchema()),
-                Field('value_is_variable', BoolSchema()),
+                Field('value_is_variable', IntBoolSchema()),
                 Field('value', IntSchema()),
                 Field('comparison', EnumSchema(Comparison))
             ]),
@@ -888,7 +931,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(115, 'ExitEventProcessing', []),
         SimpleVariant(116, 'EraseEvent', []),
         SimpleVariant(117, 'CallCommonEvent', [
-            Field('common_event_id', FKSchema(lambda: COMMON_EVENTS_SCHEMA))
+            Field('called_event_id', FKSchema(lambda: COMMON_EVENTS_SCHEMA))
         ]),
         SimpleVariant(118, 'Label', [Field('id', StrSchema())]),
         SimpleVariant(119, 'JumpToLabel', [Field('id', StrSchema())]),
@@ -902,44 +945,51 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('variable_id_hi', IntSchema()),
             Field('variable_id_lo', IntSchema()),
             Field('assign_type', EnumSchema(AssignType)),
-            Field('operand_type', EnumSchema(OperandType)),
+            Field('operand_type', IntSchema()),
         ], 'operand_type', [
-            SimpleVariant(0, 'InvariantOperand', [
+            SimpleVariant(0, 'Invariant', [
                 Field('value', IntSchema())
             ]),
-            SimpleVariant(1, 'VariableOperand', [
+            SimpleVariant(1, 'Variable', [
                 Field('variable_id', VARIABLE_SCHEMA)
             ]),
-            SimpleVariant(2, 'RandomNumberOperand', [
+            SimpleVariant(2, 'RandomNumber', [
                 Field('lb', IntSchema()),
                 Field('ub', IntSchema()),
             ]),
-            SimpleVariant(6, 'CharacterOperand', [
+            SimpleVariant(6, 'Character', [
                 Field('attr_value', IntSchema()),
                 Field('attr_code', IntSchema()),
+            ]),
+            SimpleVariant(7, 'Other', [
+                Field('other_operand_type', EnumSchema(OtherOperandType)),
             ]),
         ]),
         SimpleVariant(123, 'ControlSelfSwitch', [
             Field('self_switch_ch', EnumSchema(SelfSwitch)),
             Field('state', EnumSchema(SwitchState)),
         ]),
+        SimpleVariant(124, 'ControlTimer', [
+            Field('stop', IntBoolSchema()),
+            Field('new_value', IntSchema()),
+        ]),
         SimpleVariant(125, 'ChangeGold', [
             Field('diff_type', EnumSchema(DiffType)),
-            Field('with_variable', BoolSchema()),
+            Field('with_variable', IntBoolSchema()),
             Field('amount', IntSchema()),
         ]),
         SimpleVariant(132, 'ChangeBattleBGM', [
             Field('audio', AUDIO_FILE_SCHEMA),
         ]),
         SimpleVariant(201, 'TransferPlayer', [
-            Field('with_variables', BoolSchema()),
-            Field('map_id', IntSchema()),
+            Field('with_variables', IntBoolSchema()),
+            Field('target_map_id', IntSchema()),
             Field('x', IntSchema()), Field('y', IntSchema()),
             Field('direction', EnumSchema(Direction)),
-            Field('no_fade', BoolSchema()),
+            Field('no_fade', IntBoolSchema()),
         ]),
         SimpleVariant(202, 'SetEventLocation', [
-            Field('event_id', IntSchema()), # 0 for this event
+            Field('event_reference', IntSchema()), # 0 for this event
             Field('appoint_type', EnumSchema(AppointType)),
             Field('x', IntSchema()), Field('y', IntSchema()),
             Field('direction', EnumSchema(Direction)),
@@ -969,45 +1019,45 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('name', StrSchema())
             ]),
         ]),
-        # SimpleVariant(206, 'ChangeFogOpacity', [
-        #     Field('opacity', IntSchema()),
-        #     Field('duration', IntSchema())
-        # ]),
-        # SimpleVariant(207, 'ShowAnimation', [
-        #     # -1 for player, 0 for this event
-        #     Field('event_id', IntSchema()),
-        #     Field('animation_id', IntSchema())
-        # ]),
-        # SimpleVariant(208, 'ChangeTransparentFlag', [
-        #     Field('is_normal', BoolSchema())
-        # ]),
-        # SimpleVariant(209, 'SetMoveRoute', [
-        #     # can be -1 for player
-        #     ('target_event_id', IntSchema()),
-        #     ('move_route', MOVE_ROUTE_SCHEMA),
-        # ]),
-        # SimpleVariant(210, 'WaitForMoveCompletion', []),
-        # SimpleVariant(221, 'PrepareForTransition', []),
-        # SimpleVariant(222, 'ExecuteTransition', [
-        #     Field('name', StrSchema())
-        # ]),
-        # SimpleVariant(223, 'ChangeScreenColorTone', [
-        #     Field('tone', COLOR_SCHEMA),
-        #     Field('duration', IntSchema()) # units = frames / 2
-        # ]),
-        # SimpleVariant(224, 'ScreenFlash', [
-        #     Field('color', COLOR_SCHEMA),
-        #     Field('duration', IntSchema()), # units = frames / 2
-        # ]),
-        # SimpleVariant(225, 'ScreenShake', [
-        #     Field('power', IntSchema()),
-        #     Field('speed', IntSchema()),
-        #     Field('duration', IntSchema()),
-        # ]),
+        SimpleVariant(206, 'ChangeFogOpacity', [
+            Field('opacity', IntSchema()),
+            Field('duration', IntSchema())
+        ]),
+        SimpleVariant(207, 'ShowAnimation', [
+            # -1 for player, 0 for this event
+            Field('event_reference', IntSchema()),
+            Field('animation_id', IntSchema())
+        ]),
+        SimpleVariant(208, 'ChangeTransparentFlag', [
+            Field('is_normal', IntBoolSchema())
+        ]),
+        SimpleVariant(209, 'SetMoveRoute', [
+            # can be -1 for player
+            Field('event_reference', IntSchema()),
+            Field('move_route', MOVE_ROUTE_SCHEMA),
+        ]),
+        SimpleVariant(210, 'WaitForMoveCompletion', []),
+        SimpleVariant(221, 'PrepareForTransition', []),
+        SimpleVariant(222, 'ExecuteTransition', [
+            Field('name', StrSchema())
+        ]),
+        SimpleVariant(223, 'ChangeScreenColorTone', [
+            Field('tone', ToneSchema()),
+            Field('duration', IntSchema()) # units = frames / 2
+        ]),
+        SimpleVariant(224, 'ScreenFlash', [
+            Field('color', ColorSchema()),
+            Field('duration', IntSchema()), # units = frames / 2
+        ]),
+        SimpleVariant(225, 'ScreenShake', [
+            Field('power', IntSchema()),
+            Field('speed', IntSchema()),
+            Field('duration', IntSchema()),
+        ]),
         SimpleVariant(231, 'ShowPicture', [
             Field('number', IntSchema()), Field('name', StrSchema()),
             Field('origin', IntSchema()),
-            Field('appoint_with_vars', BoolSchema()),
+            Field('appoint_with_vars', IntBoolSchema()),
             Field('x', IntSchema()), Field('y', IntSchema()),
             Field('zoom_x', IntSchema()), Field('zoom_y', IntSchema()),
             Field('opacity', IntSchema()), Field('blend_type', IntSchema())
@@ -1015,10 +1065,19 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(232, 'MovePicture', [
             Field('number', IntSchema()), Field('duration', IntSchema()),
             Field('origin', IntSchema()),
-            Field('appoint_with_vars', BoolSchema()),
+            Field('appoint_with_vars', IntBoolSchema()),
             Field('x', IntSchema()), Field('y', IntSchema()),
             Field('zoom_x', IntSchema()), Field('zoom_y', IntSchema()),
             Field('opacity', IntSchema()), Field('blend_type', IntSchema()),
+        ]),
+        SimpleVariant(233, 'RotatePicture', [
+            Field('number', IntSchema()),
+            Field('speed', IntSchema()),
+        ]),
+        SimpleVariant(234, 'ChangePictureColorTone', [
+            Field('number', IntSchema()),
+            Field('tone', ToneSchema()),
+            Field('duration', IntSchema()),
         ]),
         SimpleVariant(235, 'ErasePicture', [Field('number', IntSchema())]),
         SimpleVariant(236, 'SetWeatherEffects', [

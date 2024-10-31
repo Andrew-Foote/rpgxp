@@ -14,6 +14,7 @@ def process_field(
     field_value: Any, col_name: str,
     field_schema: schema.DataSchema,
     parent_refs: dict[str, Any],
+    table_schema: sql.TableSchema,
     db_schema: DBSchema,
     skip_field_name: str | None=None,
 ) -> tuple[dict[str, Any], sql.Script]:
@@ -29,8 +30,8 @@ def process_field(
 
     match field_schema:
         case (
-            schema.BoolSchema() | schema.IntSchema() | schema.FloatSchema()
-            | schema.StrSchema() | schema.ZlibSchema()
+            schema.BoolSchema() | schema.IntBoolSchema() | schema.IntSchema()
+            | schema.FloatSchema() | schema.StrSchema() | schema.ZlibSchema()
         ):
             row_result = {col_name: field_value}
         case schema.NDArraySchema():
@@ -56,7 +57,7 @@ def process_field(
 
             row_result, script_result = process_field(
                 field_value, col_name, foreign_pk_schema,
-                parent_refs, db_schema
+                parent_refs, table_schema, db_schema
             )
 
         case schema.ObjSchema():
@@ -73,7 +74,7 @@ def process_field(
 
                 field_row_result, field_script_result = process_field(
                     subfield_value, combined_name, subfield.schema,
-                    parent_refs, db_schema
+                    parent_refs, table_schema, db_schema
                 )
 
                 row_result |= field_row_result
@@ -86,7 +87,7 @@ def process_field(
 
             script_result = process_table_schema(
                 field_schema, field_value,
-                db_schema, parent_refs
+                db_schema, parent_refs, parent_table=table_schema
             )
         case _:
             assert False
@@ -95,13 +96,20 @@ def process_field(
 
 def process_table_schema(
     table_schema: schema.TableSchema, data: Any,
-    db_schema: DBSchema, parent_refs: dict[str, Any]
+    db_schema: DBSchema, parent_refs: dict[str, Any],
+    parent_table: sql.TableSchema | None=None
 ) -> sql.Script:
 
     result = sql.Script([])
 
-    table_name = table_schema.table_name
-    columns = tuple(db_schema.get_table(table_name).columns())
+    parent_table_name = '' if parent_table is None else parent_table.name
+
+    table_name = table_schema.table_name.substitute({
+        'prefix': parent_table_name + '_'
+    })
+
+    db_table_schema = db_schema.get_table(table_name)
+    columns = tuple(db_table_schema.columns())
     column_names = tuple(col.name for col in columns)
     column_types = tuple(col.type_ for col in columns)
     rows: list[dict[str, Any]] = []
@@ -124,8 +132,8 @@ def process_table_schema(
                 match index_behavior:
                     case schema.AddIndexColumn(index_col_name):
                         row_result, script_result = process_field(
-                            index, index_col_name,
-                            schema.IntSchema(), parent_refs, db_schema
+                            index, index_col_name, schema.IntSchema(),
+                            parent_refs, db_table_schema, db_schema
                         )
 
                         row |= row_result
@@ -139,9 +147,8 @@ def process_table_schema(
                         pk_col_name = pk_field.db_name
 
                         row_result, script_result = process_field(
-                            index, pk_col_name,
-                            pk_field.schema, parent_refs,
-                            db_schema
+                            index, pk_col_name, pk_field.schema, parent_refs,
+                            db_table_schema, db_schema
                         )
 
                         row |= row_result
@@ -152,7 +159,8 @@ def process_table_schema(
                         assert False
 
                 row_result, script_result = process_field(
-                    item, item_name, item_schema, parent_refs_for_row, db_schema
+                    item, item_name, item_schema, parent_refs_for_row,
+                    db_table_schema, db_schema
                 )
 
                 row |= row_result
@@ -167,7 +175,8 @@ def process_table_schema(
                 row2 |= parent_refs
 
                 row_result, script_result = process_field(
-                    item, item_name, item_schema, parent_refs, db_schema
+                    item, item_name, item_schema, parent_refs,
+                    db_table_schema, db_schema
                 )
 
                 row2 |= row_result
@@ -187,7 +196,7 @@ def process_table_schema(
                     case schema.AddKeyColumn(key_col_name, key_schema):
                         row_result, script_result = process_field(
                             key, key_col_name, key_schema, parent_refs,
-                            db_schema
+                            db_table_schema, db_schema
                         )
 
                         row3 |= row_result
@@ -201,7 +210,7 @@ def process_table_schema(
 
                         row_result, script_result = process_field(
                             key, pk_col_name2, pk_field.schema, parent_refs,
-                            db_schema
+                            db_table_schema, db_schema
                         )
 
                         row3 |= row_result
@@ -213,7 +222,7 @@ def process_table_schema(
 
                 row_result, script_result = process_field(
                     value, value_name, value_schema, parent_refs_for_row,
-                    db_schema
+                    db_table_schema, db_schema
                 )
 
                 row3 |= row_result
@@ -230,7 +239,7 @@ def process_table_schema(
                 field_value = getattr(data, field.name)
                 row_result, script_result = process_field(
                     field_value, field.db_name, field.schema, parent_refs,
-                    db_schema
+                    db_table_schema, db_schema
                 )
 
                 row4 |= row_result
@@ -275,6 +284,8 @@ def process_file_schema(
                 content_schema, parsed_content, db_schema, {}
             )
         case schema.MultipleFilesSchema(pattern, table_name, keys, content_schema):
+            db_table_schema = db_schema.get_table(table_name)
+
             result = sql.Script()
             rows: list[dict[str, Any]] = []
             files: list[tuple[tuple, str]] = []
@@ -308,7 +319,8 @@ def process_file_schema(
                             raise RuntimeError('bad')
 
                     row_result, script_result = process_field(
-                        key_value, key.db_name, key.schema, {}, db_schema
+                        key_value, key.db_name, key.schema, {},
+                        db_table_schema, db_schema
                     )
 
                     row |= row_result
@@ -322,7 +334,8 @@ def process_file_schema(
                 }
 
                 row_result, script_result = process_field(
-                    data, '', content_schema, parent_refs, db_schema
+                    data, '', content_schema, parent_refs,
+                    db_table_schema, db_schema
                 )
 
                 row |= row_result
@@ -353,7 +366,7 @@ def process_file_schema(
 
             return result
         case _:
-            assert False
+            assert False, file_schema
 
 def generate_script(
     data_root: Path, *, db_schema: DBSchema, quick: bool=False

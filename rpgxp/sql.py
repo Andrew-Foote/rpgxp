@@ -1,7 +1,29 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Iterator, Self
 from rpgxp import schema
+
+class SQLType(Enum):
+	NULL = 0
+	INTEGER = 1
+	REAL = 2
+	TEXT = 3
+	BLOB = 4
+
+def python_type_to_sql(t: type) -> SQLType:
+	if issubclass(t, type(None)):
+		return SQLType.NULL
+	elif issubclass(t, int):
+		return SQLType.INTEGER
+	elif issubclass(t, float):
+		return SQLType.REAL
+	elif issubclass(t, str):
+		return SQLType.TEXT
+	elif issubclass(t, bytes):
+		return SQLType.BLOB
+	else:
+		raise ValueError(f'cannot convert Python type {t} to SQL')
 
 @dataclass
 class ColumnSchema:
@@ -71,7 +93,7 @@ class ForeignKeyConstraint(TableConstraint):
 		)
 		
 		return ' '.join([
-			f'FOREIGN KEY ({columns_csv}) ',
+			f'FOREIGN KEY ({columns_csv})',
 			f'REFERENCES "{self.referenced_table}"',
 			f'({referenced_columns_csv})'
 		])

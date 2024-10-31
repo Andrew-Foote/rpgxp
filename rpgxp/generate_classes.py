@@ -6,9 +6,9 @@ from rpgxp import schema
 def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.ObjSchema]:
 	match s:
 		case (
-			schema.BoolSchema() | schema.IntSchema() | schema.FloatSchema()
-			| schema.StrSchema() | schema.ZlibSchema() | schema.NDArraySchema()
-			| schema.EnumSchema() | schema.FKSchema()
+			schema.BoolSchema() | schema.IntBoolSchema() | schema.IntSchema()
+			| schema.FloatSchema() | schema.StrSchema() | schema.ZlibSchema()
+			| schema.NDArraySchema() | schema.EnumSchema() | schema.FKSchema()
 		):
 			pass
 		case schema.RPGVariantObjSchema():
@@ -47,7 +47,7 @@ def variant_subschemas(variant: schema.Variant) -> Iterator[schema.ObjSchema]:
 
 def schema_to_type(s: schema.DataSchema) -> str:
 	match s:
-		case schema.BoolSchema():
+		case schema.BoolSchema() | schema.IntBoolSchema():
 			return 'bool'
 		case schema.IntSchema():
 			return 'int'
@@ -179,7 +179,7 @@ def class_decls_from_variant_schema(
 	if parent_name is not None:
 		bases.insert(0, parent_name)
 
-	yield ClassDecl(class_name, class_members, ['ABC'])
+	yield ClassDecl(class_name, class_members, bases)
 
 	for variant in variants:
 		subclass_name = f'{class_name}_{variant.name}'
@@ -232,7 +232,7 @@ def generate_module() -> str:
 	return '\n'.join([
 		'from abc import ABC',
 		'from dataclasses import dataclass',
-		'from typing import Optional',
+		'from typing import ClassVar, Optional',
 		'import numpy as np',
 		'from rpgxp.common import *',
 		'',

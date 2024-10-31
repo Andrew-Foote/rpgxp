@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import StrEnum
 import importlib.resources
 from pathlib import Path
 from typing import Iterator, Self
@@ -65,7 +66,11 @@ class DBSchema:
         table_schema: schema.TableSchema,
         parent_table: sql.TableSchema | None=None
     ) -> None:
-        table_name = table_schema.table_name
+        parent_table_name = '' if parent_table is None else parent_table.name
+
+        table_name = table_schema.table_name.substitute({
+            'prefix': parent_table_name + '_'
+        })
 
         if self.has_table(table_name):
             raise schema.SchemaError(f'{table_name} used twice')
@@ -210,7 +215,7 @@ class DBSchema:
             field_prefix = field_name + '_'
 
         match field_schema:
-            case schema.BoolSchema():
+            case schema.BoolSchema() | schema.IntBoolSchema():
                 result.members.extend([
                     sql.ColumnSchema(field_name, 'INTEGER'),
                     sql.CheckConstraint(f'"{field_name}" in (0, 1)'),
@@ -250,19 +255,20 @@ class DBSchema:
             case schema.NDArraySchema():
                 result.members.append(sql.ColumnSchema(field_name, 'BLOB'))
             case schema.EnumSchema(enum_class):
+                coltype = 'TEXT' if issubclass(enum_class, StrEnum) else 'INTEGER'
                 enum_table_name = camel_case_to_snake(enum_class.__name__)
-                result.members.append(sql.ColumnSchema(field_name, 'INTEGER'))
+                result.members.append(sql.ColumnSchema(field_name, coltype))
 
                 if not self.has_table(enum_table_name):
                     self.add_table(sql.TableSchema(enum_table_name, [
-                        sql.ColumnSchema('id', 'INTEGER', pk=True),
+                        sql.ColumnSchema('id', coltype, pk=True),
                         sql.ColumnSchema('name', 'TEXT')
                     ]))
 
                     self.add_insert(sql.InsertStatement(
                         enum_table_name,
                         ('id', 'name'),
-                        ('INTEGER', 'TEXT'),
+                        (coltype, 'TEXT'),
                         [(member.value, member.name) for member in enum_class]
                     ))
 
@@ -271,7 +277,13 @@ class DBSchema:
                 ))
             case schema.FKSchema(foreign_schema_thunk, nullable):
                 foreign_schema = foreign_schema_thunk()
-                foreign_table_name = foreign_schema.table_name
+                foreign_table_name_template = foreign_schema.table_name
+
+                if foreign_table_name_template.get_identifiers():
+                    raise ValueError(f'bad FK schema: {foreign_table_name_template}')
+
+                foreign_table_name = foreign_table_name_template.template
+
                 pk_db_name = foreign_schema.pk_db_name()
                 pk_schema = foreign_schema.pk_schema()
 
@@ -289,7 +301,7 @@ class DBSchema:
                         [field_name], foreign_table_name, [pk_db_name]
                     )
                 )
-            case schema.ObjSchema():
+            case schema.RPGVariantObjSchema():
                 for subfield in field_schema.fields:
                     if skip_field_name is not None and subfield.name == skip_field_name:
                         continue
@@ -301,10 +313,64 @@ class DBSchema:
                     )
 
                     result += field_result
+
+                for variant in field_schema.variants:
+                    self.process_variant(
+                        table_schema, variant, field_schema.discriminant
+                    )
+            case schema.ObjSchema():
+                for subfield2 in field_schema.fields:
+                    if skip_field_name is not None and subfield2.name == skip_field_name:
+                        continue
+
+                    combined_name = field_prefix + subfield2.db_name
+                        
+                    field_result = self.process_field(
+                        table_schema, combined_name, subfield2.schema,
+                    )
+
+                    result += field_result
             case schema.TableSchema():
                 self.process_table_schema(field_schema, table_schema)
+            case _:
+                assert False
 
         return result
+
+    def process_variant(
+        self, base_table: sql.TableSchema, variant: schema.Variant,
+        discriminant: schema.Field
+    ) -> None:
+
+        variant_db_name = camel_case_to_snake(variant.name)
+        table_name = f'{base_table.name}_{variant_db_name}'
+        
+        table_schema = sql.TableSchema(
+            table_name, base_table.members.copy()
+        )
+
+        match variant:
+            case schema.SimpleVariant(_, _, fields):
+                for field in variant.fields:
+                    table_schema += self.process_field(
+                        table_schema, field.db_name, field.schema,
+                    )
+            case schema.ComplexVariant(
+                _, _, fields, _, subvariants
+            ):
+                for field in variant.fields:
+                    table_schema += self.process_field(
+                        table_schema, field.db_name, field.schema,
+                    )
+
+                for subvariant in variant.variants:
+                    self.process_variant(
+                        table_schema, subvariant, variant.subdiscriminant
+                    )
+            case _:
+                assert False
+        
+        self.add_table(table_schema)
 
 def generate_schema() -> DBSchema:
     result = DBSchema()
