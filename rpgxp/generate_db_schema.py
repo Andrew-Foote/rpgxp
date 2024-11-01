@@ -301,23 +301,6 @@ class DBSchema:
                         [field_name], foreign_table_name, [pk_db_name]
                     )
                 )
-            case schema.RPGVariantObjSchema():
-                for subfield in field_schema.fields:
-                    if skip_field_name is not None and subfield.name == skip_field_name:
-                        continue
-
-                    combined_name = field_prefix + subfield.db_name
-                        
-                    field_result = self.process_field(
-                        table_schema, combined_name, subfield.schema,
-                    )
-
-                    result += field_result
-
-                for variant in field_schema.variants:
-                    self.process_variant(
-                        table_schema, variant, field_schema.discriminant
-                    )
             case schema.ObjSchema():
                 for subfield2 in field_schema.fields:
                     if skip_field_name is not None and subfield2.name == skip_field_name:
@@ -330,6 +313,12 @@ class DBSchema:
                     )
 
                     result += field_result
+
+                if isinstance(field_schema, schema.RPGVariantObjSchema):
+                    for variant in field_schema.variants:
+                        self.process_variant(
+                            table_schema, table_schema, variant, field_schema.discriminant
+                        )
             case schema.TableSchema():
                 self.process_table_schema(field_schema, table_schema)
             case _:
@@ -338,37 +327,27 @@ class DBSchema:
         return result
 
     def process_variant(
-        self, base_table: sql.TableSchema, variant: schema.Variant,
+        self, base_table: sql.TableSchema, parent_table: sql.TableSchema, variant: schema.Variant,
         discriminant: schema.Field
     ) -> None:
 
         variant_db_name = camel_case_to_snake(variant.name)
-        table_name = f'{base_table.name}_{variant_db_name}'
+        table_name = f'{parent_table.name}_{variant_db_name}'
         
         table_schema = sql.TableSchema(
             table_name, base_table.members.copy()
         )
 
-        match variant:
-            case schema.SimpleVariant(_, _, fields):
-                for field in variant.fields:
-                    table_schema += self.process_field(
-                        table_schema, field.db_name, field.schema,
-                    )
-            case schema.ComplexVariant(
-                _, _, fields, _, subvariants
-            ):
-                for field in variant.fields:
-                    table_schema += self.process_field(
-                        table_schema, field.db_name, field.schema,
-                    )
+        for field in variant.fields:
+            table_schema += self.process_field(
+                table_schema, field.db_name, field.schema,
+            )
 
-                for subvariant in variant.variants:
-                    self.process_variant(
-                        table_schema, subvariant, variant.subdiscriminant
-                    )
-            case _:
-                assert False
+        if isinstance(variant, schema.ComplexVariant):
+            for subvariant in variant.variants:
+                self.process_variant(
+                    base_table, table_schema, subvariant, variant.subdiscriminant
+                )
         
         self.add_table(table_schema)
 

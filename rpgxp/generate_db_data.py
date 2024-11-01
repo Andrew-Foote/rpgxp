@@ -9,6 +9,7 @@ from typing import Any, Iterator, Self
 import numpy as np
 from rpgxp import db, parse, schema, sql
 from rpgxp.generate_db_schema import DBSchema, generate_schema
+from rpgxp.util import camel_case_to_snake
 
 def process_field(
     field_value: Any, col_name: str,
@@ -79,6 +80,15 @@ def process_field(
 
                 row_result |= field_row_result
                 script_result += field_script_result
+
+            if isinstance(field_schema, schema.RPGVariantObjSchema):
+                vscript_result = process_variant(
+                    field_value, field_schema.discriminant,
+                    field_schema.variants,
+                    parent_refs, table_schema, db_schema
+                )
+
+                script_result += vscript_result
         case schema.TableSchema():
             # suppose this is the ListSchema for map events
             # in this case the field value is a list of events
@@ -93,6 +103,84 @@ def process_field(
             assert False
 
     return row_result, script_result
+
+def process_variant(
+    obj: Any,
+    discriminant: schema.Field,
+    variants: list[schema.Variant],
+    parent_refs: dict[str, Any],
+    table_schema: sql.TableSchema,
+    db_schema: DBSchema,
+) -> sql.Script:
+
+    discriminant_value = getattr(obj, discriminant.name)
+
+    for poss_variant in variants:
+        if poss_variant.discriminant_value == discriminant_value:
+            variant = poss_variant
+            break
+    else:
+        assert False
+
+    variant_db_name = camel_case_to_snake(variant.name)
+    subtable_name = f'{table_schema.name}_{variant_db_name}'
+    subtable_schema = db_schema.get_table(subtable_name)
+    columns = tuple(subtable_schema.columns())
+    column_names = tuple(col.name for col in columns)
+    column_types = tuple(col.type_ for col in columns)
+
+    new_parent_refs = parent_refs.copy()
+    parent_refs_key_to_adjust = list(new_parent_refs)[-1]
+    parent_refs_kta_value = new_parent_refs.pop(parent_refs_key_to_adjust)
+    parent_refs_key_adjusted = parent_refs_key_to_adjust.removeprefix(f'{table_schema.name}_')
+    new_parent_refs[parent_refs_key_adjusted] = parent_refs_kta_value
+
+    parent_refs2 = new_parent_refs.copy()
+    pr2val = parent_refs2.pop(parent_refs_key_adjusted)
+    parent_refs2[f'{subtable_name}_{parent_refs_key_adjusted}'] = parent_refs_kta_value
+    
+    row_result: dict[str, Any] = new_parent_refs.copy()
+    # hacky_k = list(row_result)[-1]
+    # hacky_v = row_result.pop(hacky_k)
+    # row_result[hacky_k.removeprefix(f'{table_schema.name}_')] = hacky_v
+    # hacky_row_result = row_result.copy()
+    # print(row_result)
+    script_result = sql.Script([])
+
+    for field in variant.fields:
+        combined_name = field.db_name
+        #combined_name = col_prefix + field.db_name
+        subfield_value = getattr(obj, field.name)
+
+        field_row_result, field_script_result = process_field(
+            subfield_value, combined_name, field.schema,
+            parent_refs2, subtable_schema, db_schema
+        )
+
+        row_result |= field_row_result
+        script_result += field_script_result
+
+    if isinstance(variant, schema.ComplexVariant):
+        vscript_result = process_variant(
+            obj, variant.subdiscriminant, variant.variants,
+            new_parent_refs, subtable_schema, db_schema
+        )
+
+        script_result += vscript_result
+
+    array_row = []
+
+    for column in column_names:
+        if column not in row_result:
+            raise RuntimeError(f'{column} not in {row_result} [{variant}, {subtable_schema}]')
+
+        array_row.append(row_result[column])
+
+    insert = sql.InsertStatement(
+        subtable_name, column_names, column_types, [tuple(array_row)]
+    )
+
+    return sql.Script([insert]) + script_result
 
 def process_table_schema(
     table_schema: schema.TableSchema, data: Any,

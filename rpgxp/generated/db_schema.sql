@@ -325,7 +325,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_switch";
 CREATE TABLE "common_event_command_conditional_branch_switch" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "switch_id" INTEGER REFERENCES "switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("common_event_id", "index")
@@ -349,7 +348,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_variable";
 CREATE TABLE "common_event_command_conditional_branch_variable" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "variable_id" INTEGER NOT NULL,
     "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
     "value" INTEGER NOT NULL,
@@ -373,7 +371,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_self_switch";
 CREATE TABLE "common_event_command_conditional_branch_self_switch" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("common_event_id", "index")
@@ -393,7 +390,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_timer";
 CREATE TABLE "common_event_command_conditional_branch_timer" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("common_event_id", "index")
@@ -403,7 +399,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor";
 CREATE TABLE "common_event_command_conditional_branch_actor" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -411,7 +406,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_enemy";
 CREATE TABLE "common_event_command_conditional_branch_enemy" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -432,7 +426,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_character";
 CREATE TABLE "common_event_command_conditional_branch_character" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "character_reference" INTEGER NOT NULL,
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     PRIMARY KEY ("common_event_id", "index")
@@ -442,7 +435,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_gold";
 CREATE TABLE "common_event_command_conditional_branch_gold" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "amount" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("common_event_id", "index")
@@ -452,7 +444,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_item";
 CREATE TABLE "common_event_command_conditional_branch_item" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -460,7 +451,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_weapon";
 CREATE TABLE "common_event_command_conditional_branch_weapon" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -468,7 +458,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_armor";
 CREATE TABLE "common_event_command_conditional_branch_armor" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -476,7 +465,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_button";
 CREATE TABLE "common_event_command_conditional_branch_button" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "button" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -485,7 +473,6 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_script";
 CREATE TABLE "common_event_command_conditional_branch_script" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "expr" TEXT NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -578,10 +565,6 @@ DROP TABLE IF EXISTS "common_event_command_control_variables_invariant";
 CREATE TABLE "common_event_command_control_variables_invariant" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -590,10 +573,6 @@ DROP TABLE IF EXISTS "common_event_command_control_variables_variable";
 CREATE TABLE "common_event_command_control_variables_variable" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "variable_id" INTEGER REFERENCES "variable" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -602,10 +581,6 @@ DROP TABLE IF EXISTS "common_event_command_control_variables_random_number";
 CREATE TABLE "common_event_command_control_variables_random_number" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "lb" INTEGER NOT NULL,
     "ub" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
@@ -615,10 +590,6 @@ DROP TABLE IF EXISTS "common_event_command_control_variables_character";
 CREATE TABLE "common_event_command_control_variables_character" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "attr_value" INTEGER NOT NULL,
     "attr_code" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
@@ -643,10 +614,6 @@ DROP TABLE IF EXISTS "common_event_command_control_variables_other";
 CREATE TABLE "common_event_command_control_variables_other" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -675,7 +642,6 @@ DROP TABLE IF EXISTS "common_event_command_control_timer_start";
 CREATE TABLE "common_event_command_control_timer_start" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "initial_value" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -684,7 +650,6 @@ DROP TABLE IF EXISTS "common_event_command_control_timer_stop";
 CREATE TABLE "common_event_command_control_timer_stop" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -784,7 +749,6 @@ DROP TABLE IF EXISTS "common_event_command_change_map_settings_panorama";
 CREATE TABLE "common_event_command_change_map_settings_panorama" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
     PRIMARY KEY ("common_event_id", "index")
@@ -794,7 +758,6 @@ DROP TABLE IF EXISTS "common_event_command_change_map_settings_fog";
 CREATE TABLE "common_event_command_change_map_settings_fog" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
@@ -809,7 +772,6 @@ DROP TABLE IF EXISTS "common_event_command_change_map_settings_battle_back";
 CREATE TABLE "common_event_command_change_map_settings_battle_back" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
@@ -2906,7 +2868,6 @@ CREATE TABLE "event_page_command_conditional_branch_switch" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "switch_id" INTEGER REFERENCES "switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -2919,7 +2880,6 @@ CREATE TABLE "event_page_command_conditional_branch_variable" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "variable_id" INTEGER NOT NULL,
     "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
     "value" INTEGER NOT NULL,
@@ -2934,7 +2894,6 @@ CREATE TABLE "event_page_command_conditional_branch_self_switch" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -2947,7 +2906,6 @@ CREATE TABLE "event_page_command_conditional_branch_timer" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -2960,7 +2918,6 @@ CREATE TABLE "event_page_command_conditional_branch_actor" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -2971,7 +2928,6 @@ CREATE TABLE "event_page_command_conditional_branch_enemy" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -2982,7 +2938,6 @@ CREATE TABLE "event_page_command_conditional_branch_character" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "character_reference" INTEGER NOT NULL,
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -2995,7 +2950,6 @@ CREATE TABLE "event_page_command_conditional_branch_gold" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "amount" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -3008,7 +2962,6 @@ CREATE TABLE "event_page_command_conditional_branch_item" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3019,7 +2972,6 @@ CREATE TABLE "event_page_command_conditional_branch_weapon" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3030,7 +2982,6 @@ CREATE TABLE "event_page_command_conditional_branch_armor" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3041,7 +2992,6 @@ CREATE TABLE "event_page_command_conditional_branch_button" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "button" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3053,7 +3003,6 @@ CREATE TABLE "event_page_command_conditional_branch_script" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "expr" TEXT NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3162,10 +3111,6 @@ CREATE TABLE "event_page_command_control_variables_invariant" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3177,10 +3122,6 @@ CREATE TABLE "event_page_command_control_variables_variable" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "variable_id" INTEGER REFERENCES "variable" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3192,10 +3133,6 @@ CREATE TABLE "event_page_command_control_variables_random_number" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "lb" INTEGER NOT NULL,
     "ub" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -3208,10 +3145,6 @@ CREATE TABLE "event_page_command_control_variables_character" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "attr_value" INTEGER NOT NULL,
     "attr_code" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -3224,10 +3157,6 @@ CREATE TABLE "event_page_command_control_variables_other" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3265,7 +3194,6 @@ CREATE TABLE "event_page_command_control_timer_start" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "initial_value" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -3277,7 +3205,6 @@ CREATE TABLE "event_page_command_control_timer_stop" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3380,7 +3307,6 @@ CREATE TABLE "event_page_command_change_map_settings_panorama" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
@@ -3393,7 +3319,6 @@ CREATE TABLE "event_page_command_change_map_settings_fog" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
@@ -3411,7 +3336,6 @@ CREATE TABLE "event_page_command_change_map_settings_battle_back" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
@@ -5460,7 +5384,6 @@ CREATE TABLE "troop_page_command_conditional_branch_switch" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "switch_id" INTEGER REFERENCES "switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5472,7 +5395,6 @@ CREATE TABLE "troop_page_command_conditional_branch_variable" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "variable_id" INTEGER NOT NULL,
     "value_is_variable" INTEGER NOT NULL CHECK ("value_is_variable" in (0, 1)),
     "value" INTEGER NOT NULL,
@@ -5486,7 +5408,6 @@ CREATE TABLE "troop_page_command_conditional_branch_self_switch" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
     "state" INTEGER NOT NULL REFERENCES "switch_state" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5498,7 +5419,6 @@ CREATE TABLE "troop_page_command_conditional_branch_timer" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5510,7 +5430,6 @@ CREATE TABLE "troop_page_command_conditional_branch_actor" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5520,7 +5439,6 @@ CREATE TABLE "troop_page_command_conditional_branch_enemy" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5530,7 +5448,6 @@ CREATE TABLE "troop_page_command_conditional_branch_character" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "character_reference" INTEGER NOT NULL,
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5542,7 +5459,6 @@ CREATE TABLE "troop_page_command_conditional_branch_gold" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "amount" INTEGER NOT NULL,
     "bound_type" INTEGER NOT NULL REFERENCES "bound_type" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5554,7 +5470,6 @@ CREATE TABLE "troop_page_command_conditional_branch_item" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5564,7 +5479,6 @@ CREATE TABLE "troop_page_command_conditional_branch_weapon" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5574,7 +5488,6 @@ CREATE TABLE "troop_page_command_conditional_branch_armor" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5584,7 +5497,6 @@ CREATE TABLE "troop_page_command_conditional_branch_button" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "button" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5595,7 +5507,6 @@ CREATE TABLE "troop_page_command_conditional_branch_script" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "expr" TEXT NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5694,10 +5605,6 @@ CREATE TABLE "troop_page_command_control_variables_invariant" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "value" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5708,10 +5615,6 @@ CREATE TABLE "troop_page_command_control_variables_variable" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "variable_id" INTEGER REFERENCES "variable" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5722,10 +5625,6 @@ CREATE TABLE "troop_page_command_control_variables_random_number" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "lb" INTEGER NOT NULL,
     "ub" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5737,10 +5636,6 @@ CREATE TABLE "troop_page_command_control_variables_character" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "attr_value" INTEGER NOT NULL,
     "attr_code" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5752,10 +5647,6 @@ CREATE TABLE "troop_page_command_control_variables_other" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "variable_id_hi" INTEGER NOT NULL,
-    "variable_id_lo" INTEGER NOT NULL,
-    "assign_type" INTEGER NOT NULL REFERENCES "assign_type" ("id"),
-    "operand_type" INTEGER NOT NULL,
     "other_operand_type" INTEGER NOT NULL REFERENCES "other_operand_type" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5790,7 +5681,6 @@ CREATE TABLE "troop_page_command_control_timer_start" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "initial_value" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
@@ -5801,7 +5691,6 @@ CREATE TABLE "troop_page_command_control_timer_stop" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5896,7 +5785,6 @@ CREATE TABLE "troop_page_command_change_map_settings_panorama" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
@@ -5908,7 +5796,6 @@ CREATE TABLE "troop_page_command_change_map_settings_fog" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
@@ -5925,7 +5812,6 @@ CREATE TABLE "troop_page_command_change_map_settings_battle_back" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "subcode" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
