@@ -1,0 +1,19 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Switches {% endblock %}
+{% block content %}
+	<section>
+		<h1>Switches</h1>
+		<table>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+			</tr>
+			{% for switch in switches %}
+				<tr>
+					<td>{{ switch.id }}</td>
+					<td>{{ switch.name }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</section>
+{% endblock %}

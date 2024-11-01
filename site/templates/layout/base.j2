@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>
+			{% if self.title() | trim %}
+				{% block title %}{% endblock %} -
+			{% endif %}
+			{{ game_name }} Database
+		</title>
+		<link rel="stylesheet" href="{{ url_base }}/style.css">
+		{% block links %}
+		{% endblock %}
+		<style>
+			{% block style %}
+			{% endblock %}
+		</style>
+		{% block script %}
+		{% endblock %}
+	</head>
+	<body>
+		<a id="title" href="{{ url_base }}/">{{ game_name }} Database</a>
+		{% block content %}
+		{% endblock %}
+	</body>
+</html>

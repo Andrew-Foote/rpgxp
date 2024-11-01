@@ -8,6 +8,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/2e/9f/29be0326b2178cfe10d6d45de83163c70cd0b4985502f398fe32791943e2/apsw-3.46.1.0.tar.gz", hash = "sha256:96e3dfad1fd0cc77a778aa6b27468292041a8e9cb1f2dcf06bd773762c9b0c0c", size = 403954 }
 
 [[package]]
+name = "jinja2"
+version = "3.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markupsafe" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/55/39036716d19cab0747a5020fc7e907f362fbf48c984b14e62127f7e68e5d/jinja2-3.1.4.tar.gz", hash = "sha256:4a3aee7acbbe7303aede8e9648d13b8bf88a429282aa6122a993f0ac800cb369", size = 240245 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/80/3a54838c3fb461f6fec263ebf3a3a41771bd05190238de3486aae8540c36/jinja2-3.1.4-py3-none-any.whl", hash = "sha256:bc5dd2abb727a5319567b7a813e6a2e7318c39f4f487cfe6c89c6f9c7d25197d", size = 133271 },
+]
+
+[[package]]
+name = "markupsafe"
+version = "3.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/97/5d42485e71dfc078108a86d6de8fa46db44a1a9295e89c5d6d4a06e23a62/markupsafe-3.0.2.tar.gz", hash = "sha256:ee55d3edf80167e48ea11a923c7386f4669df67d7994554387f84e7d8b0a2bf0", size = 20537 }
+
+[[package]]
 name = "mypy"
 version = "1.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -41,6 +59,7 @@ version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "apsw" },
+    { name = "jinja2" },
     { name = "numpy" },
     { name = "ruby-marshal-parser" },
 ]
@@ -53,6 +72,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "apsw", specifier = ">=3.46.1.0" },
+    { name = "jinja2", specifier = ">=3.1.4" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "numpy", specifier = ">=2.1.2" },
     { name = "ruby-marshal-parser", editable = "../ruby-marshal-parser" },

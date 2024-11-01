@@ -40,6 +40,11 @@ def run(
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
 		module.run(output_dir)
 
+	if 'site' in modules:
+		print("Generating web UI...")
+		module = importlib.import_module('rpgxp.generate_site')
+		module.run(output_dir)
+
 if __name__ == '__main__':
     import argparse
 
