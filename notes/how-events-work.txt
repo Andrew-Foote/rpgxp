@@ -1,0 +1,25 @@
+There are two types of events, common events and map events. Map events belong to a specific tile on a specific map, while common events don't.
+
+Each event is associated with a sequence of commands, which are executed in order, causing things to happen in the game, whenever the event is activated.
+
+Events can be activated in various ways. For common events, the following means of activation are available:
+
+- Common events can be activated when skills or items are used. Each skill or item has a "common_event_id" field which stores the ID of the common event to activate.
+- Common events can be activated via the "Call Common Event" command, when another event is running.
+- Common events can be activated when a specific switch is set to ON. This is controlled by the "switch_id" field on the common event. The common event's "trigger" field must also be set to either 1 ("autorun") or 2 ("parallel"). As long as the switch remains on the common event will resume again after it finishes. The choice of trigger determines whether the event takes over the main thread (autorun) or runs in a parallel thread.
+
+The common event's "trigger" field can only be 0, 1, or 2. If it's 0, this just indicates that it is only intended to be activated via a skill, item or command. You can't associate common events with trigger 0 with a switch.
+
+As far as I know, any common event can be triggered via skill, item or command, regardless of its trigger value.
+
+Map events are a little more complicated. These events have multiple "pages", each associated with its own activation condition and its own list of commands. When the event is executed, only the commands from a specific page will be run. To decide which page to run, the pages are checked in reverse order, from the last page to the first page. The first page found (i.e. the one closest to last) whose condition is true is the one that will be executed, i.e. the one that is "ready".
+
+Event page conditions can be based on a switch, like for common events, but the options are richer:
+- The condition can require TWO switches to be on.
+- The condition can require the value of a certain variable to be greater than or equal to a certain value.
+- The condition can require one of the event's "self switches" to be on. Each event has four self switches, named A, B, C, and D, which are only settable and accessible from that event.
+
+Even if a page is "ready", it won't actually be executed until its trigger is activated, controlled by the "trigger" field. Like common events, this can be set to autorun or parallel, in which case the page will trigger as soon as its condition is true (or, I asusme, if the player enters the map and the condition is already true). But some other triggers are also available for event pages:
+	- player uses action button adjacent to event tile
+	- "Player Touch" - player bumps into the evnet (only applies if the player "makes contact", which is controlled by event priority settings)
+	- "Event Touch" - like player touch, but player needs to only walk to the adjacent tile of the event, rather than walking into the event tile outright

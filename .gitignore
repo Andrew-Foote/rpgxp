@@ -1,15 +1,15 @@
-__pycache__/
 *.py[cod]
-.mypy_cache/
-
-env/
-dist/
-dist/
-
-scratch/
-
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
 
+__pycache__/
+.mypy_cache/
+env/
+dist/
+scratch/
+
 rpgxp/generated/db_data.sql
+
+# This contains paths to local pckages that I haven't uploaded to PyPI.
+uv.toml

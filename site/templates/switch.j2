@@ -1,0 +1,27 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Switch {{ switch.id }} ({{ switch.name }}) {% endblock %}
+{% block content %}
+	<section>
+		<h1>Usage</h1>
+		{% if switch.common_events %}
+			<section>
+				<h2>As a common event condition</h2>
+
+				<p>This switch is used as a condition for the following common events. This means that the event will be executed whenever the switch's value is set to 'on', and will continue executing in a loop as long as the switch is on.</p>
+
+				<table>
+					<tr>
+						<th>ID</th>
+						<th>Name</th>
+					</tr>
+					{% for event in switch.common_event %}
+						<tr>
+							<td>{{ event.id }}</td>
+							<td>{{ event.name }}</td>
+						</tr>
+					{% endfor %}
+				</table>
+			</section>
+		{% endif %}
+	</section>
+{% endblock %}

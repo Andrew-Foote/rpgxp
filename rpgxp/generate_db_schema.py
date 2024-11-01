@@ -381,4 +381,3 @@ def run(output_dir: Path) -> None:
 
     with connection:
         connection.execute(script)
-

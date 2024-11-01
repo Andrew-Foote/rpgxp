@@ -10,6 +10,15 @@ def connect(db_path: Path) -> apsw.Connection:
     apsw.bestpractice.apply(apsw.bestpractice.recommended)
     return apsw.Connection(str(db_path))
 
+def run_script(
+    connection: apsw.Connection, script_path: Path, bindings: apsw.Bindings
+) -> None:
+
+    with script_path.open() as script_file:
+        script = script_file.read()
+
+    connection.execute(script, bindings)
+
 def foreign_key_report(connection: apsw.Connection) -> str:
     raw_check = connection.execute('pragma foreign_key_check').fetchall()
     reports = []
