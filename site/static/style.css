@@ -7,6 +7,7 @@ body {
 	background-color: #f0f0f0;
 	max-width: 64rem;
 	margin: 0 auto;
+	padding-bottom: 1em;
 }
 
 #title {
@@ -74,4 +75,4 @@ th, td {
 	min-width: 5em;
 }
 
-th { background-color: #eee; }
+th { background-color: #ddd; }

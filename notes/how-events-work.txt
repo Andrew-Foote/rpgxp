@@ -8,7 +8,7 @@ Events can be activated in various ways. For common events, the following means 
 - Common events can be activated via the "Call Common Event" command, when another event is running.
 - Common events can be activated when a specific switch is set to ON. This is controlled by the "switch_id" field on the common event. The common event's "trigger" field must also be set to either 1 ("autorun") or 2 ("parallel"). As long as the switch remains on the common event will resume again after it finishes. The choice of trigger determines whether the event takes over the main thread (autorun) or runs in a parallel thread.
 
-The common event's "trigger" field can only be 0, 1, or 2. If it's 0, this just indicates that it is only intended to be activated via a skill, item or command. You can't associate common events with trigger 0 with a switch.
+The common event's "trigger" field can only be 0, 1, or 2. If it's 0, this just indicates that it is only intended to be activated via a skill, item or command, and whatever switch it's associated with has no effect on the game.
 
 As far as I know, any common event can be triggered via skill, item or command, regardless of its trigger value.
 

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 import shutil
 from typing import Any
@@ -36,6 +37,7 @@ def run(db_root: Path):
         shutil.copyfile(static_path, dst_path)
 
     for route in routes():
+        print(f'Generating route {route.url_pattern}...', end='\r')
         url_params: tuple[str, ...]
         possible_url_args: list[tuple[apsw.SQLiteValue, ...]]
 
@@ -69,13 +71,18 @@ def run(db_root: Path):
                     dict(zip(template_params, template_arg_values))
                 )
 
-            print(f'Generating {filesystem_url}... (args={template_args})')
+            #print(f'Generating {filesystem_url}... (args={template_args})')
 
-            render_template(
-                route.template,
-                str(filesystem_url),
-                **template_args
-            )
+            try:
+                render_template(
+                    route.template,
+                    str(filesystem_url),
+                    **template_args
+                )
+            except jinja2.TemplateError as e:
+                e.add_note(route.template)
+                e.add_note(str(template_args))
+                raise
 
 if __name__ == '__main__':
     run(settings.db_root)

@@ -9,6 +9,41 @@
 		<h1>Switch {{ switch.id }} ({{ switch.name }})</h1>
 		<section>
 			<h2>Usage</h2>
+			{% if switch.event_pages %}
+				<section>
+					<h3>As a map event page condition</h3>
+
+					<p>This switch is used as a condition for the following map event pages. This means that one of the conditions for the event page to be active is that this switch is on. This is not necessarily the only condition; click on an individual event page's page number for more information about it, including the full condition.</p>
+
+					<table>
+						<tr>
+							<th>Map</th>
+							<th>Event</th>
+							<th>Page number</th>
+						</tr>
+						{% for page in switch.event_pages %}
+							<tr>
+								<td>
+									<a href="/map/{{ page.map.id }}.html">
+										{{ page.map.id }} ({{ page.map.name }})
+									</a>
+								</td>
+								<td>
+									<a href="/map/{{ page.map.id }}/event/{{ page.event.id }}.html">
+										{{ page.event.id }} ({{ page.event.name }})
+									</a>
+								</td>
+								<td>
+									<a href="/map/{{ page.map.id }}/event/{{ page.event.id }}/page/{{ page.number }}.html">
+										{{ page.number }}
+									</a>
+								</td>
+							</tr>
+						{% endfor %}
+					</table>
+				</section>
+			{% endif %}
+
 			{% if switch.common_events %}
 				<section>
 					<h3>As a common event condition</h3>

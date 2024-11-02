@@ -1,0 +1,23 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Common event {{ id }} ({{ name }}) {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/common_events.html">Common events</a>
+	</div>
+
+	<section>		
+		<h1>Common event {{ id }} ({{ name }})</h1>
+
+		<p><b>Trigger</b>:
+			{% if trigger is none %}
+				none
+			{% else %}
+				{{ trigger.type }},
+				<a href="{{ url_base }}/switch/{{ trigger.switch.id }}">
+					switch {{ trigger.switch.id }}
+				</a>
+				({{ trigger.switch.name }})
+			{% endif %}
+		</p>
+	</section>
+{% endblock %}

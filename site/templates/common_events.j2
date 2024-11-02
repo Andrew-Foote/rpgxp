@@ -1,0 +1,31 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Common events {% endblock %}
+{% block content %}
+	<section>
+		<h1>Common events</h1>
+		<table>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+				<th>Trigger</th>
+			</tr>
+			{% for e in common_events %}
+				<tr>
+					<td><a href="{{ url_base }}/common_event/{{ e.id }}.html">{{ e.id }}</td>
+					<td>{{ e.name }}</td>
+					<td>
+						{% if e.trigger is none %}
+							None
+						{% else %}
+							{{ e.trigger.type }},
+							<a href="{{ url_base }}/switch/{{ e.trigger.switch.id }}">
+								{{ e.trigger.switch.id }}
+							</a>
+							({{ e.trigger.switch.name }})
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</section>
+{% endblock %}

@@ -19,6 +19,7 @@ class ParamType(Enum):
 	BYTES = 3
 	STR = 4
 	JSON = 5
+	OPTIONAL_JSON = 6
 
 @dataclass
 class Route:
@@ -96,15 +97,29 @@ class Route:
 		for param, param_type in self.param_types.items():
 			raw_arg = args[param]
 
-			match param_type:
+			match param_type:#
 				case (
 					ParamType.NONE | ParamType.INT | ParamType.FLOAT
 					| ParamType.BYTES | ParamType.STR
 				):
 					arg = raw_arg
 				case ParamType.JSON:
-					assert isinstance(raw_arg, str)
+					if not isinstance(raw_arg, str):
+						raise ValueError(
+							f'expected raw argument for {param} to be a JSON '
+							f'string, got {raw_arg!r}'
+						)
 					arg = json.loads(raw_arg)
+				case ParamType.OPTIONAL_JSON: # we should support unions really
+					if raw_arg is None:
+						arg = raw_arg
+					else:
+						if not isinstance(raw_arg, str):
+							raise ValueError(
+								f'expected raw argument for {param} to be a JSON '
+								f'string, got {raw_arg!r}'
+							)
+						arg = json.loads(raw_arg)
 				case _:
 					assert_never(param_type)
 
@@ -116,10 +131,16 @@ class Route:
 def routes() -> list[Route]:
 	return [
 		Route('index.html', 'index.j2'),
+		Route('common_events.html', 'common_events.j2', 'view_common_events', {
+			'common_events': ParamType.JSON,
+		}),
+		Route('common_event/{id}.html', 'common_event.j2', 'view_common_event', {
+			'id': ParamType.INT, 'name': ParamType.STR, 'trigger': ParamType.OPTIONAL_JSON,
+		}, 'common_event_ids'),
 		Route('switches.html', 'switches.j2', 'view_switches', {
-			'switches': ParamType.JSON
+			'switches': ParamType.JSON,
 		}),
 		Route('switch/{id}.html', 'switch.j2', 'view_switch', {
-			'switch': ParamType.JSON
+			'switch': ParamType.JSON,
 		}, 'switch_ids'),
 	]
