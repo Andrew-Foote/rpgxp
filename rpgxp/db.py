@@ -29,6 +29,15 @@ def run_script(
 
     return dbh.execute(script, bindings)
 
+def run_named_query(
+    dbh: apsw.Connection,
+    query_name: str,
+    bindings: apsw.Bindings | None=None
+) -> apsw.Cursor:
+    
+    script_path = settings.project_root / f'sql/{query_name}.sql'
+    return run_script(dbh, script_path, bindings)
+
 def foreign_key_report(dbh: apsw.Connection) -> str:
     raw_check = dbh.execute('pragma foreign_key_check').fetchall()
     reports = []

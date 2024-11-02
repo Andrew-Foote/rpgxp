@@ -43,6 +43,11 @@ def run(*, modules_list: list[str], quick: bool):
 		module = importlib.import_module('rpgxp.generate_site')
 		module.run(db_root)
 
+	if 'serve' in modules:
+		print('Serving web UI...')
+		module = importlib.import_module('rpgxp.serve')
+		module.run()
+
 if __name__ == '__main__':
     import argparse
 
@@ -56,7 +61,8 @@ if __name__ == '__main__':
 
     arg_parser.add_argument('-m', '--modules', nargs='*', help=(
     	'Modules to run'
-    ), default='class type schema data fk'.split())
+    ), #default='class type schema data fk'.split()
+    )
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(
     	"avoid processing everything so that the database is generated more "

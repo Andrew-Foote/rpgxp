@@ -10,7 +10,7 @@
 			</tr>
 			{% for switch in switches %}
 				<tr>
-					<td>{{ switch.id }}</td>
+					<td><a href="{{ url_base }}/switch/{{ switch.id }}.html">{{ switch.id }}</td>
 					<td>{{ switch.name }}</td>
 				</tr>
 			{% endfor %}

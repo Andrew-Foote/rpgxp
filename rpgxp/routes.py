@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import functools as ft
+import json
 from typing import Any, assert_never
 import apsw
 
@@ -10,6 +11,14 @@ class PatternSyntaxError(Exception):
 class PatternParserState(Enum):
 	START = 0
 	VAR = 1
+
+class ParamType(Enum):
+	NONE = 0
+	INT = 1
+	FLOAT = 2
+	BYTES = 3
+	STR = 4
+	JSON = 5
 
 @dataclass
 class Route:
@@ -21,6 +30,8 @@ class Route:
 	# the project root. It is expected that there will be a file at this path,
 	# and its content will be used as the source code for the query.
 	template_query: str | None=None
+
+	param_types: dict[str, ParamType]=field(default_factory=lambda: {})
 
 	# Path to an SQL query which will return the set of all possible pattern
 	# variable values for the URL. Each column in the query result should have
@@ -76,10 +87,39 @@ class Route:
 
 		return ''.join(result_chars)
 
+	def format_template_args(
+		self, args: dict[str, apsw.SQLiteValue]
+	) -> dict[str, Any]:
+		
+		result = {}
+
+		for param, param_type in self.param_types.items():
+			raw_arg = args[param]
+
+			match param_type:
+				case (
+					ParamType.NONE | ParamType.INT | ParamType.FLOAT
+					| ParamType.BYTES | ParamType.STR
+				):
+					arg = raw_arg
+				case ParamType.JSON:
+					assert isinstance(raw_arg, str)
+					arg = json.loads(raw_arg)
+				case _:
+					assert_never(param_type)
+
+			result[param] = arg
+
+		return result
+
 @ft.cache
 def routes() -> list[Route]:
 	return [
 		Route('index.html', 'index.j2'),
-		Route('switches.html', 'switches.j2', 'view_switches'),
-		Route('switch/{id}.html', 'switch.j2', 'view_switch', 'switch-ids'),
+		Route('switches.html', 'switches.j2', 'view_switches', {
+			'switches': ParamType.JSON
+		}),
+		Route('switch/{id}.html', 'switch.j2', 'view_switch', {
+			'switch': ParamType.JSON
+		}, 'switch_ids'),
 	]
