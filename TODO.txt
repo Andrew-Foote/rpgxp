@@ -1,3 +1,3 @@
-- Event commands
-- Web interface to database
+- Web interface to database (working on)
 - Handle Materialbase
+- Profile generate_db_data and remove anything making it unnecesssarily slow

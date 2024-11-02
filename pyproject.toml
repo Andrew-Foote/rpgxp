@@ -19,11 +19,14 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "ruby_marshal_parser",
     "apsw>=3.46.1.0",
     "numpy>=2.1.2",
     "jinja2>=3.1.4",
+    "ruby-marshal-parser",
 ]
+
+[tool.uv.sources]
+ruby_marshal_parser = { path = "../ruby-marshal-parser", editable = true }
 
 [project.urls]
 Homepage = "https://github.com/Andrew-Foote/rpgxp"

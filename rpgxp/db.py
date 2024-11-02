@@ -1,26 +1,36 @@
+import functools as ft
+from pathlib import Path
 import apsw
 import apsw.bestpractice
-from pathlib import Path
+from rpgxp import settings
 
-def get_path(db_dir: Path) -> Path:
-    return db_dir / 'rpgxp.sqlite'
-
-def connect(db_path: Path) -> apsw.Connection:
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+def connect(db_root: Path) -> apsw.Connection:
     apsw.bestpractice.apply(apsw.bestpractice.recommended)
-    return apsw.Connection(str(db_path))
+    db_root.mkdir(parents=True, exist_ok=True)
+    return apsw.Connection(str(db_root / 'db.sqlite'))
+
+def row(cursor: apsw.Cursor) -> tuple[apsw.SQLiteValue, ...]:
+    results = cursor.fetchall()
+    row_count = len(results)
+
+    if row_count != 1:
+        raise RuntimeError(f'got {row_count} rows from query, expected 1')
+
+    return results[0]
 
 def run_script(
-    connection: apsw.Connection, script_path: Path, bindings: apsw.Bindings
-) -> None:
+    dbh: apsw.Connection,
+    script_path: Path,
+    bindings: apsw.Bindings | None=None
+) -> apsw.Cursor:
 
     with script_path.open() as script_file:
         script = script_file.read()
 
-    connection.execute(script, bindings)
+    return dbh.execute(script, bindings)
 
-def foreign_key_report(connection: apsw.Connection) -> str:
-    raw_check = connection.execute('pragma foreign_key_check').fetchall()
+def foreign_key_report(dbh: apsw.Connection) -> str:
+    raw_check = dbh.execute('pragma foreign_key_check').fetchall()
     reports = []
 
     for table, rowid, parent, fkid in raw_check:
@@ -29,7 +39,7 @@ def foreign_key_report(connection: apsw.Connection) -> str:
         assert isinstance(parent, str)
         assert isinstance(fkid, int)
 
-        fk = connection.execute('\n'.join([
+        fk = dbh.execute('\n'.join([
             f"SELECT * FROM pragma_foreign_key_list('{table}')",
             f'WHERE "id" = {fkid}',
             f'ORDER BY "seq"',
@@ -55,14 +65,14 @@ def foreign_key_report(connection: apsw.Connection) -> str:
             f'REFERENCES "{parent}" ({ref_cols_csv})',
         ])
 
-        violator_resultset = connection.execute(
+        violator_resultset = dbh.execute(
             f'SELECT {fk_cols_csv} FROM "{table}" WHERE "rowid" = {rowid}'
         ).fetchall()
 
         assert len(violator_resultset) == 1
         violator, = violator_resultset
 
-        pk_cols_resultset = connection.execute(
+        pk_cols_resultset = dbh.execute(
             f'SELECT "name" from pragma_table_info(\'{table}\') WHERE "pk" = 1'
         ).fetchall()
 
@@ -74,7 +84,7 @@ def foreign_key_report(connection: apsw.Connection) -> str:
 
         pk_cols_csv = ', '.join([f'"{col}"' for col in pk_cols])
 
-        pk_vals_resultset = connection.execute(
+        pk_vals_resultset = dbh.execute(
             f'SELECT {pk_cols_csv} from "{table}" WHERE "rowid" = {rowid}'
         ).fetchall()
 

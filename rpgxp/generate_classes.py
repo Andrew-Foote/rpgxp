@@ -1,6 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from typing import Iterable, Iterator, Self, Sequence
+from rpgxp import settings
 from rpgxp import schema
 
 def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.ObjSchema]:
@@ -240,16 +241,11 @@ def generate_module() -> str:
 	])
 
 def run() -> None:
-	import importlib.resources
-	import subprocess
-
 	module = generate_module()
+	module_path = settings.package_root / 'generated/schema.py'
 
-	with importlib.resources.path('rpgxp') as base_path:
-		path = base_path / 'generated/schema.py'
-
-		with open(path, 'w') as f:
-			f.write(module)
+	with module_path.open('w') as module_file:
+		module_file.write(module)
 
 if __name__ == '__main__':
 	run()

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
+import functools as ft
 import importlib.resources
 from pathlib import Path
 from typing import Iterator, Self
-from rpgxp import schema, sql, db
-from rpgxp.util import *
+from rpgxp import db, schema, settings, sql
+from rpgxp.util import camel_case_to_snake
 
 @dataclass
 class DBSchema:
@@ -362,21 +363,14 @@ def generate_schema() -> DBSchema:
 def generate_script() -> str:
     return str(generate_schema().script)
 
-def write_script() -> None:
+def run(db_root: Path) -> None:
     script = generate_script()
+    schema_path = settings.project_root / 'sql/schema.sql'
 
-    with importlib.resources.path('rpgxp') as base_path:
-        with open(base_path / 'generated/db_schema.sql', 'w') as f:
-            f.write(script)
+    with schema_path.open('w') as f:
+        f.write(script)
 
-def run(output_dir: Path) -> None:
-    write_script()
-
-    with importlib.resources.path('rpgxp') as base_path:
-        with open(base_path / 'generated/db_schema.sql', 'r') as f:
-            script = f.read()
-
-    connection = db.connect(db.get_path(output_dir))
+    connection = db.connect(db_root)
     connection.pragma('foreign_keys', False)
 
     with connection:

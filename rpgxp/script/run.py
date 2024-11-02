@@ -1,13 +1,14 @@
-import importlib.resources
-from pathlib import Path
+import importlib
 import subprocess
+from rpgxp import settings
 from rpgxp.script import foreign_key_report
 
-def run(
-	data_root: Path | None, output_dir: Path, *,
-	modules_list: list[str], quick: bool
-):
+def run(*, modules_list: list[str], quick: bool):
 	modules = set(modules_list)
+
+	game_data_root = settings.game_data_root
+	db_root = settings.db_root
+	site_root = settings.site_root
 
 	if 'class' in modules:
 		print("Generating classes...")
@@ -25,25 +26,22 @@ def run(
 	if 'schema' in modules:
 		print("Generating the database schema...")
 		module = importlib.import_module('rpgxp.generate_db_schema')
-		module.run(output_dir)
+		module.run(db_root)
 
 	if 'data' in modules:
-		if data_root is None:
-			raise ValueError('data_root must be set')
-
 		print("Generating the database data...")
 		module = importlib.import_module('rpgxp.generate_db_data')
-		module.run(data_root, output_dir, quick=quick)
+		module.run(game_data_root, db_root, quick=quick)
 
 	if 'fk' in modules:
 		print("Checking foreign keys...")
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
-		module.run(output_dir)
+		module.run(db_root)
 
 	if 'site' in modules:
 		print("Generating web UI...")
 		module = importlib.import_module('rpgxp.generate_site')
-		module.run(output_dir)
+		module.run(db_root)
 
 if __name__ == '__main__':
     import argparse
@@ -55,17 +53,6 @@ if __name__ == '__main__':
         	'Maker XP'
         )
     )
-
-    arg_parser.add_argument(
-    	'-d', '--data_root', type=Path, default=None,
-    	help="The path to the game's Data directory"
-    )
-
-    with importlib.resources.path('rpgxp') as base_path:
-        arg_parser.add_argument(
-            '-o', '--output_dir', type=Path, default=base_path / 'generated',
-           	help='The directory where the SQLite database will be stored'
-        )
 
     arg_parser.add_argument('-m', '--modules', nargs='*', help=(
     	'Modules to run'
@@ -80,8 +67,7 @@ if __name__ == '__main__':
     parsed_args = arg_parser.parse_args()
     
     run(
-    	parsed_args.data_root, parsed_args.output_dir,
-    	modules_list=parsed_args.modules,
+   		modules_list=parsed_args.modules,
     	quick=parsed_args.quick
     )
 

@@ -472,14 +472,14 @@ def generate_script(
 
     return str(result.with_truncation())
 
-def run(data_root: Path, output_dir: Path, *, quick: bool=False) -> None:
+def run(data_root: Path, db_root: Path, *, quick: bool=False) -> None:
     db_schema = generate_schema()
     script = generate_script(data_root, db_schema=db_schema, quick=quick)
 
-    with open(output_dir / 'db_data.sql', 'w') as f:
+    with open(db_root / 'db_data.sql', 'w') as f:
         f.write(script)
 
-    connection = db.connect(db.get_path(output_dir))
+    connection = db.connect(db_root)
     connection.pragma('foreign_keys', False)
 
     with connection:
