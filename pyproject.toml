@@ -22,6 +22,7 @@ dependencies = [
     "apsw>=3.46.1.0",
     "numpy>=2.1.2",
     "jinja2>=3.1.4",
+    "sortedcontainers>=2.4.0",
     "ruby-marshal-parser",
 ]
 
@@ -35,6 +36,8 @@ Issues = "https://github.com/Andrew-Foote/rpgxp/issues"
 [project.optional-dependencies]
 dev = [
     "mypy >= 1.13.0",
+    "sortedcontainers-stubs>=2.4.2",
+    "pytest>=8.3.3",
 ]
 
 [tool.hatch.metadata]

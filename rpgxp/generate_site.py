@@ -26,8 +26,8 @@ def render_template(src_path: str, dst_path: str, **args: Any) -> None:
     with src_path_obj.open('w', encoding='utf-8') as f:
         f.write(content)
 
-def run(db_root: Path):
-    connection = db.connect(db_root)
+def run() -> None:
+    connection = db.connect()
     static_root = settings.project_root / 'site/static'
     project_root = settings.project_root
 
@@ -37,7 +37,7 @@ def run(db_root: Path):
         shutil.copyfile(static_path, dst_path)
 
     for route in routes():
-        print(f'Generating route {route.url_pattern}...', end='\r')
+        print(f'Generating route {route.url_pattern}...')
         url_params: tuple[str, ...]
         possible_url_args: list[tuple[apsw.SQLiteValue, ...]]
 
@@ -85,4 +85,4 @@ def run(db_root: Path):
                 raise
 
 if __name__ == '__main__':
-    run(settings.db_root)
+    run()

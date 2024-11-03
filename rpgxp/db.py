@@ -1,13 +1,52 @@
+from dataclasses import dataclass
 import functools as ft
+import json
 from pathlib import Path
 import apsw
 import apsw.bestpractice
-from rpgxp import settings
+from rpgxp import forest, settings
+from rpgxp.util import Just
 
-def connect(db_root: Path) -> apsw.Connection:
+class TreeAgg:
+    """Defines the "tree" aggregate function for the database.
+
+    This function can be used to turn an SQL query result into a JSON tree
+    structure. It takes three parameters, 'id', 'parent_id', and 'label'. The
+    first two parameters determine the structure of the tree by associating
+    each row with a parent. The 'parent_id' value may be NULL, in which case
+    that means the row has no parent; there can be multiple such rows. The
+    returned JSON will have a structure like
+
+        [{"label": <label>, "children": ...}]
+
+    where the labels come from the 'label' parameter. The ordering of adjacent
+    nodes will be carried over from the order in which the rows are processed.
+    """
+
+    rows: list[forest.Row]
+
+    def __init__(self):
+        self.rows = []
+
+    def step(self, *args: apsw.SQLiteValue) -> None:
+        assert len(args) == 3
+        id_, parent_id, label = args
+        maybe_parent_id = None if parent_id is None else Just(parent_id)
+        index = len(self.rows)
+        self.rows.append(forest.Row(id_, maybe_parent_id, json.loads(str(label))))
+
+    def final(self) -> str:
+        return forest.to_json(forest.from_rows(self.rows))
+
+def connect(db_path: Path | None=None) -> apsw.Connection:
+    if db_path is None:
+        db_path = settings.db_root / 'db.sqlite'
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     apsw.bestpractice.apply(apsw.bestpractice.recommended)
-    db_root.mkdir(parents=True, exist_ok=True)
-    return apsw.Connection(str(db_root / 'db.sqlite'))
+    connection = apsw.Connection(str(db_path))
+    connection.create_aggregate_function('tree', TreeAgg, numargs=3)
+    return connection
 
 def row(cursor: apsw.Cursor) -> tuple[apsw.SQLiteValue, ...]:
     results = cursor.fetchall()

@@ -131,6 +131,7 @@ class Route:
 def routes() -> list[Route]:
 	return [
 		Route('index.html', 'index.j2'),
+		Route('maps.html', 'maps.j2', 'view_maps', {'maps': ParamType.JSON}),
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
 			'common_events': ParamType.JSON,
 		}),

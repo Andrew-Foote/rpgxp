@@ -41,7 +41,7 @@ def run(*, modules_list: list[str], quick: bool):
 	if 'site' in modules:
 		print("Generating web UI...")
 		module = importlib.import_module('rpgxp.generate_site')
-		module.run(db_root)
+		module.run()
 
 	if 'serve' in modules:
 		print('Serving web UI...')
