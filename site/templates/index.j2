@@ -1,6 +1,11 @@
 {% extends 'layout/base.j2' %}
 {% block content %}
 	<section>
+		<h1>About</h1>
+		<p>This website was generated from the RPG Maker XP project for {{ game_name }}. It provides an alternative view on the game's data, such as actors, enemies, maps, events, etc. The main difference compared to the RPG Maker XP editor is that everything is cross-referenced, so that, for example, you can view each individual switch or variable and see all places where it is used (or at least, all places that can be detected&mdash;there may be usages in scripts that cannot be detected programmatically).</p>
+	</section>
+	<section>
+		<h1>Pages</h1>
 		<ul>
 			<li><a href="{{ url_base }}/actors.html">Actors</a></li>
 			<li><a href="{{ url_base }}/classes.html">Classes</a></li>

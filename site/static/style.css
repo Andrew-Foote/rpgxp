@@ -58,9 +58,13 @@ h3 {
 	background-color: #ccc;
 }
 
-p, table {
+p, dl, table {
 	margin-left: 1rem;
 	margin-right: 1rem;
+}
+
+dt {
+	font-weight: bold;
 }
 
 table {
@@ -76,3 +80,6 @@ th, td {
 }
 
 th { background-color: #ddd; }
+
+a { text-decoration: none; }
+a:hover { text-decoration: underline; }

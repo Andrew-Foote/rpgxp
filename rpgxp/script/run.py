@@ -38,6 +38,11 @@ def run(*, modules_list: list[str], quick: bool):
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
 		module.run(db_root)
 
+	if 'static' in modules:
+		print("Copying static files for web UI...")
+		module = importlib.import_module('rpgxp.generate_site')
+		module.copy_static_files()
+
 	if 'site' in modules:
 		print("Generating web UI...")
 		module = importlib.import_module('rpgxp.generate_site')

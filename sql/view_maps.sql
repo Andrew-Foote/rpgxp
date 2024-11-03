@@ -1,7 +1,7 @@
 select tree(
 	m.id,
 	m.parent_id,
-	json(json_object('id', m.name, 'name', m.id))
+	json(json_object('id', m.id, 'name', m.name))
 ) maps
 from map_info m
 -- NB: Generally, I'd expect each map to have a unique "order" value, but for

@@ -2,24 +2,89 @@ from dataclasses import dataclass, field
 from enum import Enum
 import functools as ft
 import json
-from typing import Any, assert_never
+from typing import Any, assert_never, Self
 import apsw
 
-class PatternSyntaxError(Exception):
+class RouteError(Exception):
+	pass
+
+class RoutePatternSyntaxError(RouteError):
+	pass
+
+class RoutePatternValueError(RouteError, ValueError):
 	pass
 
 class PatternParserState(Enum):
 	START = 0
 	VAR = 1
 
-class ParamType(Enum):
+class BasicParamType(Enum):
 	NONE = 0
 	INT = 1
 	FLOAT = 2
 	BYTES = 3
 	STR = 4
 	JSON = 5
-	OPTIONAL_JSON = 6
+
+@dataclass
+class ParamType:
+	members: set[BasicParamType]
+
+	def __or__(self, other: Self) -> Self:
+		return self.__class__(self.members | other.members)
+
+	def parse_arg(self, raw_arg: apsw.SQLiteValue) -> Any:
+		for member in self.members:
+			match member:
+				case BasicParamType.NONE:
+					if raw_arg is None:
+						return None
+				case BasicParamType.INT:
+					if isinstance(raw_arg, int):
+						return raw_arg
+				case BasicParamType.FLOAT:
+					if isinstance(raw_arg, float):
+						return raw_arg
+				case BasicParamType.BYTES:
+					if isinstance(raw_arg, bytes):
+						return raw_arg
+				case BasicParamType.STR:
+					if isinstance(raw_arg, str):
+						return raw_arg
+				case BasicParamType.JSON:
+					if isinstance(raw_arg, str):
+						return json.loads(raw_arg)
+				case _:
+					assert_never(member)
+
+		raise RoutePatternValueError(
+			f'{raw_arg!r} cannot be parsed as any of {self.members}'
+		)
+
+def int_param(*, optional: bool=False) -> ParamType:
+	return ParamType({BasicParamType.INT} | (
+		{BasicParamType.NONE} if optional else set()
+	))
+
+def float_param(*, optional: bool=False) -> ParamType:
+	return ParamType({BasicParamType.FLOAT} | (
+		{BasicParamType.NONE} if optional else set()
+	))
+
+def bytes_param(*, optional: bool=False) -> ParamType:
+	return ParamType({BasicParamType.BYTES} | (
+		{BasicParamType.NONE} if optional else set()
+	))
+
+def str_param(*, optional: bool=False) -> ParamType:
+	return ParamType({BasicParamType.STR} | (
+		{BasicParamType.NONE} if optional else set()
+	))
+
+def json_param(*, optional: bool=False) -> ParamType:
+	return ParamType({BasicParamType.JSON} | (
+		{BasicParamType.NONE} if optional else set()
+	))
 
 @dataclass
 class Route:
@@ -56,14 +121,14 @@ class Route:
 					if char == '{':
 						parser_state = PatternParserState.VAR
 					elif char == '}':
-						raise PatternSyntaxError(
+						raise RoutePatternSyntaxError(
 							f"unmatched closing '}}' character at index {i}"
 						)
 					else:
 						result_chars.append(char)
 				case PatternParserState.VAR:
 					if char == '{':
-						raise PatternSyntaxError(
+						raise RoutePatternSyntaxError(
 							f"'{{' character at index {i} is not allowed since"
 							" it is within a variable"
 						)
@@ -74,7 +139,7 @@ class Route:
 						try:
 							var_value = args[var_name]
 						except KeyError:
-							raise ValueError(
+							raise RoutePatternValueError(
 								f'no binding given for pattern variable '
 								f'{var_name}'
 							)
@@ -91,57 +156,40 @@ class Route:
 	def format_template_args(
 		self, args: dict[str, apsw.SQLiteValue]
 	) -> dict[str, Any]:
-		
-		result = {}
 
-		for param, param_type in self.param_types.items():
-			raw_arg = args[param]
-
-			match param_type:#
-				case (
-					ParamType.NONE | ParamType.INT | ParamType.FLOAT
-					| ParamType.BYTES | ParamType.STR
-				):
-					arg = raw_arg
-				case ParamType.JSON:
-					if not isinstance(raw_arg, str):
-						raise ValueError(
-							f'expected raw argument for {param} to be a JSON '
-							f'string, got {raw_arg!r}'
-						)
-					arg = json.loads(raw_arg)
-				case ParamType.OPTIONAL_JSON: # we should support unions really
-					if raw_arg is None:
-						arg = raw_arg
-					else:
-						if not isinstance(raw_arg, str):
-							raise ValueError(
-								f'expected raw argument for {param} to be a JSON '
-								f'string, got {raw_arg!r}'
-							)
-						arg = json.loads(raw_arg)
-				case _:
-					assert_never(param_type)
-
-			result[param] = arg
-
-		return result
+		return {
+			param: param_type.parse_arg(args[param])
+			for param, param_type in self.param_types.items()
+		}
 
 @ft.cache
 def routes() -> list[Route]:
 	return [
 		Route('index.html', 'index.j2'),
-		Route('maps.html', 'maps.j2', 'view_maps', {'maps': ParamType.JSON}),
+		Route('maps.html', 'maps.j2', 'view_maps', {'maps': json_param()}),
+		Route('map/{id}.html', 'map.j2', 'view_map', {
+			'id': int_param(),
+			'name': str_param(),
+			'parent': json_param(optional=True),
+			'children': json_param(),
+			'tileset': json_param(),
+			'bgm': json_param(optional=True),
+			'bgs': json_param(optional=True),
+			'encounter_step': int_param(),
+			'encounters': json_param(),
+		}, 'map_ids'),
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
-			'common_events': ParamType.JSON,
+			'common_events': json_param(),
 		}),
 		Route('common_event/{id}.html', 'common_event.j2', 'view_common_event', {
-			'id': ParamType.INT, 'name': ParamType.STR, 'trigger': ParamType.OPTIONAL_JSON,
+			'id': int_param(),
+			'name': str_param(),
+			'trigger': json_param(optional=True),
 		}, 'common_event_ids'),
 		Route('switches.html', 'switches.j2', 'view_switches', {
-			'switches': ParamType.JSON,
+			'switches': json_param(),
 		}),
 		Route('switch/{id}.html', 'switch.j2', 'view_switch', {
-			'switch': ParamType.JSON,
+			'switch': json_param(),
 		}, 'switch_ids'),
 	]

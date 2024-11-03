@@ -26,15 +26,17 @@ def render_template(src_path: str, dst_path: str, **args: Any) -> None:
     with src_path_obj.open('w', encoding='utf-8') as f:
         f.write(content)
 
-def run() -> None:
-    connection = db.connect()
+def copy_static_files() -> None:
     static_root = settings.project_root / 'site/static'
-    project_root = settings.project_root
 
     for static_path in static_root.rglob('*'):
         dst_path = settings.site_root / static_path.relative_to(static_root)
         print(f'Copying {static_path} to {dst_path}')
         shutil.copyfile(static_path, dst_path)
+
+def run() -> None:
+    connection = db.connect()
+    project_root = settings.project_root
 
     for route in routes():
         print(f'Generating route {route.url_pattern}...')

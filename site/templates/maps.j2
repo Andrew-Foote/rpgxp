@@ -4,9 +4,9 @@
 	{% for child in tree %}
 		<li>
 			<a href="#" class="tree-collapse">[&minus;]</a>
-			<a href="{{ url_base }}/area/{{ child.label.id }}.html">
-				{{ child.label.name }}
-				({{ child.label.id }})
+			<a href="{{ url_base }}/map/{{ child.label.id }}.html">
+				{{ child.label.id }}
+				({{ child.label.name }})
 			</a>
 			{{ map_tree(child.children) }}
 		</li>
