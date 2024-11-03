@@ -5,7 +5,7 @@ import functools as ft
 import importlib.resources
 from pathlib import Path
 from typing import Iterator, Self
-from rpgxp import db, schema, settings, sql
+from rpgxp import db, material, schema, settings, sql
 from rpgxp.util import camel_case_to_snake
 
 @dataclass
@@ -364,6 +364,7 @@ def generate_script() -> str:
     return str(generate_schema().script)
 
 def run(db_root: Path) -> None:
+    material.generate_schema()
     script = generate_script()
     schema_path = settings.project_root / 'sql/schema.sql'
 

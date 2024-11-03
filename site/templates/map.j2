@@ -1,3 +1,4 @@
+{% from 'macros.j2' import bgm_link, bgs_link %}	
 {% extends 'layout/base.j2' %}
 {% block title %} Map {{ id }} ({{ name }}) {% endblock %}
 {% block content %}
@@ -7,43 +8,61 @@
 
 	<section>		
 		<h1>Map {{ id }} ({{ name }})</h1>
-		<dl>
-			<dt>Parent map</dt>
-			<dd>
-				{% if parent is none %}
-					None
-				{% else %}
-					<a href="{{ url_base }}/map/{{ parent.id }}">{{ parent.id }} ({{ parent.name }})</a>
-				{% endif %}
-			</dd>
-			<dt>Child maps</dt>
-			<dd>
-				{% if children %}
-					{% for child in children %}
-						<a href="{{ url_base }}/map/{{ child.id }}">{{ child.id }} ({{ child.name }})</a>{% if not loop.last %},{% endif %}
-					{% endfor %}
-				{% else %}
-					None
-				{% endif %}
-			</dd>
-			<dt>Tileset</dt>
-			<dd><a href="{{ url_base }}/tileset/{{ tileset.id }}">{{ tileset.id }} ({{ tileset.name }})</a></dd>
-			<dt>BGM</dt>
-			<dd>
-				{% if bgm is none %}
-					None
-				{% else %}
-					<a href="{{ url_base }}/bgm/{{ bgm.name }}">{{ bgm.name }}</a> (volume {{ bgm.volume }}, pitch {{ bgm.pitch }})
-				{% endif %}
-			</dd>
-			<dt>BGS</dt>
-			<dd>
-				{% if bgs is none %}
-					None
-				{% else %}
-					<a href="{{ url_base }}/bgm/{{ bgs.name }}">{{ bgs.name }}</a> (volume {{ bgs.volume }}, pitch {{ bgs.pitch }})
-				{% endif %}
-			</dd>
+		<dl class="tabular">
+			<div class="row">
+				<div class="col">
+					<dt>Parent map</dt>
+					<dd>
+						{% if parent is none %}
+							None
+						{% else %}
+							<a href="{{ url_base }}/map/{{ parent.id }}.html">{{ parent.id }} ({{ parent.name }})</a>
+						{% endif %}
+					</dd>
+					</div>
+				<div class="col">
+					<dt>Child maps</dt>
+					<dd>
+						{% if children %}
+							{% for child in children %}
+								<a href="{{ url_base }}/map/{{ child.id }}.html">{{ child.id }} ({{ child.name }})</a>{% if not loop.last %}<br>{% endif %}
+							{% endfor %}
+						{% else %}
+							None
+						{% endif %}
+					</dd>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<dt>Tileset</dt>
+					<dd><a href="{{ url_base }}/tileset/{{ tileset.id }}.html">{{ tileset.id }} ({{ tileset.name }})</a></dd>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<dt>BGM</dt>
+					<dd>
+						{% if bgm is none %}
+							None
+						{% else %}
+							{{ bgm_link(bgm) }}
+							<small style="display: block">(volume {{ bgm.volume }}, pitch {{ bgm.pitch }})</small>
+						{% endif %}
+					</dd>
+				</div>
+				<div class="col">
+					<dt>BGS</dt>
+					<dd>
+						{% if bgs is none %}
+							None
+						{% else %}
+							{{ bgs_link(bgs) }}
+							<small style="display: block">(volume {{ bgs.volume }}, pitch {{ bgs.pitch }})</small>
+						{% endif %}
+					</dd>
+				</div>
+			</div>
 		</dl>
 		<section>
 			<h2>Encounters</h2>
@@ -51,13 +70,13 @@
 				<section>
 					<h3>Rate</h3>
 
-					<p>The "encounter steps" value stored against this map is <strong>{{ encounter_step }}.</strong> By default, this means that the average number of steps the player must take before an encounter is initiated is {{ encounter_step }}. More precisely, the number of steps is calculated by generating two uniformly-distributed random numbers between 0 and {{ encounter_step }} &minus; 1, and adding 1. This means the number of steps may be as low as 1 or as high as {{ 2 * encounter_step + 1 }}.</p>
+					<p>The "encounter steps" value stored against this map is <strong>{{ encounter_step }}.</strong> By default, this means that the average number of steps the player must take before an encounter is initiated is {{ encounter_step }}. More precisely, the number of steps is calculated by generating two uniformly-distributed random numbers between 0 and {{ encounter_step - 1 }}, and adding 1. This means the number of steps may be as low as 1 or as high as {{ 2 * encounter_step + 1 }}.</p>
 				</section>
 				<section>
 					<h3>Troops</h3>
 					<ol>
 						{% for encounter in encounters %}
-							<li><a href="{{ url_base }}/troop/{{ encounter.troop_id }}">{{ encounter.troop_id }}</a> ({{ encounter.troop_name }})</li>
+							<li><a href="{{ url_base }}/troop/{{ encounter.troop_id }}.html">{{ encounter.troop_id }}</a> ({{ encounter.troop_name }})</li>
 						{% endfor %}
 					</ol>
 				</section>

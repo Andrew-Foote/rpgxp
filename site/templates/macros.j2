@@ -1,0 +1,10 @@
+{% macro material_link(type, subtype, material) %}
+	<a href="{{ url_base }}/{{ type }}/{{ subtype }}/{{ material.name }}{{ material.extension }}">
+		{{ material.name }}
+	</a>
+{% endmacro %}
+
+{% macro bgm_link(bgm) %} {{ material_link('audio', 'bgm', bgm) }} {% endmacro %}
+{% macro bgs_link(bgs) %} {{ material_link('audio', 'bgs', bgs) }} {% endmacro %}
+{% macro me_link(me) %} {{ material_link('audio', 'me', me) }} {% endmacro %}
+{% macro se_link(se) %} {{ material_link('audio', 'se', se) }} {% endmacro %}

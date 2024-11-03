@@ -4,9 +4,8 @@ import shutil
 from typing import Any
 import jinja2
 import apsw
-from rpgxp import db
+from rpgxp import db, material, settings
 from rpgxp.routes import routes
-from rpgxp import settings
 
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
     str(settings.project_root / 'site/templates')
@@ -34,7 +33,11 @@ def copy_static_files() -> None:
         print(f'Copying {static_path} to {dst_path}')
         shutil.copyfile(static_path, dst_path)
 
+    material.copy_static_files()
+
 def run() -> None:
+    copy_static_files()
+
     connection = db.connect()
     project_root = settings.project_root
 

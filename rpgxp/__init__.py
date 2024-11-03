@@ -23,6 +23,7 @@ def _settings_path() -> Path:
 _SettingsDict = TypedDict('_SettingsDict', {
 	'game_name': str,
 	'game_root': Path,
+	'rtp_root': Path,
 	'db_root': Path,
 	'site_root': Path,
 })
@@ -59,6 +60,8 @@ def _settings_dict() -> _SettingsDict:
 					game_name = value
 				case 'game_root':
 					game_root = Path(value)
+				case 'rtp_root':
+					rtp_root = Path(value)
 				case 'db_root':
 					db_root = Path(value)
 				case 'site_root':
@@ -69,6 +72,7 @@ def _settings_dict() -> _SettingsDict:
 	return {
 		'game_name': game_name,
 		'game_root': game_root,
+		'rtp_root': rtp_root,
 		'db_root': db_root,
 		'site_root': site_root,
 	}
@@ -94,6 +98,10 @@ class _Settings:
 	@property
 	def game_root(self) -> Path:
 		return _settings_dict()['game_root']
+
+	@property
+	def rtp_root(self) -> Path:
+		return _settings_dict()['rtp_root']
 
 	@property
 	def db_root(self) -> Path:

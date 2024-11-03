@@ -1,3 +1,5 @@
+* { box-sizing: border-box; }
+
 html {
 	font-family: sans-serif;
 	background-color: #505058;
@@ -63,8 +65,25 @@ p, dl, table {
 	margin-right: 1rem;
 }
 
+dl.tabular {
+	display: table;
+}
+
+dl .row {
+	display: table-row;
+}
+
+dl .col {
+	display: table-cell;
+	padding: 0.2rem; min-width: 16rem;
+}
+
 dt {
 	font-weight: bold;
+}
+
+dd {
+	margin-left: 0;
 }
 
 table {

@@ -1,3 +1,8 @@
 - Web interface to database (working on)
+- On-the-fly rendering for web UI, for convenience when developing
 - Handle Materialbase
 - Profile generate_db_data and remove anything making it unnecesssarily slow
+- Have a way to regenerate schema/data for only one file (e.g. Map001.rxdata),
+  leaving anything from other files untouched as much as possible
+- Maybe use APSW's row tracer thing to generate objects from rows rather than
+ unpacking tuples all the time

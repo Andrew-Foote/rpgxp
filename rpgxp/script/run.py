@@ -33,6 +33,11 @@ def run(*, modules_list: list[str], quick: bool):
 		module = importlib.import_module('rpgxp.generate_db_data')
 		module.run(game_data_root, db_root, quick=quick)
 
+	if 'material' in modules:
+		print("Generating material data...")
+		module = importlib.import_module('rpgxp.material')
+		module.generate_db_data()
+
 	if 'fk' in modules:
 		print("Checking foreign keys...")
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
