@@ -30,6 +30,7 @@ def copy_static_files() -> None:
 
     for static_path in static_root.rglob('*'):
         dst_path = settings.site_root / static_path.relative_to(static_root)
+        dst_path.parent.mkdir(parents=True, exist_ok=True)
         print(f'Copying {static_path} to {dst_path}')
         shutil.copyfile(static_path, dst_path)
 

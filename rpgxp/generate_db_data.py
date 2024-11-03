@@ -7,7 +7,7 @@ import random
 import re
 from typing import Any, Iterator, Self
 import numpy as np
-from rpgxp import db, parse, schema, sql
+from rpgxp import db, material, parse, schema, settings, sql
 from rpgxp.generate_db_schema import DBSchema, generate_schema
 from rpgxp.util import camel_case_to_snake
 
@@ -41,6 +41,11 @@ def process_field(
             row_result = {col_name: stream.getvalue()}
         case schema.EnumSchema(enum_class):
             row_result = {col_name: field_value.value}
+        case schema.MaterialRefSchema():
+            if field_value == '':
+                field_value = None
+
+            row_result = {col_name: field_value}
         case schema.FKSchema(foreign_schema_thunk, nullable):
             foreign_schema = foreign_schema_thunk()
             foreign_pk_schema = foreign_schema.pk_schema()
@@ -125,7 +130,7 @@ def process_variant(
     variant_db_name = camel_case_to_snake(variant.name)
     subtable_name = f'{table_schema.name}_{variant_db_name}'
     subtable_schema = db_schema.get_table(subtable_name)
-    columns = tuple(subtable_schema.columns())
+    columns = tuple(subtable_schema.non_generated_columns())
     column_names = tuple(col.name for col in columns)
     column_types = tuple(col.type_ for col in columns)
 
@@ -197,7 +202,7 @@ def process_table_schema(
     })
 
     db_table_schema = db_schema.get_table(table_name)
-    columns = tuple(db_table_schema.columns())
+    columns = tuple(db_table_schema.non_generated_columns())
     column_names = tuple(col.name for col in columns)
     column_types = tuple(col.type_ for col in columns)
     rows: list[dict[str, Any]] = []
@@ -434,7 +439,7 @@ def process_file_schema(
                 rows.append(row)
 
             if rows:
-                columns = tuple(db_schema.get_table(table_name).columns())
+                columns = tuple(db_schema.get_table(table_name).non_generated_columns())
                 column_names = tuple(col.name for col in columns)
                 column_types = tuple(col.type_ for col in columns)
 
@@ -459,27 +464,27 @@ def process_file_schema(
         case _:
             assert False, file_schema
 
-def generate_script(
-    data_root: Path, *, db_schema: DBSchema, quick: bool=False
-) -> str:
+def generate_script(*, db_schema: DBSchema, quick: bool=False) -> str:
+    data_root = settings.game_data_root
     result = sql.Script()
 
     for file_schema in schema.FILES:
-        
         result += process_file_schema(
             file_schema, data_root=data_root, db_schema=db_schema, quick=quick
         )
 
     return str(result.with_truncation())
 
-def run(data_root: Path, db_root: Path, *, quick: bool=False) -> None:
-    db_schema = generate_schema()
-    script = generate_script(data_root, db_schema=db_schema, quick=quick)
+def run(*, quick: bool=False) -> None:
+    material.generate_db_data()
 
-    with open(db_root / 'db_data.sql', 'w') as f:
+    db_schema = generate_schema()
+    script = generate_script(db_schema=db_schema, quick=quick)
+
+    with open(settings.db_root / 'db_data.sql', 'w') as f:
         f.write(script)
 
-    connection = db.connect(db_root)
+    connection = db.connect()
     connection.pragma('foreign_keys', False)
 
     with connection:

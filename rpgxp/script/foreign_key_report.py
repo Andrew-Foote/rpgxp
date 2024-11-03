@@ -1,6 +1,5 @@
-from pathlib import Path
 from rpgxp import db
 
-def run(db_dir: Path):
-	dbh = db.connect(db_dir)
+def run():
+	dbh = db.connect()
 	print(db.foreign_key_report(dbh))

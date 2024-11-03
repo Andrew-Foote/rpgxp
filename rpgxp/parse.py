@@ -443,7 +443,7 @@ def parse(data_schema: schema.DataSchema, node: marshal.Node) -> Any:
 					assert False
 		case schema.IntSchema(lb, ub):
 			return parse_int(data_schema, node)
-		case schema.StrSchema():
+		case schema.StrSchema() | schema.MaterialRefSchema():
 			return parse_str(node)
 		case schema.ZlibSchema(encoding):
 			return parse_zlib(node, encoding)

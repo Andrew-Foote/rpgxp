@@ -60,7 +60,9 @@ CREATE TABLE "animation_timing" (
     "animation_id" INTEGER NOT NULL REFERENCES "animation" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "frame" INTEGER NOT NULL,
-    "se_name" TEXT NOT NULL,
+    "se_name" TEXT,
+    "_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "se_volume" INTEGER NOT NULL,
     "se_pitch" INTEGER NOT NULL,
     "flash_scope" INTEGER NOT NULL REFERENCES "animation_timing_flash_scope" ("id"),
@@ -70,7 +72,8 @@ CREATE TABLE "animation_timing" (
     "flash_color_alpha" REAL NOT NULL CHECK ("flash_color_alpha" BETWEEN 0 AND 255),
     "flash_duration" INTEGER NOT NULL,
     "condition" INTEGER NOT NULL REFERENCES "animation_timing_condition" ("id"),
-    PRIMARY KEY ("animation_id", "index")
+    PRIMARY KEY ("animation_id", "index"),
+    FOREIGN KEY ("se_name", "_se_name__type", "_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "animation_timing_flash_scope";
@@ -685,10 +688,13 @@ DROP TABLE IF EXISTS "common_event_command_change_battle_bgm";
 CREATE TABLE "common_event_command_change_battle_bgm" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_change_menu_access";
@@ -1274,11 +1280,14 @@ CREATE TABLE "common_event_command_set_move_route_move_command_play_se" (
     "common_event_id" INTEGER NOT NULL,
     "common_event_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
-    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_script";
@@ -1447,10 +1456,13 @@ DROP TABLE IF EXISTS "common_event_command_play_bgm";
 CREATE TABLE "common_event_command_play_bgm" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_fade_out_bgm";
@@ -1465,10 +1477,13 @@ DROP TABLE IF EXISTS "common_event_command_play_bgs";
 CREATE TABLE "common_event_command_play_bgs" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGS'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_fade_out_bgs";
@@ -1497,20 +1512,26 @@ DROP TABLE IF EXISTS "common_event_command_play_me";
 CREATE TABLE "common_event_command_play_me" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_play_se";
 CREATE TABLE "common_event_command_play_se" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_stop_se";
@@ -1966,10 +1987,13 @@ DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_play_se";
 CREATE TABLE "common_event_command_continue_set_move_route_play_se" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_script";
@@ -2100,7 +2124,9 @@ CREATE TABLE "item" (
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
     "animation1_id" INTEGER REFERENCES "animation" ("id"),
     "animation2_id" INTEGER REFERENCES "animation" ("id"),
-    "menu_se_name" TEXT NOT NULL,
+    "menu_se_name" TEXT,
+    "_menu_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_menu_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "menu_se_volume" INTEGER NOT NULL,
     "menu_se_pitch" INTEGER NOT NULL,
     "common_event_id" INTEGER REFERENCES "common_event" ("id"),
@@ -2115,7 +2141,8 @@ CREATE TABLE "item" (
     "hit" INTEGER NOT NULL,
     "pdef_f" INTEGER NOT NULL,
     "mdef_f" INTEGER NOT NULL,
-    "variance" INTEGER NOT NULL
+    "variance" INTEGER NOT NULL,
+    FOREIGN KEY ("menu_se_name", "_menu_se_name__type", "_menu_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "scope";
@@ -2718,11 +2745,14 @@ CREATE TABLE "event_page_move_command_play_se" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_move_command_script";
@@ -3239,11 +3269,14 @@ CREATE TABLE "event_page_command_change_battle_bgm" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_change_menu_access";
@@ -3918,11 +3951,14 @@ CREATE TABLE "event_page_command_set_move_route_move_command_play_se" (
     "event_page_index" INTEGER NOT NULL,
     "event_page_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_script";
@@ -4122,11 +4158,14 @@ CREATE TABLE "event_page_command_play_bgm" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_fade_out_bgm";
@@ -4146,11 +4185,14 @@ CREATE TABLE "event_page_command_play_bgs" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGS'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_fade_out_bgs";
@@ -4190,11 +4232,14 @@ CREATE TABLE "event_page_command_play_me" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_play_se";
@@ -4203,11 +4248,14 @@ CREATE TABLE "event_page_command_play_se" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_stop_se";
@@ -4848,11 +4896,14 @@ CREATE TABLE "event_page_command_continue_set_move_route_play_se" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_script";
@@ -4935,15 +4986,21 @@ CREATE TABLE "map" (
     "width" INTEGER NOT NULL,
     "height" INTEGER NOT NULL,
     "autoplay_bgm" INTEGER NOT NULL CHECK ("autoplay_bgm" in (0, 1)),
-    "bgm_name" TEXT NOT NULL,
+    "bgm_name" TEXT,
+    "_bgm_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_bgm_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "bgm_volume" INTEGER NOT NULL,
     "bgm_pitch" INTEGER NOT NULL,
     "autoplay_bgs" INTEGER NOT NULL CHECK ("autoplay_bgs" in (0, 1)),
-    "bgs_name" TEXT NOT NULL,
+    "bgs_name" TEXT,
+    "_bgs_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_bgs_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGS'),
     "bgs_volume" INTEGER NOT NULL,
     "bgs_pitch" INTEGER NOT NULL,
     "encounter_step" INTEGER NOT NULL,
-    "data" BLOB NOT NULL
+    "data" BLOB NOT NULL,
+    FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("bgs_name", "_bgs_name__type", "_bgs_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "map_info";
@@ -4975,7 +5032,9 @@ CREATE TABLE "skill" (
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
     "animation1_id" INTEGER REFERENCES "animation" ("id"),
     "animation2_id" INTEGER REFERENCES "animation" ("id"),
-    "menu_se_name" TEXT NOT NULL,
+    "menu_se_name" TEXT,
+    "_menu_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_menu_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "menu_se_volume" INTEGER NOT NULL,
     "menu_se_pitch" INTEGER NOT NULL,
     "common_event_id" INTEGER REFERENCES "common_event" ("id"),
@@ -4990,7 +5049,8 @@ CREATE TABLE "skill" (
     "hit" INTEGER NOT NULL,
     "pdef_f" INTEGER NOT NULL,
     "mdef_f" INTEGER NOT NULL,
-    "variance" INTEGER NOT NULL
+    "variance" INTEGER NOT NULL,
+    FOREIGN KEY ("menu_se_name", "_menu_se_name__type", "_menu_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "skill_element";
@@ -5085,52 +5145,84 @@ CREATE TABLE "system" (
     "title_name" TEXT NOT NULL,
     "gameover_name" TEXT NOT NULL,
     "battle_transition" TEXT NOT NULL,
-    "title_bgm_name" TEXT NOT NULL,
+    "title_bgm_name" TEXT,
+    "_title_bgm_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_title_bgm_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "title_bgm_volume" INTEGER NOT NULL,
     "title_bgm_pitch" INTEGER NOT NULL,
-    "battle_bgm_name" TEXT NOT NULL,
+    "battle_bgm_name" TEXT,
+    "_battle_bgm_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_battle_bgm_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "battle_bgm_volume" INTEGER NOT NULL,
     "battle_bgm_pitch" INTEGER NOT NULL,
-    "battle_end_me_name" TEXT NOT NULL,
+    "battle_end_me_name" TEXT,
+    "_battle_end_me_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_battle_end_me_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
     "battle_end_me_volume" INTEGER NOT NULL,
     "battle_end_me_pitch" INTEGER NOT NULL,
-    "gameover_me_name" TEXT NOT NULL,
+    "gameover_me_name" TEXT,
+    "_gameover_me_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_gameover_me_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
     "gameover_me_volume" INTEGER NOT NULL,
     "gameover_me_pitch" INTEGER NOT NULL,
-    "cursor_se_name" TEXT NOT NULL,
+    "cursor_se_name" TEXT,
+    "_cursor_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_cursor_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "cursor_se_volume" INTEGER NOT NULL,
     "cursor_se_pitch" INTEGER NOT NULL,
-    "decision_se_name" TEXT NOT NULL,
+    "decision_se_name" TEXT,
+    "_decision_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_decision_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "decision_se_volume" INTEGER NOT NULL,
     "decision_se_pitch" INTEGER NOT NULL,
-    "cancel_se_name" TEXT NOT NULL,
+    "cancel_se_name" TEXT,
+    "_cancel_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_cancel_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "cancel_se_volume" INTEGER NOT NULL,
     "cancel_se_pitch" INTEGER NOT NULL,
-    "buzzer_se_name" TEXT NOT NULL,
+    "buzzer_se_name" TEXT,
+    "_buzzer_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_buzzer_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "buzzer_se_volume" INTEGER NOT NULL,
     "buzzer_se_pitch" INTEGER NOT NULL,
-    "equip_se_name" TEXT NOT NULL,
+    "equip_se_name" TEXT,
+    "_equip_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_equip_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "equip_se_volume" INTEGER NOT NULL,
     "equip_se_pitch" INTEGER NOT NULL,
-    "shop_se_name" TEXT NOT NULL,
+    "shop_se_name" TEXT,
+    "_shop_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_shop_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "shop_se_volume" INTEGER NOT NULL,
     "shop_se_pitch" INTEGER NOT NULL,
-    "save_se_name" TEXT NOT NULL,
+    "save_se_name" TEXT,
+    "_save_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_save_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "save_se_volume" INTEGER NOT NULL,
     "save_se_pitch" INTEGER NOT NULL,
-    "load_se_name" TEXT NOT NULL,
+    "load_se_name" TEXT,
+    "_load_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_load_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "load_se_volume" INTEGER NOT NULL,
     "load_se_pitch" INTEGER NOT NULL,
-    "battle_start_se_name" TEXT NOT NULL,
+    "battle_start_se_name" TEXT,
+    "_battle_start_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_battle_start_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "battle_start_se_volume" INTEGER NOT NULL,
     "battle_start_se_pitch" INTEGER NOT NULL,
-    "escape_se_name" TEXT NOT NULL,
+    "escape_se_name" TEXT,
+    "_escape_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_escape_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "escape_se_volume" INTEGER NOT NULL,
     "escape_se_pitch" INTEGER NOT NULL,
-    "actor_collapse_se_name" TEXT NOT NULL,
+    "actor_collapse_se_name" TEXT,
+    "_actor_collapse_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_actor_collapse_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "actor_collapse_se_volume" INTEGER NOT NULL,
     "actor_collapse_se_pitch" INTEGER NOT NULL,
-    "enemy_collapse_se_name" TEXT NOT NULL,
+    "enemy_collapse_se_name" TEXT,
+    "_enemy_collapse_se_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_enemy_collapse_se_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "enemy_collapse_se_volume" INTEGER NOT NULL,
     "enemy_collapse_se_pitch" INTEGER NOT NULL,
     "words_gold" TEXT NOT NULL,
@@ -5161,7 +5253,23 @@ CREATE TABLE "system" (
     "battler_name" TEXT NOT NULL,
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "edit_map_id" INTEGER REFERENCES "map" ("id"),
-    "_" INTEGER NOT NULL
+    "_" INTEGER NOT NULL,
+    FOREIGN KEY ("title_bgm_name", "_title_bgm_name__type", "_title_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battle_bgm_name", "_battle_bgm_name__type", "_battle_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battle_end_me_name", "_battle_end_me_name__type", "_battle_end_me_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("gameover_me_name", "_gameover_me_name__type", "_gameover_me_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("cursor_se_name", "_cursor_se_name__type", "_cursor_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("decision_se_name", "_decision_se_name__type", "_decision_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("cancel_se_name", "_cancel_se_name__type", "_cancel_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("buzzer_se_name", "_buzzer_se_name__type", "_buzzer_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("equip_se_name", "_equip_se_name__type", "_equip_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("shop_se_name", "_shop_se_name__type", "_shop_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("save_se_name", "_save_se_name__type", "_save_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("load_se_name", "_load_se_name__type", "_load_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battle_start_se_name", "_battle_start_se_name__type", "_battle_start_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("escape_se_name", "_escape_se_name__type", "_escape_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("actor_collapse_se_name", "_actor_collapse_se_name__type", "_actor_collapse_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("enemy_collapse_se_name", "_enemy_collapse_se_name__type", "_enemy_collapse_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "party_member";
@@ -5722,11 +5830,14 @@ CREATE TABLE "troop_page_command_change_battle_bgm" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_change_menu_access";
@@ -6343,11 +6454,14 @@ CREATE TABLE "troop_page_command_set_move_route_move_command_play_se" (
     "troop_page_index" INTEGER NOT NULL,
     "troop_page_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_script";
@@ -6532,11 +6646,14 @@ CREATE TABLE "troop_page_command_play_bgm" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_fade_out_bgm";
@@ -6554,11 +6671,14 @@ CREATE TABLE "troop_page_command_play_bgs" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGS'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_fade_out_bgs";
@@ -6594,11 +6714,14 @@ CREATE TABLE "troop_page_command_play_me" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_play_se";
@@ -6606,11 +6729,14 @@ CREATE TABLE "troop_page_command_play_se" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_stop_se";
@@ -7189,11 +7315,14 @@ CREATE TABLE "troop_page_command_continue_set_move_route_play_se" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "audio_name" TEXT NOT NULL,
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('SE'),
     "audio_volume" INTEGER NOT NULL,
     "audio_pitch" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_script";

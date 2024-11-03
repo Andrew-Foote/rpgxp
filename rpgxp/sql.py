@@ -33,6 +33,7 @@ class ColumnSchema:
 	default: str=''
 	collate: str=''
 	pk: bool=False
+	generated_as: str=''
 
 	def __str__(self) -> str:		
 		result = f'"{self.name}" {self.type_}'
@@ -45,6 +46,9 @@ class ColumnSchema:
 
 		if self.collate:
 			result += f' COLLATE {self.collate}'
+
+		if self.generated_as:
+			result += f' GENERATED ALWAYS AS ({self.generated_as})'
 
 		return result
 
@@ -112,6 +116,11 @@ class TableSchema:
 		for member in self.members:
 			if isinstance(member, ColumnSchema):
 				yield member
+
+	def non_generated_columns(self) -> Iterator[ColumnSchema]:
+		for column in self.columns():
+			if not column.generated_as:
+				yield column
 
 	def only_columns(self) -> Self:
 		return self.__class__(

@@ -113,19 +113,6 @@ def insert_material(dbh: apsw.Connection, root: Path, source: str) -> None:
                 (type_, subtype, name, source, path.suffix)
             )
 
-def generate_db_data():
-    rtp_root = settings.rtp_root
-    dbh = db.connect()
-    dbh.pragma('foreign_keys', False)
-
-    with dbh:
-        dbh.execute(SCHEMA)
-
-        if rtp_root.exists():
-            insert_material(dbh, rtp_root, 'rtp')
-
-        insert_material(dbh, settings.game_root, 'game')
-
 def root_for_source(source: str) -> Path:
     match source:
         case 'game':
@@ -134,6 +121,24 @@ def root_for_source(source: str) -> Path:
             return settings.rtp_root
         case _:
             raise ValueError(f"unrecognized source '{source}'")
+
+def generate_db_schema():
+    dbh = db.connect()
+    dbh.pragma('foreign_keys', False)
+
+    with dbh:
+        dbh.execute(SCHEMA)
+
+def generate_db_data():
+    rtp_root = settings.rtp_root
+    dbh = db.connect()
+    dbh.pragma('foreign_keys', False)
+
+    with dbh:
+        if rtp_root.exists():
+            insert_material(dbh, rtp_root, 'rtp')
+
+        insert_material(dbh, settings.game_root, 'game')
 
 def copy_static_files():
     rtp_root = settings.rtp_root

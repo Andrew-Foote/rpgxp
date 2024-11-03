@@ -9,7 +9,8 @@ def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.
 		case (
 			schema.BoolSchema() | schema.IntBoolSchema() | schema.IntSchema()
 			| schema.FloatSchema() | schema.StrSchema() | schema.ZlibSchema()
-			| schema.NDArraySchema() | schema.EnumSchema() | schema.FKSchema()
+			| schema.NDArraySchema() | schema.EnumSchema()
+			| schema.MaterialRefSchema() | schema.FKSchema()
 		):
 			pass
 		case schema.RPGVariantObjSchema():
@@ -54,7 +55,10 @@ def schema_to_type(s: schema.DataSchema) -> str:
 			return 'int'
 		case schema.FloatSchema():
 			return 'float'
-		case schema.StrSchema() | schema.ZlibSchema():
+		case (
+			schema.StrSchema() | schema.ZlibSchema()
+			| schema.MaterialRefSchema()
+		):
 			return 'str'
 		case schema.NDArraySchema():
 			return 'np.ndarray'

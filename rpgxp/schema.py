@@ -128,6 +128,12 @@ class EnumSchema(RowSchema):
     enum_class: type[Enum]
 
 @dataclass(frozen=True)
+class MaterialRefSchema(RowSchema):
+    material_type: str
+    material_subtype: str
+    nullable: bool=True
+
+@dataclass(frozen=True)
 class RefableSchema(TableSchema):
     @abstractmethod
     def pk_db_name(self) -> str:
@@ -649,9 +655,6 @@ def int_field(name: str) -> RPGField:
 def str_field(name: str) -> RPGField:
     return RPGField(name, StrSchema())
 
-def audio_field(name: str) -> RPGField:
-    return RPGField(name, AUDIO_FILE_SCHEMA)
-
 def many_fields(
     names: str, maker: Callable[[str], RPGField]
 ) -> Iterator[RPGField]:
@@ -662,7 +665,6 @@ def many_fields(
 bool_fields = ft.partial(many_fields, maker=bool_field)
 int_fields = ft.partial(many_fields, maker=int_field)
 str_fields = ft.partial(many_fields, maker=str_field)
-audio_fields = ft.partial(many_fields, maker=audio_field)
 
 def enum_field(name: str, cls: type[Enum]) -> RPGField:
     return RPGField(name, EnumSchema(cls))
@@ -682,9 +684,19 @@ HUE_SCHEMA = IntSchema(0, 360)
 def hue_field(name: str) -> RPGField:
     return RPGField(name, HUE_SCHEMA)
 
-AUDIO_FILE_SCHEMA = RPGObjSchema('AudioFile', 'RPG::AudioFile', [
-    str_field('name'), *int_fields('volume pitch')
-])
+def audio_schema(subtype: str) -> RPGObjSchema:
+    return RPGObjSchema('AudioFile', 'RPG::AudioFile', [
+        RPGField('name', MaterialRefSchema('Audio', subtype)),
+        *int_fields('volume pitch')
+    ])
+
+def audio_field(name: str, subtype: str) -> RPGField:
+    return RPGField(name, audio_schema(subtype))
+
+def audio_fields(names: str, subtype: str) -> Iterator[RPGField]:
+    return many_fields(names, maker=ft.partial(
+        audio_field, subtype=subtype
+    ))
 
 ELEMENT_SCHEMA = FKSchema(lambda: ELEMENTS_SCHEMA)
 SWITCH_SCHEMA = FKSchema(lambda: SWITCHES_SCHEMA)
@@ -723,7 +735,7 @@ ANIMATION_TIMING_SCHEMA = RPGObjSchema(
     'RPG::Animation::Timing',
     [
         int_field('frame'),
-        audio_field('se'),
+        audio_field('se', 'SE'),
         enum_field('flash_scope', AnimationTimingFlashScope),
         RPGField('flash_color', ColorSchema()),
         int_field('flash_duration'),
@@ -834,7 +846,7 @@ MOVE_COMMAND_SCHEMA = RPGVariantObjSchema('MoveCommand', 'RPG::MoveCommand', [
     ]),
     SimpleVariant(42, 'ChangeOpacity', [Field('opacity', IntSchema())]),
     SimpleVariant(43, 'ChangeBlending', [Field('blend_type', IntSchema())]),
-    SimpleVariant(44, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
+    SimpleVariant(44, 'PlaySE', [Field('audio', audio_schema('SE'))]),
     SimpleVariant(45, 'Script', [Field('line', StrSchema())]),
 ])
 
@@ -981,7 +993,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('amount', IntSchema()),
         ]),
         SimpleVariant(132, 'ChangeBattleBGM', [
-            Field('audio', AUDIO_FILE_SCHEMA),
+            Field('audio', audio_schema('BGM')),
         ]),
         SimpleVariant(135, 'ChangeMenuAccess', [
             Field('enabled', IntBoolSchema())
@@ -1094,14 +1106,14 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('power', IntSchema()),
             Field('duration', IntSchema())
         ]),
-        SimpleVariant(241, 'PlayBGM', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(241, 'PlayBGM', [Field('audio', audio_schema('BGM'))]),
         SimpleVariant(242, 'FadeOutBGM', [Field('seconds', IntSchema())]),
-        SimpleVariant(245, 'PlayBGS', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(245, 'PlayBGS', [Field('audio', audio_schema('BGS'))]),
         SimpleVariant(246, 'FadeOutBGS', [Field('seconds', IntSchema())]),
         SimpleVariant(247, 'MemorizeBGAudio', []),
         SimpleVariant(248, 'RestoreBGAudio', []),
-        SimpleVariant(249, 'PlayME', [Field('audio', AUDIO_FILE_SCHEMA)]),
-        SimpleVariant(250, 'PlaySE', [Field('audio', AUDIO_FILE_SCHEMA)]),
+        SimpleVariant(249, 'PlayME', [Field('audio', audio_schema('ME'))]),
+        SimpleVariant(250, 'PlaySE', [Field('audio', audio_schema('SE'))]),
         SimpleVariant(251, 'StopSE', []),
         SimpleVariant(301, 'BattleProcessing', [
             Field('opponent_troop_id', FKSchema(lambda: TROOPS_SCHEMA)),
@@ -1195,7 +1207,7 @@ ITEM_SCHEMA = RPGObjSchema('Item', 'RPG::Item', [
     enum_field('occasion', Occasion),
     fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
     fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
-    audio_field('menu_se'),
+    audio_field('menu_se', 'SE'),
     fk_field('common_event_id', lambda: COMMON_EVENTS_SCHEMA, True),
     int_field('price'),
     bool_field('consumable'),
@@ -1270,9 +1282,9 @@ MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
     RPGField('width', IntSchema()),
     RPGField('height', IntSchema()),
     RPGField('autoplay_bgm', BoolSchema()),
-    RPGField('bgm', AUDIO_FILE_SCHEMA),
+    audio_field('bgm', 'BGM'),
     RPGField('autoplay_bgs', BoolSchema()),
-    RPGField('bgs', AUDIO_FILE_SCHEMA),
+    audio_field('bgs', 'BGS'),
     RPGField('encounter_list', ListSchema(
         'encounter', FKSchema(lambda: TROOPS_SCHEMA, nullable=False),
         item_name='troop_id'
@@ -1306,7 +1318,7 @@ SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
     enum_field('occasion', Occasion),
     fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
     fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
-    audio_field('menu_se'),
+    audio_field('menu_se', 'SE'),
     fk_field('common_event_id', lambda: COMMON_EVENTS_SCHEMA, True),
     *int_fields('''
         sp_cost power atk_f eva_f str_f dex_f agi_f int_f hit pdef_f mdef_f
@@ -1412,11 +1424,12 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
     RPGField('title_name', StrSchema()),
     RPGField('gameover_name', StrSchema()),
     RPGField('battle_transition', StrSchema()),
+    *audio_fields('title_bgm battle_bgm', 'BGM'),
+    *audio_fields('battle_end_me gameover_me', 'ME'),
     *audio_fields('''
-        title_bgm battle_bgm battle_end_me gameover_me cursor_se decision_se
-        cancel_se buzzer_se equip_se shop_se save_se load_se battle_start_se
-        escape_se actor_collapse_se enemy_collapse_se
-    '''),
+        cursor_se decision_se cancel_se buzzer_se equip_se shop_se save_se
+        load_se battle_start_se escape_se actor_collapse_se enemy_collapse_se
+    ''', 'SE'),
     RPGField('words', SYSTEM_WORDS_SCHEMA),
     RPGField('start_map_id', FKSchema(lambda: MAPS_SCHEMA)),
     RPGField('start_x', IntSchema()),

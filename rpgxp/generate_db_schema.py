@@ -276,6 +276,31 @@ class DBSchema:
                 result.members.append(sql.ForeignKeyConstraint(
                     [field_name], enum_table_name, ['id']
                 ))
+            case schema.MaterialRefSchema(material_type, material_subtype, nullable):
+                type_column_name = f'_{field_name}__type'
+                subtype_column_name = f'_{field_name}__subtype'
+
+                result.members.extend([
+                    sql.ColumnSchema(field_name, 'TEXT', nullable=True),
+                    sql.ColumnSchema(
+                        type_column_name, 'TEXT',
+                        generated_as=f"'{material_type}'"
+                    ),
+                    sql.ColumnSchema(
+                        subtype_column_name, 'TEXT',
+                        generated_as=f"'{material_subtype}'"
+                    ),
+                    sql.ForeignKeyConstraint(
+                        [field_name, type_column_name, subtype_column_name],
+                        'material',
+                        ['name', 'type', 'subtype']
+                    )
+                ])
+
+                if not nullable:
+                    result.members.append(sql.CheckConstraint(
+                        f'"{field_name}" != \'\''
+                    ))
             case schema.FKSchema(foreign_schema_thunk, nullable):
                 foreign_schema = foreign_schema_thunk()
                 foreign_table_name_template = foreign_schema.table_name
@@ -363,15 +388,15 @@ def generate_schema() -> DBSchema:
 def generate_script() -> str:
     return str(generate_schema().script)
 
-def run(db_root: Path) -> None:
-    material.generate_schema()
+def run() -> None:
+    material.generate_db_schema()
     script = generate_script()
     schema_path = settings.project_root / 'sql/schema.sql'
 
     with schema_path.open('w') as f:
         f.write(script)
 
-    connection = db.connect(db_root)
+    connection = db.connect()
     connection.pragma('foreign_keys', False)
 
     with connection:

@@ -1,6 +1,6 @@
 import importlib
 import subprocess
-from rpgxp import settings
+from rpgxp import material, settings
 from rpgxp.script import foreign_key_report
 
 def run(*, modules_list: list[str], quick: bool):
@@ -26,32 +26,35 @@ def run(*, modules_list: list[str], quick: bool):
 	if 'schema' in modules:
 		print("Generating the database schema...")
 		module = importlib.import_module('rpgxp.generate_db_schema')
-		module.run(db_root)
+		module.run()
+	elif 'material.schema' in modules:
+		print("Generating the database schema for materials...")
+		material.generate_db_schema()
 
 	if 'data' in modules:
 		print("Generating the database data...")
 		module = importlib.import_module('rpgxp.generate_db_data')
-		module.run(game_data_root, db_root, quick=quick)
-
-	if 'material' in modules:
+		module.run(quick=quick)
+	elif 'material.data' in modules:
 		print("Generating material data...")
-		module = importlib.import_module('rpgxp.material')
-		module.generate_db_data()
+		material.generate_db_data()
 
 	if 'fk' in modules:
 		print("Checking foreign keys...")
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
-		module.run(db_root)
-
-	if 'static' in modules:
-		print("Copying static files for web UI...")
-		module = importlib.import_module('rpgxp.generate_site')
-		module.copy_static_files()
+		module.run()
 
 	if 'site' in modules:
 		print("Generating web UI...")
 		module = importlib.import_module('rpgxp.generate_site')
 		module.run()
+	elif 'static' in modules:
+		print("Copying static files for web UI...")
+		module = importlib.import_module('rpgxp.generate_site')
+		module.copy_static_files()
+	elif 'material.static' in modules:
+		print("Copying static files for materials...")
+		material.copy_static_files()
 
 	if 'serve' in modules:
 		print('Serving web UI...')
@@ -71,7 +74,7 @@ if __name__ == '__main__':
 
     arg_parser.add_argument('-m', '--modules', nargs='*', help=(
     	'Modules to run'
-    ), #default='class type schema data fk'.split()
+    ), default='class type schema data fk site serve'.split()
     )
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(
