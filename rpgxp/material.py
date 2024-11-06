@@ -72,9 +72,11 @@ CREATE TABLE material_file (
 -- first alphabetically will be preferred. This is not intended to reflect how
 -- RPG Maker chooses the file to play (I don't know how exactly that works).
 DROP VIEW IF EXISTS material_best_file;
-CREATE VIEW material_best_file (type, subtype, name, source, extension) AS
+CREATE VIEW material_best_file (
+    type, subtype, name, source, extension, full_name
+) AS
 SELECT
-    m.type, m.subtype, m.name, m.source, m.extension
+    m.type, m.subtype, m.name, m.source, m.extension, m.name || m.extension
 FROM material_file m
 JOIN material_source s on s.name = m.source
 WHERE NOT EXISTS (

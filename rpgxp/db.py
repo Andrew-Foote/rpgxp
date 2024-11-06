@@ -57,6 +57,34 @@ def row(cursor: apsw.Cursor) -> tuple[apsw.SQLiteValue, ...]:
 
     return results[0]
 
+def fetch_rows(
+    query: str, bindings: apsw.Bindings | None=None,
+    *, dbh: apsw.Connection | None=None
+) -> list[tuple[apsw.SQLiteValue, ...]]:
+
+    if dbh is None:
+        dbh = connect()
+
+    return dbh.execute(query, bindings).fetchall()
+
+def fetch_row(
+    query: str, bindings: apsw.Bindings | None=None,
+    *, dbh: apsw.Connection | None=None
+) -> tuple[apsw.SQLiteValue, ...]:
+
+    rows = fetch_rows(query, bindings, dbh=dbh)
+    assert len(rows) == 1
+    return rows[0]
+
+def fetch_value(
+    query: str, bindings: apsw.Bindings | None=None,
+    *, dbh: apsw.Connection | None=None
+) -> apsw.SQLiteValue:
+
+    row = fetch_row(query, bindings, dbh=dbh)
+    assert len(row) == 1
+    return row[0]
+
 def run_script(
     dbh: apsw.Connection,
     script_path: Path,

@@ -1,12 +1,10 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import importlib.resources
 from pathlib import Path
 import re
-from typing import Self
+from typing import Protocol, Self
 
-class Comparable(ABC):
-    @abstractmethod
+class Comparable(Protocol):
     def __lt__(self, other: Self) -> bool:
     	...
 

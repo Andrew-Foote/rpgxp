@@ -45,4 +45,4 @@ dev = [
 allow-direct-references = true
 
 [tool.mypy]
-packages = ["rpgxp"]
+packages = ["rpgxp", "tests", "golden"]
