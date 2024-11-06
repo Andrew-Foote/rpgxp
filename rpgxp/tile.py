@@ -2,6 +2,7 @@ import io
 import itertools as it
 from pathlib import Path
 from typing import Iterator
+from warnings import warn
 import numpy as np
 from PIL import Image as image
 from PIL.Image import Image
@@ -122,7 +123,15 @@ def map_image(map_id: int) -> Image:
             config = get_configuration(data_array, (x, y, z))
             tile = autotile.configure(autotile_image, config)
         else:
-            tile = regular_tiles[tile_id - 384]
+            try:
+                tile = regular_tiles[tile_id - 384]
+            except IndexError:
+                warn(
+                    f"can't find tile for tile ID {tile_id} in map ID "
+                    f"{map_id} at coords ({x}, {y}, {z})"
+                )
+
+                continue
 
         result.paste(tile, (x * TILE_SIZE, y * TILE_SIZE), tile)
             

@@ -56,6 +56,11 @@ def run(*, modules_list: list[str], quick: bool):
 		print("Copying static files for materials...")
 		material.copy_static_files()
 
+	if 'maps' in modules:
+		print('Generating map images...')
+		module = importlib.import_module('rpgxp.script.generate_map_images')
+		module.run()
+
 	if 'serve' in modules:
 		print('Serving web UI...')
 		module = importlib.import_module('rpgxp.serve')
@@ -74,7 +79,7 @@ if __name__ == '__main__':
 
     arg_parser.add_argument('-m', '--modules', nargs='*', help=(
     	'Modules to run'
-    ), default='class type schema data fk site serve'.split()
+    ), default='class type schema data fk site maps serve'.split()
     )
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(

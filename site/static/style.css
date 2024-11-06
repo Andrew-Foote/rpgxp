@@ -102,3 +102,11 @@ th { background-color: #ddd; }
 
 a { text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+figure { margin: 0.1em }
+
+figcaption {
+	text-align: center;
+	margin-top: 0.2em;
+	font-size: small;
+}

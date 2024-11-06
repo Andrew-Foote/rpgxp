@@ -75,17 +75,17 @@ DROP VIEW IF EXISTS material_best_file;
 CREATE VIEW material_best_file (type, subtype, name, source, extension) AS
 SELECT
     m.type, m.subtype, m.name, m.source, m.extension
-FROM (
-    SELECT
-        m.type, m.subtype, m.name, m.source, m.extension,
-        RANK() OVER (
-            PARTITION BY m.type, m.subtype, m.name 
-            ORDER BY s.priority DESC, m.extension
-        ) as rank
-    FROM material_file m
-    JOIN material_source s on s.name = m.source
-) m
-WHERE m.rank = 1;
+FROM material_file m
+JOIN material_source s on s.name = m.source
+WHERE NOT EXISTS (
+    SELECT * FROM material_file m2
+    JOIN material_source s2 on s2.name = m2.source
+    WHERE m2.type = m.type AND m2.subtype = m.subtype AND m2.name = m.name
+    AND (
+        s2.priority > s.priority
+        OR (s2.priority = s.priority AND m2.extension < m.extension)
+    )
+);
 '''
 
 def insert_material(dbh: apsw.Connection, root: Path, source: str) -> None:
