@@ -81,6 +81,12 @@ wheels = [
 ]
 
 [[package]]
+name = "pillow"
+version = "11.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/26/0d95c04c868f6bdb0c447e3ee2de5564411845e36a858cfd63766bc7b563/pillow-11.0.0.tar.gz", hash = "sha256:72bacbaf24ac003fea9bff9837d1eedb6088758d41e100c1552930151f677739", size = 46737780 }
+
+[[package]]
 name = "pluggy"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -112,6 +118,7 @@ dependencies = [
     { name = "apsw" },
     { name = "jinja2" },
     { name = "numpy" },
+    { name = "pillow" },
     { name = "ruby-marshal-parser" },
     { name = "sortedcontainers" },
 ]
@@ -129,6 +136,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "numpy", specifier = ">=2.1.2" },
+    { name = "pillow" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.3" },
     { name = "ruby-marshal-parser", editable = "../ruby-marshal-parser" },
     { name = "sortedcontainers", specifier = ">=2.4.0" },

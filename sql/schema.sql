@@ -4987,20 +4987,14 @@ CREATE TABLE "map" (
     "height" INTEGER NOT NULL,
     "autoplay_bgm" INTEGER NOT NULL CHECK ("autoplay_bgm" in (0, 1)),
     "bgm_name" TEXT,
-    "_bgm_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
-    "_bgm_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
     "bgm_volume" INTEGER NOT NULL,
     "bgm_pitch" INTEGER NOT NULL,
     "autoplay_bgs" INTEGER NOT NULL CHECK ("autoplay_bgs" in (0, 1)),
     "bgs_name" TEXT,
-    "_bgs_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
-    "_bgs_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGS'),
     "bgs_volume" INTEGER NOT NULL,
     "bgs_pitch" INTEGER NOT NULL,
     "encounter_step" INTEGER NOT NULL,
-    "data" BLOB NOT NULL,
-    FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
-    FOREIGN KEY ("bgs_name", "_bgs_name__type", "_bgs_name__subtype") REFERENCES "material" ("name", "type", "subtype")
+    "data" BLOB NOT NULL
 ) STRICT;
 
 DROP TABLE IF EXISTS "map_info";

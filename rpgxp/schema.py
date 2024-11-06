@@ -132,6 +132,7 @@ class MaterialRefSchema(RowSchema):
     material_type: str
     material_subtype: str
     nullable: bool=True
+    enforce_fk: bool=True
 
 @dataclass(frozen=True)
 class RefableSchema(TableSchema):
@@ -684,14 +685,19 @@ HUE_SCHEMA = IntSchema(0, 360)
 def hue_field(name: str) -> RPGField:
     return RPGField(name, HUE_SCHEMA)
 
-def audio_schema(subtype: str) -> RPGObjSchema:
+def audio_schema(subtype: str, *, enforce_fk: bool=True) -> RPGObjSchema:
     return RPGObjSchema('AudioFile', 'RPG::AudioFile', [
-        RPGField('name', MaterialRefSchema('Audio', subtype)),
+        RPGField('name', MaterialRefSchema(
+            'Audio', subtype, enforce_fk=enforce_fk
+        )),
         *int_fields('volume pitch')
     ])
 
-def audio_field(name: str, subtype: str) -> RPGField:
-    return RPGField(name, audio_schema(subtype))
+def audio_field(
+    name: str, subtype: str, *, enforce_fk: bool=True
+) -> RPGField:
+    
+    return RPGField(name, audio_schema(subtype, enforce_fk=enforce_fk))
 
 def audio_fields(names: str, subtype: str) -> Iterator[RPGField]:
     return many_fields(names, maker=ft.partial(
@@ -1281,10 +1287,12 @@ MAP_SCHEMA = RPGObjSchema('Map', 'RPG::Map', [
     RPGField('tileset_id', FKSchema(lambda: TILESETS_SCHEMA, nullable=False)),
     RPGField('width', IntSchema()),
     RPGField('height', IntSchema()),
+    # the audio field FKs should only be enforced if the autoplay fields are
+    # on, but there's no good way to do that AFAIK
     RPGField('autoplay_bgm', BoolSchema()),
-    audio_field('bgm', 'BGM'),
+    audio_field('bgm', 'BGM', enforce_fk=False),
     RPGField('autoplay_bgs', BoolSchema()),
-    audio_field('bgs', 'BGS'),
+    audio_field('bgs', 'BGS', enforce_fk=False),
     RPGField('encounter_list', ListSchema(
         'encounter', FKSchema(lambda: TROOPS_SCHEMA, nullable=False),
         item_name='troop_id'

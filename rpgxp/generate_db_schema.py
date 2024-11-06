@@ -276,26 +276,35 @@ class DBSchema:
                 result.members.append(sql.ForeignKeyConstraint(
                     [field_name], enum_table_name, ['id']
                 ))
-            case schema.MaterialRefSchema(material_type, material_subtype, nullable):
+            case schema.MaterialRefSchema(
+                material_type, material_subtype, nullable, enforce
+            ):
                 type_column_name = f'_{field_name}__type'
                 subtype_column_name = f'_{field_name}__subtype'
 
-                result.members.extend([
-                    sql.ColumnSchema(field_name, 'TEXT', nullable=True),
-                    sql.ColumnSchema(
-                        type_column_name, 'TEXT',
-                        generated_as=f"'{material_type}'"
-                    ),
-                    sql.ColumnSchema(
-                        subtype_column_name, 'TEXT',
-                        generated_as=f"'{material_subtype}'"
-                    ),
-                    sql.ForeignKeyConstraint(
-                        [field_name, type_column_name, subtype_column_name],
-                        'material',
-                        ['name', 'type', 'subtype']
-                    )
-                ])
+                result.members.append(
+                    sql.ColumnSchema(field_name, 'TEXT', nullable=True)
+                )
+
+                if enforce:
+                    result.members.extend([
+                        sql.ColumnSchema(
+                            type_column_name, 'TEXT',
+                            generated_as=f"'{material_type}'"
+                        ),
+                        sql.ColumnSchema(
+                            subtype_column_name, 'TEXT',
+                            generated_as=f"'{material_subtype}'"
+                        ),
+                        sql.ForeignKeyConstraint(
+                            [
+                                field_name, type_column_name,
+                                subtype_column_name
+                            ],
+                            'material',
+                            ['name', 'type', 'subtype']
+                        )
+                    ])
 
                 if not nullable:
                     result.members.append(sql.CheckConstraint(

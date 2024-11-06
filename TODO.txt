@@ -6,3 +6,4 @@
   leaving anything from other files untouched as much as possible
 - Maybe use APSW's row tracer thing to generate objects from rows rather than
  unpacking tuples all the time
+- We could get the game title from the Game.ini file

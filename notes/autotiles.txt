@@ -1,0 +1,86 @@
+ok so immediately after the "Table" we see 02 1C 07 --- that's the fixnum indicating the length of the byte sequence
+
+table data starts at offset 0xad
+there are 3 dimensions
+the sizes of the dimensions (in words) are
+	width: 20
+	height: 15
+	depth: 3
+then we  have a 900 - indicating the product of the dimensions
+so the real data begins at 0xC1
+these are signed? 16 bit integers
+currently they're all 384
+
+palette tiles:
+94, 142, 190, 238, 286, 334, 382
+  48   48   48   48   48   48
+      _ _
+91 = |_ _|  left part
+93 = ditto  right part   similarly 139, 141 and so on
+           _ _ _
+middle of |_ _ _| = 81
+ _
+| | top=90
+| | middle=80
+|_| bottom=92
+ _ _ _
+|     |  TL=82 TM=68 TR=84
+|     |  ML=64 MM=48 MR=72
+|_ _ _|  BL=88 BM=76 BR=86
+
+
+ok, so we know we have 48 tiles corresponding to each of the 8 autotiles (including the blank one) assignments for the second one:
+
+48 = (surrounded by inside pattern)
+
+     _| |_
+63 = _   _   middle of a cross
+      | |
+
+64 = |in
+      __
+68 =  in
+
+72 = in|
+
+76 = _  (in above the line)
+
+80 = |in|
+     _  _
+81 = _in_
+      _
+82 = | in
+      _
+83 = |/  (inside pattern direct right and direct bottom, but not on the bottom-right diag)
+       _
+84 = in |
+     _
+85 = \|
+
+86 = in _|
+
+      /|
+87 = /_| (inside pat on top and left but not top-left, outside on all others)
+
+88 = |_ in
+
+89 = |\
+     |_\
+          _
+90 = out | |
+          _
+91 = out |_ in
+
+92 = |_| out
+        _
+93 = in _| out
+                                    
+94 = surrounded by outside pattern |o|
+
+95 = ?
+
+
+each tile has 8 tiles surrounding it
+we can classify each of those tiles as inside (another instance of the same autotile) or outside
+so we have 2^8 = 256 combinations
+	but i guess some of those will be redundant

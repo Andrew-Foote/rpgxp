@@ -8,6 +8,7 @@ __pycache__/
 env/
 dist/
 scratch/
+output/
 
 settings.ini
 

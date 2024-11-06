@@ -23,3 +23,11 @@ JsonDumpable = (
 
 def camel_case_to_snake(s: str) -> str:
 	return re.sub(r'(?<=[^A-Z])(?=[A-Z])', '_', s).lower()
+
+def int_from_digits(digits: list[int], base: int=10) -> int:
+	result = 0
+
+	for digit in digits:
+		result = result * base + digit
+
+	return result

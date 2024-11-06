@@ -1,0 +1,1150 @@
+Checking foreign keys...
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (315,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Trainers' Eyes Meet(2)", 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_play_me"
+  At row with primary key values (319,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Team Galactic Battle Remix ', 'Audio', 'ME')
+
+Foreign key violation in table "event_page_command_change_battle_bgm"
+  At row with primary key values (529,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_change_battle_bgm"
+  At row with primary key values (582,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (50,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (78,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (114,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mystery Dungeon Sky Tower Remix', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (128,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Serene', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (342,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Fortuna Island', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (445,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (475,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Souvenir De Aelita', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (477,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "map"
+  At row with primary key values (509,)
+  FK declaration: FOREIGN KEY ("bgm_name", "_bgm_name__type", "_bgm_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Celebrate!', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page"
+  At row with primary key values (425,)
+  FK declaration: FOREIGN KEY ("condition_switch2_id")  REFERENCES "switch" ("id")
+  FK column values in violating row: (2090,)
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (150,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (164,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Belch', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (171,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Belch', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (225,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Copycat', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (256,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('479Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (262,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Precipice Blades', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (277,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Blow6', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (321,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (321,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (321,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (321,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (337,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- After You', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (337,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- After You', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (363,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (363,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (363,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (363,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (385,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Belch', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (385,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('736', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (385,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('761', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (385,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('757', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (395,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (395,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (395,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (395,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (395,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('130Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (416,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('569_1Cry', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (446,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('598Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (447,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('598Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (447,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('598Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (447,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('598Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (447,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('598Cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (461,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (461,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (494,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (494,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (494,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (494,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (495,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (495,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (529,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (557,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Copycat', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (557,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Copycat', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (557,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Copycat', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (586,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Barrage', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_se"
+  At row with primary key values (590,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Memento', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (147,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Natural Gift', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (355,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (394,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (495,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_continue_set_move_route_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "common_event_command_play_se"
+  At row with primary key values (102,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Precipice Blades', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (8,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Strong Trainer', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (22,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (22,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (22,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (25,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Serene', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (26,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Team AA', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (43,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (52,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Happy', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (52,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Legendary', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (68,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Sadness', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (84,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('D1m3N$10N!@L R1f7', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (84,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('D1m3N$10N!@L R1f7', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (84,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('D1m3N$10N!@L R1f7', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (88,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (88,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (88,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (88,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (88,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (94,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (95,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Melia's Theme_2", 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (99,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (109,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (128,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Relaxed', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (128,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Relaxed', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (128,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Relaxed', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (136,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Whimsical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (136,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Whimsical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (148,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (158,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Serene', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (161,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Happy', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (161,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Happy', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (175,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (178,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (178,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (201,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (217,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (218,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (218,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (218,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (218,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (247,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Aqua', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (249,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Melia's Theme_2", 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (255,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Melia's Theme_2", 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (266,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Team AA', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Team AA', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Team AA', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (270,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Encounter! Team AA', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (278,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (278,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('evolv', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (278,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('evolv', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (296,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (304,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (308,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (319,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Rivalry', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (321,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Happy', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (342,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (345,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Evil Gym', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (356,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (356,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (356,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (364,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Battle - Xen Executives_1', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (369,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Happy', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (379,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Gearen City', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (379,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Gearen City', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (379,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Gearen City', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (379,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Gearen City', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (379,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Gearen City', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (413,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Mischievous', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (413,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Sadness', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (413,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Mischeivous_2', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (413,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Sadness', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (415,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Melia's Theme_2", 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (415,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ("Melia's Theme_2", 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (435,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (438,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (438,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (438,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (452,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (475,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Music - Souvenir De Aelita', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (477,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Feeling - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (517,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (552,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (554,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Technical', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (586,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (593,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_play_bgm"
+  At row with primary key values (602,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('Mood - Despair', 'Audio', 'BGM')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (33,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (147,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Natural Gift', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (293,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (355,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (394,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (495,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('487cry_1', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (551,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Power Up Punch2 (2)', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Leaf Tornado', 'Audio', 'SE')
+
+Foreign key violation in table "event_page_command_set_move_route_move_command_play_se"
+  At row with primary key values (581,)
+  FK declaration: FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype")  REFERENCES "material" ("name", "type", "subtype")
+  FK column values in violating row: ('PRSFX- Techno Blast', 'Audio', 'SE')

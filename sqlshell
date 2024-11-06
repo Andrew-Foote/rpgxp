@@ -1,1 +1,1 @@
-.venv/bin/python -m apsw ../rejuv/rpgxp/db.sqlite
+.venv/bin/python -m apsw output/rejuv/db.sqlite

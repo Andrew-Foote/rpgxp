@@ -12,7 +12,7 @@ game_root = /home/andrew/Programs/Pokemon Rejuvenation
 rtp_root = /home/andrew/.steam/steam/steamapps/compatdata/235900/pfx/drive_c/Program Files (x86)/Common Files/Enterbrain/RGSS/Standard
 
 # The directory where the SQLite database will be stored
-db_root = /home/andrew/myspace/code/rpgmaker-stuff/rejuv/rpgxp/
+db_root = /home/andrew/myspace/code/rpgmaker-stuff/rpgxp/output/rejuv
 
 # The root directory for the generated website
-site_root = /home/andrew/myspace/code/rpgmaker-stuff/rejuv/rpgxp/site/
+site_root = /home/andrew/myspace/code/rpgmaker-stuff/rpgxp/output/rejuv/site
