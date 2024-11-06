@@ -1,7 +1,8 @@
+from enum import Enum
 import io
 import itertools as it
 from pathlib import Path
-from typing import Iterator
+from typing import assert_never, Iterator
 from warnings import warn
 import numpy as np
 from PIL import Image as image
@@ -39,12 +40,28 @@ def itertiles(tileset_path: Path) -> Iterator[Image]:
             for x in range(0, w, TILE_SIZE):
                 yield tileset.crop((x, y, x + TILE_SIZE, y + TILE_SIZE))
 
-def is_autotile(tile_id: int) -> bool:
-    return tile_id < 384
+class TileType(Enum):
+    BLANK = 0
+    AUTO = 1
+    REGULAR = 2
 
-def get_configuration(array: np.ndarray, point: tuple[int, int, int]) -> int:
-    # I'm assuming the autotile configuration only depends on the adjacent
-    # tiles in the same layer...
+def tile_type_from_id(tile_id: int) -> TileType:
+    if tile_id < 48:
+        return TileType.BLANK
+    elif tile_id < 384:
+        # TODO: If less than 7 autotiles are assigned to the tileset, should
+        # tile IDs corresponding to the missing autotiles be treated as blanks?
+        return TileType.AUTO
+    else:
+        return TileType.REGULAR
+
+def get_autotile_configuration(
+    array: np.ndarray, point: tuple[int, int, int]
+) -> int:
+
+    # It looks like the autotile configuration only depends on the adjacent
+    # tiles in the same layer
+
     point_array = np.array(point)
 
     offsets = [np.array((*offset, 0)) for offset in (
@@ -59,7 +76,7 @@ def get_configuration(array: np.ndarray, point: tuple[int, int, int]) -> int:
     return int_from_digits([
         (
             not np.all((0 <= adj) & (adj < shape_array))
-            or is_autotile(array[tuple(adj)])
+            or tile_type_from_id(array[tuple(adj)]) == TileType.AUTO
         )
         for adj in adjacents
     ], 2)
@@ -82,8 +99,6 @@ def map_image(map_id: int) -> Image:
     real_width, real_height, depth = data_array.shape
     assert real_width == width
     assert real_height == height
-
-    autotile_cells: set[tuple[int, int, int]] = set()
 
     # regular tiles
 
@@ -112,26 +127,38 @@ def map_image(map_id: int) -> Image:
     # that we get the correct layering
     for x, y, z in it.product(range(width), range(height), range(depth)):
         tile_id = data_array[x, y, z]
+        tile_type = tile_type_from_id(tile_id)
 
-        if is_autotile(tile_id):
-            autotile_index = tile_id // 48
-            autotile_image = autotile_images[autotile_index]
-
-            if autotile_image is None:
+        match tile_type:
+            case TileType.BLANK:
                 continue
+            case TileType.AUTO:
+                image_index, tile_index = divmod(tile_id, 48)
+                autotile_image = autotile_images[image_index]
 
-            config = get_configuration(data_array, (x, y, z))
-            tile = autotile.configure(autotile_image, config)
-        else:
-            try:
-                tile = regular_tiles[tile_id - 384]
-            except IndexError:
-                warn(
-                    f"can't find tile for tile ID {tile_id} in map ID "
-                    f"{map_id} at coords ({x}, {y}, {z})"
-                )
+                if autotile_image is None:
+                    continue
+                elif autotile_image.height <= TILE_SIZE:
+                    # Autotile file is just one row of tiles (corresponding
+                    # to stages of an animation), with no variants based on
+                    # adjacent tiles. So just take the first tile in the row.
+                    tile = autotile_image.crop((0, 0, TILE_SIZE, TILE_SIZE))
+                else:
+                    tile = autotile.tile_from_tile_id(
+                        autotile_image, tile_index
+                    )
+            case TileType.REGULAR:
+                try:
+                    tile = regular_tiles[tile_id - 384]
+                except IndexError:
+                    warn(
+                        f"can't find tile for tile ID {tile_id} in map ID "
+                        f"{map_id} at coords ({x}, {y}, {z})"
+                    )
 
-                continue
+                    continue
+            case _:
+                assert_never(tile_type)
 
         result.paste(tile, (x * TILE_SIZE, y * TILE_SIZE), tile)
             

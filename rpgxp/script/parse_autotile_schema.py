@@ -43,11 +43,13 @@ def parse_variant(tile_id: int, pic: str) -> Variant:
 	br_y, br_x = divmod(pic.find('br') // 3, 6)
 
 	return Variant(
-		tile_id, (tl_x, tl_y), (tr_x, tr_y), (bl_x, bl_y), (br_x, bl_y)
+		tile_id, (tl_x, tl_y), (tr_x, tr_y), (bl_x, bl_y), (br_x, br_y)
 	)
 
-def parse_schema(schema: str) -> dict[int, Variant]:
-	result: dict[int, Variant] = {}
+def parse_schema(schema: str) -> tuple[dict[int, int], dict[int, Variant]]:
+	tile_id_for_config: dict[int, int] = {}
+	variant_for_tile_id: dict[int, Variant] = {}
+
 	blocks = schema.split('===')
 
 	for block in blocks:
@@ -64,17 +66,21 @@ def parse_schema(schema: str) -> dict[int, Variant]:
 		variant_pic = parts[2].strip()
 
 		variant = parse_variant(tile_id, variant_pic)
+
+		assert tile_id not in variant_for_tile_id, tile_id
+		variant_for_tile_id[tile_id] = variant
+
 		configs = list(parse_config_pics(config_pics))
 		
 		for config in configs:
-			assert config not in result, config
-			result[config] = variant
+			assert config not in tile_id_for_config, config
+			tile_id_for_config[config] = tile_id
 
 		# print(block)
 		# print(variant, configs)
 		# input()
 
-	return result
+	return tile_id_for_config, variant_for_tile_id
 
 def run() -> None:
 	schema_path = settings.package_root / 'autotile' / 'schema.txt'
@@ -82,12 +88,17 @@ def run() -> None:
 	with schema_path.open() as schema_file:
 		schema = schema_file.read()
 
-	result = parse_schema(schema)
+	tile_id_for_config, variant_for_tile_id = parse_schema(schema)
 
-	output_path = settings.package_root / 'autotile' / 'schema.pickle'
+	output_path1 = settings.package_root / 'autotile' / 'tile_id_for_config.pickle'
 
-	with output_path.open('wb') as output_file:
-		pickle.dump(result, output_file)
+	with output_path1.open('wb') as output_file:
+		pickle.dump(tile_id_for_config, output_file)
+
+	output_path2 = settings.package_root / 'autotile' / 'variant_for_tile_id.pickle'
+
+	with output_path2.open('wb') as output_file:
+		pickle.dump(variant_for_tile_id, output_file)
 
 if __name__ == '__main__':
 	run()
