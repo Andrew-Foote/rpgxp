@@ -1,0 +1,1 @@
+SELECT s.name FROM script s

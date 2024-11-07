@@ -48,7 +48,7 @@ def golden_test(output_suffix: str='') -> _Decorator:
 					new_output_path = case_path / f'new-output{output_suffix}'
 
 					if output == output_content:
-						new_output_path.unlink()
+						new_output_path.unlink(missing_ok=True)
 					else:
 						with new_output_path.open('wb') as output_file:
 							output_file.write(output)

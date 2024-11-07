@@ -1,11 +1,28 @@
 from dataclasses import dataclass
+import io
 from pathlib import Path
 import shutil
-from typing import Any
-import jinja2
+from typing import Any, Iterable, TypedDict
+import zipfile
 import apsw
+import jinja2
 from rpgxp import db, material, settings
 from rpgxp.routes import routes
+
+NamedStr = TypedDict('NamedStr', {
+    'name': str,
+    'content': str,
+})
+
+def zip_archive(members: Iterable[NamedStr]) -> str:
+    stream = io.BytesIO()
+
+    with zipfile.ZipFile(stream, 'w') as archive:
+        for member in members:
+            archive.writestr(member['name'], member['content'])
+
+    stream.seek(0)
+    return stream.read().decode('utf-8', 'surrogateescape')
 
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
     str(settings.project_root / 'site/templates')
@@ -14,16 +31,24 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(
 jinja_env.globals |= {
     'game_name': settings.game_name,
     'url_base': '',
+    'zip_archive': zip_archive,
 }
 
-def render_template(src_path: str, dst_path: str, **args: Any) -> None:
+def render_template(
+    src_path: str, dst_path: str, template_args: dict[str, Any], 
+    *, binary: bool=False
+) -> None:
     src_path_obj = settings.project_root / dst_path 
     src_path_obj.parent.mkdir(parents=True, exist_ok=True)
     template = jinja_env.get_template(src_path)
-    content = template.render(**args)
+    content = template.render(**template_args)
 
-    with src_path_obj.open('w', encoding='utf-8') as f:
-        f.write(content)
+    if binary:
+        with src_path_obj.open('wb') as f:
+            f.write(content.encode('utf-8', 'surrogateescape'))
+    else:
+        with src_path_obj.open('w', encoding='utf-8') as f:
+            f.write(content)
 
 def copy_static_files() -> None:
     static_root = settings.project_root / 'site/static'
@@ -87,7 +112,8 @@ def run() -> None:
                 render_template(
                     route.template,
                     str(filesystem_url),
-                    **template_args
+                    template_args,
+                    binary=route.binary
                 )
             except jinja2.TemplateError as e:
                 e.add_note(route.template)

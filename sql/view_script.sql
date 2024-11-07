@@ -1,0 +1,1 @@
+SELECT s.id, s.name, s.content FROM script s WHERE s.name = :name

@@ -110,6 +110,16 @@ class Route:
 	# Should be set to None when the URL contains no pattern variables.
 	url_query: str | None=None
 
+	# Indicates whether the rendered template output generated from this route
+	# should be treated as binary or not. The rendered template output given by
+	# Jinja2 is always a string, but if this field is set to True, the file to
+	# which the output is written will be opened in binary mode, and the output
+	# will be encoded as UTF-8 with surrogate escaping. So if the template was
+	# rendered by generating some binary data and then decoding it as UTF-8
+	# with surrogate escaping, the binary data will be reproduced in the
+	# content of the file.
+	binary: bool=False
+
 	def url(self, **args: apsw.SQLiteValue) -> str:
 		result_chars: list[str] = []
 		var_chars: list[str] = []
@@ -219,4 +229,18 @@ def routes() -> list[Route]:
 		Route('switch/{id}.html', 'switch.j2', 'view_switch', {
 			'switch': json_param(),
 		}, 'switch_ids'),
+		Route('scripts.html', 'scripts.j2', 'view_scripts', {
+			'scripts': json_param(),
+		}),
+		Route('script/{name}.html', 'script.j2', 'view_script', {
+			'id': int_param(),
+			'name': str_param(),
+			'content': str_param(),
+		}, 'script_names'),
+		Route('script/raw/{name}.rb', 'raw_script.j2', 'view_raw_script', {
+			'content': str_param(),
+		}, 'script_names'),
+		Route('scripts.zip', 'scripts_zip.j2', 'get_scripts_for_archive', {
+			'scripts': json_param()
+		}, binary=True),
 	]

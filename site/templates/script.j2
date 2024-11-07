@@ -1,0 +1,23 @@
+{% extends 'layout/base.j2' %}
+{% block links %}
+	<link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/panda-syntax-light.min.css">
+{% endblock %}
+{% block title %} Script "{{ name }}" {% endblock %}
+{% block script %}
+	<script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+	<script>hljs.highlightAll();</script>
+{% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/scripts.html">Scripts</a>
+	</div>
+
+	<section>
+		<h1>Script "{{ name}}"</h1>
+		<div style="display: flex; justify-content: space-between">
+			<div style="margin-left: 1rem"><b>ID</b>: {{ id }}</div>
+			<div style="margin-right: 1rem"><a href="{{ url_base }}/script/raw/{{ name }}.rb">Download</a></div>
+		</div>
+		<pre><code>{{ content }}</code></pre>
+	</section>
+{% endblock %}

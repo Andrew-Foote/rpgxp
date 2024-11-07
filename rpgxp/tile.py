@@ -39,7 +39,9 @@ def itertiles(tileset: Image) -> Iterator[Image]:
             yield tileset.crop((x, y, x + TILE_SIZE, y + TILE_SIZE))
 
 def map_image_from_data(
-    map_data: np.ndarray, tileset: Image, autotiles: Mapping[int, Image]
+    map_data: np.ndarray,
+    tileset: Image,
+    autotiles: Mapping[int, Image]
 ) -> Image:
 
     assert all(key in range(1, 8) for key in autotiles)
@@ -50,7 +52,9 @@ def map_image_from_data(
     )
 
     width, height, depth = map_data.shape
-    result = image.new(tileset.mode, (width * TILE_SIZE, height * TILE_SIZE))
+    width_px = width * TILE_SIZE
+    height_px = height * TILE_SIZE
+    result = image.new(tileset.mode, (width_px, height_px))
     regular_tiles = list(itertiles(tileset))
 
     # note that it's important that we iterate over z in ascending order, so
@@ -174,9 +178,11 @@ def autotiles_from_map_id(map_id: int) -> Iterator[dict[int, Image]]:
 def map_image_from_id(map_id: int) -> Iterator[Image]:
     map_data = map_data_from_id(map_id)
 
-    with tileset_from_map_id(map_id) as tileset:
-        with autotiles_from_map_id(map_id) as autotiles:
-            yield map_image_from_data(map_data, tileset, autotiles)
+    with (
+        tileset_from_map_id(map_id) as tileset,
+        autotiles_from_map_id(map_id) as autotiles
+    ):
+        yield map_image_from_data(map_data, tileset, autotiles)
 
 def save_test_case(
     name: str, map_data: np.ndarray, tileset: Image,
@@ -212,11 +218,12 @@ if __name__ == '__main__':
 
     map_data = map_data_from_id(map_id)
 
-    with tileset_from_map_id(map_id) as tileset:
-        with autotiles_from_map_id(map_id) as autotiles:
-            if test_case:
-                print(test_case)
-                save_test_case(test_case, map_data, tileset, autotiles)
+    with (
+        tileset_from_map_id(map_id) as tileset,
+        autotiles_from_map_id(map_id) as autotiles
+    ):
+        if test_case:
+            save_test_case(test_case, map_data, tileset, autotiles)
 
-            map_image = map_image_from_data(map_data, tileset, autotiles)
-            map_image.show()
+        map_image = map_image_from_data(map_data, tileset, autotiles)
+        map_image.show()

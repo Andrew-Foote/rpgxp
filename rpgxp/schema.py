@@ -715,9 +715,9 @@ ACTOR_SCHEMA = RPGObjSchema('Actor', 'RPG::Actor', [
     *int_fields('initial_level final_level'),
     RPGField('exp_basis', IntSchema(10, 50)),
     RPGField('exp_inflation', IntSchema(10, 50)),
-    str_field('character_name'),
+    RPGField('character_name', MaterialRefSchema('Graphics', 'Characters')),
     hue_field('character_hue'),
-    str_field('battler_name'),
+    RPGField('battler_name', MaterialRefSchema('Graphics', 'Battlers')),
     hue_field('battler_hue'),
     RPGField('parameters', NDArraySchema(2)),
     fk_field('weapon_id', lambda: WEAPONS_SCHEMA, True),
@@ -751,7 +751,8 @@ ANIMATION_TIMING_SCHEMA = RPGObjSchema(
 
 ANIMATION_SCHEMA = RPGObjSchema('Animation', 'RPG::Animation', [
     id_field(),
-    *str_fields('name animation_name'),
+    str_field('name'),
+    RPGField('animation_name', MaterialRefSchema('Graphics', 'Animations')),
     hue_field('animation_hue'),
     enum_field('position', AnimationPosition),
     int_field('frame_max'),
@@ -763,7 +764,9 @@ ANIMATION_SCHEMA = RPGObjSchema('Animation', 'RPG::Animation', [
 
 ARMOR_SCHEMA = RPGObjSchema('Armor', 'RPG::Armor', [
     id_field(),
-    *str_fields('name icon_name description'),
+    str_field('name'),
+    RPGField('icon_name', MaterialRefSchema('Graphics', 'Icons')),
+    str_field('description'),
     enum_field('kind', ArmorKind),
     fk_field('auto_state_id', lambda: STATES_SCHEMA, True),
     *int_fields('price pdef mdef eva str_plus dex_plus agi_plus int_plus'),
@@ -845,7 +848,7 @@ MOVE_COMMAND_SCHEMA = RPGVariantObjSchema('MoveCommand', 'RPG::MoveCommand', [
     SimpleVariant(39, 'AlwaysOnTopOn', []),
     SimpleVariant(40, 'AlwaysOnTopOff', []),
     SimpleVariant(41, 'Graphic', [
-        Field('character_name', StrSchema()),
+        Field('character_name', MaterialRefSchema('Graphics', 'Characters')),
         Field('character_hue', HUE_SCHEMA),
         Field('direction', EnumSchema(Direction)),
         Field('pattern', IntSchema())
@@ -1026,11 +1029,11 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('subcode', IntSchema())
         ], 'subcode', [
             SimpleVariant(0, 'Panorama', [
-                Field('name', StrSchema()),
+                Field('name', MaterialRefSchema('Graphics', 'Panoramas')),
                 Field('hue', HUE_SCHEMA),
             ]),
             SimpleVariant(1, 'Fog', [
-                Field('name', StrSchema()),
+                Field('name', MaterialRefSchema('Graphics', 'Fogs')),
                 Field('hue', IntSchema()),
                 Field('opacity', IntSchema()),
                 Field('blend_type', IntSchema()),
@@ -1039,7 +1042,7 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('sy', IntSchema()),
             ]),
             SimpleVariant(2, 'BattleBack', [
-                Field('name', StrSchema())
+                Field('name', MaterialRefSchema('Graphics', 'Battlebacks')),
             ]),
         ]),
         SimpleVariant(205, 'ChangeFogColorTone', [
@@ -1082,7 +1085,8 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('duration', IntSchema()),
         ]),
         SimpleVariant(231, 'ShowPicture', [
-            Field('number', IntSchema()), Field('name', StrSchema()),
+            Field('number', IntSchema()),
+            Field('name', MaterialRefSchema('Graphics', 'Pictures')),
             Field('origin', IntSchema()),
             Field('appoint_with_vars', IntBoolSchema()),
             Field('x', IntSchema()), Field('y', IntSchema()),
@@ -1187,7 +1191,8 @@ ENEMY_ACTION_SCHEMA = RPGObjSchema('EnemyAction', 'RPG::Enemy::Action', [
 
 ENEMY_SCHEMA = RPGObjSchema('Enemy', 'RPG::Enemy', [
     id_field(),
-    *str_fields('name battler_name'),
+    str_field('name'),
+    RPGField('battler_name', MaterialRefSchema('Graphics', 'Battlers')),
     hue_field('battler_hue'),
     *int_fields('maxhp maxsp'),
     RPGField('str_', IntSchema(), rpg_name='str', _db_name='str'),
@@ -1208,7 +1213,9 @@ ENEMY_SCHEMA = RPGObjSchema('Enemy', 'RPG::Enemy', [
 
 ITEM_SCHEMA = RPGObjSchema('Item', 'RPG::Item', [
     id_field(),
-    *str_fields('name icon_name description'),
+    str_field('name'),
+    RPGField('icon_name', MaterialRefSchema('Graphics', 'Icons')),
+    str_field('description'),
     enum_field('scope', Scope),
     enum_field('occasion', Occasion),
     fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
@@ -1253,7 +1260,7 @@ EVENT_PAGE_GRAPHIC_SCHEMA = RPGObjSchema(
     'RPG::Event::Page::Graphic',
     [
         int_field('tile_id'),
-        str_field('character_name'),
+        RPGField('character_name', MaterialRefSchema('Graphics', 'Characters')),
         hue_field('character_hue'),
         enum_field('direction', Direction),
         RPGField('pattern', IntSchema(0, 3)),
@@ -1321,7 +1328,9 @@ SCRIPT_SCHEMA = ArrayObjSchema('Script', [
 
 SKILL_SCHEMA = RPGObjSchema('Skill', 'RPG::Skill', [
     id_field(),
-    *str_fields('name icon_name description'),
+    str_field('name'),
+    RPGField('icon_name', MaterialRefSchema('Graphics', 'Icons')),
+    str_field('description'),
     enum_field('scope', Scope),
     enum_field('occasion', Occasion),
     fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
@@ -1428,10 +1437,10 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
     RPGField('elements', ELEMENTS_SCHEMA),
     RPGField('switches', SWITCHES_SCHEMA),
     RPGField('variables', VARIABLES_SCHEMA),
-    RPGField('windowskin_name', StrSchema()),
-    RPGField('title_name', StrSchema()),
-    RPGField('gameover_name', StrSchema()),
-    RPGField('battle_transition', StrSchema()),
+    RPGField('windowskin_name', MaterialRefSchema('Graphics', 'Windowskins')),
+    RPGField('title_name', MaterialRefSchema('Graphics', 'Titles')),
+    RPGField('gameover_name', MaterialRefSchema('Graphics', 'Gameovers')),
+    RPGField('battle_transition', MaterialRefSchema('Graphics', 'Transitions')),
     *audio_fields('title_bgm battle_bgm', 'BGM'),
     *audio_fields('battle_end_me gameover_me', 'ME'),
     *audio_fields('''
@@ -1446,8 +1455,8 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
         'test_battler', SYSTEM_TEST_BATTLER_SCHEMA
     )),
     RPGField('test_troop_id', FKSchema(lambda: TROOPS_SCHEMA)),
-    RPGField('battleback_name', StrSchema()),
-    RPGField('battler_name', StrSchema()),
+    RPGField('battleback_name', MaterialRefSchema('Graphics', 'Battlebacks')),
+    RPGField('battler_name', MaterialRefSchema('Graphics', 'Battlers')),
     RPGField('battler_hue', HUE_SCHEMA),
     RPGField('edit_map_id', FKSchema(lambda: MAPS_SCHEMA)),
     RPGField('_', IntSchema()),
@@ -1455,17 +1464,18 @@ SYSTEM_SCHEMA = RPGSingletonObjSchema('System', 'system', 'RPG::System', [
 
 TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
     id_field(),
-    *str_fields('name tileset_name'),
+    str_field('name'),
+    RPGField('tileset_name', MaterialRefSchema('Graphics', 'Tilesets')),
     RPGField('autotile_names', ListSchema(
-        'tileset_autotile', StrSchema(),
+        'tileset_autotile', MaterialRefSchema('Graphics', 'Autotiles'),
         item_name='autotile_name', length_schema=IntSchema(7, 7)
     )),
-    str_field('panorama_name'),
+    RPGField('panorama_name', MaterialRefSchema('Graphics', 'Panoramas')),
     hue_field('panorama_hue'),
-    str_field('fog_name'),
+    RPGField('fog_name', MaterialRefSchema('Graphics', 'Fogs')),
     hue_field('fog_hue'),
     *int_fields('fog_opacity fog_blend_type fog_zoom fog_sx fog_sy'),
-    str_field('battleback_name'),
+    RPGField('battleback_name', MaterialRefSchema('Graphics', 'Battlebacks')),
     RPGField('passages', NDArraySchema(1)),
     RPGField('priorities', NDArraySchema(1)),
     RPGField('terrain_tags', NDArraySchema(1)),
@@ -1508,7 +1518,9 @@ TROOP_SCHEMA = RPGObjSchema('Troop', 'RPG::Troop', [
 
 WEAPON_SCHEMA = RPGObjSchema('Weapon', 'RPG::Weapon', [
     id_field(),
-    *str_fields('name icon_name description'),
+    str_field('name'),
+    RPGField('icon_name', MaterialRefSchema('Graphics', 'Icons')),
+    str_field('description'),
     fk_field('animation1_id', lambda: ANIMATIONS_SCHEMA, True),
     fk_field('animation2_id', lambda: ANIMATIONS_SCHEMA, True),
     *int_fields('price atk pdef mdef str_plus dex_plus agi_plus int_plus'),

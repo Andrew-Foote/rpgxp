@@ -135,6 +135,8 @@ def generate_db_data():
     rtp_root = settings.rtp_root
     dbh = db.connect()
     dbh.pragma('foreign_keys', False)
+    dbh.execute('DELETE FROM material_file')
+    dbh.execute('DELETE FROM material')
 
     with dbh:
         if rtp_root.exists():

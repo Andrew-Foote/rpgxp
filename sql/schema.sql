@@ -7,9 +7,13 @@ CREATE TABLE "actor" (
     "final_level" INTEGER NOT NULL,
     "exp_basis" INTEGER NOT NULL CHECK ("exp_basis" BETWEEN 10 AND 50),
     "exp_inflation" INTEGER NOT NULL CHECK ("exp_inflation" BETWEEN 10 AND 50),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
-    "battler_name" TEXT NOT NULL,
+    "battler_name" TEXT,
+    "_battler_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battler_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlers'),
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "parameters" BLOB NOT NULL,
     "weapon_id" INTEGER REFERENCES "weapon" ("id"),
@@ -21,17 +25,22 @@ CREATE TABLE "actor" (
     "armor1_fix" INTEGER NOT NULL CHECK ("armor1_fix" in (0, 1)),
     "armor2_fix" INTEGER NOT NULL CHECK ("armor2_fix" in (0, 1)),
     "armor3_fix" INTEGER NOT NULL CHECK ("armor3_fix" in (0, 1)),
-    "armor4_fix" INTEGER NOT NULL CHECK ("armor4_fix" in (0, 1))
+    "armor4_fix" INTEGER NOT NULL CHECK ("armor4_fix" in (0, 1)),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battler_name", "_battler_name__type", "_battler_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "animation";
 CREATE TABLE "animation" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "animation_name" TEXT NOT NULL,
+    "animation_name" TEXT,
+    "_animation_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_animation_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Animations'),
     "animation_hue" INTEGER NOT NULL CHECK ("animation_hue" BETWEEN 0 AND 360),
     "position" INTEGER NOT NULL REFERENCES "animation_position" ("id"),
-    "frame_max" INTEGER NOT NULL
+    "frame_max" INTEGER NOT NULL,
+    FOREIGN KEY ("animation_name", "_animation_name__type", "_animation_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "animation_position";
@@ -103,7 +112,9 @@ DROP TABLE IF EXISTS "armor";
 CREATE TABLE "armor" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "icon_name" TEXT NOT NULL,
+    "icon_name" TEXT,
+    "_icon_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_icon_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Icons'),
     "description" TEXT NOT NULL,
     "kind" INTEGER NOT NULL REFERENCES "armor_kind" ("id"),
     "auto_state_id" INTEGER REFERENCES "state" ("id"),
@@ -114,7 +125,8 @@ CREATE TABLE "armor" (
     "str_plus" INTEGER NOT NULL,
     "dex_plus" INTEGER NOT NULL,
     "agi_plus" INTEGER NOT NULL,
-    "int_plus" INTEGER NOT NULL
+    "int_plus" INTEGER NOT NULL,
+    FOREIGN KEY ("icon_name", "_icon_name__type", "_icon_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "armor_kind";
@@ -755,31 +767,40 @@ DROP TABLE IF EXISTS "common_event_command_change_map_settings_panorama";
 CREATE TABLE "common_event_command_change_map_settings_panorama" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Panoramas'),
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_change_map_settings_fog";
 CREATE TABLE "common_event_command_change_map_settings_fog" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Fogs'),
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
     "zoom" INTEGER NOT NULL,
     "sx" INTEGER NOT NULL,
     "sy" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_change_map_settings_battle_back";
 CREATE TABLE "common_event_command_change_map_settings_battle_back" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlebacks'),
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_change_map_settings";
@@ -1247,12 +1268,15 @@ CREATE TABLE "common_event_command_set_move_route_move_command_graphic" (
     "common_event_id" INTEGER NOT NULL,
     "common_event_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "common_event_command_set_move_route_index", "index"),
-    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index")
+    FOREIGN KEY ("common_event_id", "common_event_command_set_move_route_index") REFERENCES "common_event_command_set_move_route" ("common_event_id", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_set_move_route_move_command_change_opacity";
@@ -1371,7 +1395,9 @@ CREATE TABLE "common_event_command_show_picture" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "number" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Pictures'),
     "origin" INTEGER NOT NULL,
     "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
     "x" INTEGER NOT NULL,
@@ -1380,7 +1406,8 @@ CREATE TABLE "common_event_command_show_picture" (
     "zoom_y" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_move_picture";
@@ -1960,11 +1987,14 @@ DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_graphic";
 CREATE TABLE "common_event_command_continue_set_move_route_graphic" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
-    PRIMARY KEY ("common_event_id", "index")
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "common_event_command_continue_set_move_route_change_opacity";
@@ -2052,7 +2082,9 @@ DROP TABLE IF EXISTS "enemy";
 CREATE TABLE "enemy" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "battler_name" TEXT NOT NULL,
+    "battler_name" TEXT,
+    "_battler_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battler_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlers'),
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "maxhp" INTEGER NOT NULL,
     "maxsp" INTEGER NOT NULL,
@@ -2073,7 +2105,8 @@ CREATE TABLE "enemy" (
     "item_id" INTEGER REFERENCES "item" ("id"),
     "weapon_id" INTEGER REFERENCES "weapon" ("id"),
     "armor_id" INTEGER REFERENCES "armor" ("id"),
-    "treasure_prob" INTEGER NOT NULL
+    "treasure_prob" INTEGER NOT NULL,
+    FOREIGN KEY ("battler_name", "_battler_name__type", "_battler_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "enemy_action";
@@ -2118,7 +2151,9 @@ DROP TABLE IF EXISTS "item";
 CREATE TABLE "item" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "icon_name" TEXT NOT NULL,
+    "icon_name" TEXT,
+    "_icon_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_icon_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Icons'),
     "description" TEXT NOT NULL,
     "scope" INTEGER NOT NULL REFERENCES "scope" ("id"),
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
@@ -2142,6 +2177,7 @@ CREATE TABLE "item" (
     "pdef_f" INTEGER NOT NULL,
     "mdef_f" INTEGER NOT NULL,
     "variance" INTEGER NOT NULL,
+    FOREIGN KEY ("icon_name", "_icon_name__type", "_icon_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("menu_se_name", "_menu_se_name__type", "_menu_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
@@ -2242,7 +2278,9 @@ CREATE TABLE "event_page" (
     "condition_variable_value" INTEGER NOT NULL,
     "condition_self_switch_ch" TEXT NOT NULL REFERENCES "self_switch" ("id"),
     "graphic_tile_id" INTEGER NOT NULL,
-    "graphic_character_name" TEXT NOT NULL,
+    "graphic_character_name" TEXT,
+    "_graphic_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_graphic_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "graphic_character_hue" INTEGER NOT NULL CHECK ("graphic_character_hue" BETWEEN 0 AND 360),
     "graphic_direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "graphic_pattern" INTEGER NOT NULL CHECK ("graphic_pattern" BETWEEN 0 AND 3),
@@ -2260,7 +2298,8 @@ CREATE TABLE "event_page" (
     "always_on_top" INTEGER NOT NULL CHECK ("always_on_top" in (0, 1)),
     "trigger" INTEGER NOT NULL REFERENCES "event_page_trigger" ("id"),
     PRIMARY KEY ("map_id", "event_id", "index"),
-    FOREIGN KEY ("map_id", "event_id") REFERENCES "event" ("map_id", "id")
+    FOREIGN KEY ("map_id", "event_id") REFERENCES "event" ("map_id", "id"),
+    FOREIGN KEY ("graphic_character_name", "_graphic_character_name__type", "_graphic_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "move_type";
@@ -2709,12 +2748,15 @@ CREATE TABLE "event_page_move_command_graphic" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_move_command_change_opacity";
@@ -3340,10 +3382,13 @@ CREATE TABLE "event_page_command_change_map_settings_panorama" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Panoramas'),
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_change_map_settings_fog";
@@ -3352,7 +3397,9 @@ CREATE TABLE "event_page_command_change_map_settings_fog" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Fogs'),
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
@@ -3360,7 +3407,8 @@ CREATE TABLE "event_page_command_change_map_settings_fog" (
     "sx" INTEGER NOT NULL,
     "sy" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_change_map_settings_battle_back";
@@ -3369,9 +3417,12 @@ CREATE TABLE "event_page_command_change_map_settings_battle_back" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlebacks'),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_change_map_settings";
@@ -3912,12 +3963,15 @@ CREATE TABLE "event_page_command_set_move_route_move_command_graphic" (
     "event_page_index" INTEGER NOT NULL,
     "event_page_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index", "event_page_command_set_move_route_index") REFERENCES "event_page_command_set_move_route" ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_set_move_route_move_command_change_opacity";
@@ -4067,7 +4121,9 @@ CREATE TABLE "event_page_command_show_picture" (
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "number" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Pictures'),
     "origin" INTEGER NOT NULL,
     "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
     "x" INTEGER NOT NULL,
@@ -4077,7 +4133,8 @@ CREATE TABLE "event_page_command_show_picture" (
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_move_picture";
@@ -4860,12 +4917,15 @@ CREATE TABLE "event_page_command_continue_set_move_route_graphic" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
-    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "event_page_command_continue_set_move_route_change_opacity";
@@ -5020,7 +5080,9 @@ DROP TABLE IF EXISTS "skill";
 CREATE TABLE "skill" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "icon_name" TEXT NOT NULL,
+    "icon_name" TEXT,
+    "_icon_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_icon_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Icons'),
     "description" TEXT NOT NULL,
     "scope" INTEGER NOT NULL REFERENCES "scope" ("id"),
     "occasion" INTEGER NOT NULL REFERENCES "occasion" ("id"),
@@ -5044,6 +5106,7 @@ CREATE TABLE "skill" (
     "pdef_f" INTEGER NOT NULL,
     "mdef_f" INTEGER NOT NULL,
     "variance" INTEGER NOT NULL,
+    FOREIGN KEY ("icon_name", "_icon_name__type", "_icon_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("menu_se_name", "_menu_se_name__type", "_menu_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
@@ -5135,10 +5198,18 @@ DROP TABLE IF EXISTS "system";
 CREATE TABLE "system" (
     "id" INTEGER NOT NULL DEFAULT 0 CHECK ("id" = 0) PRIMARY KEY,
     "magic_number" INTEGER NOT NULL,
-    "windowskin_name" TEXT NOT NULL,
-    "title_name" TEXT NOT NULL,
-    "gameover_name" TEXT NOT NULL,
-    "battle_transition" TEXT NOT NULL,
+    "windowskin_name" TEXT,
+    "_windowskin_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_windowskin_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Windowskins'),
+    "title_name" TEXT,
+    "_title_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_title_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Titles'),
+    "gameover_name" TEXT,
+    "_gameover_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_gameover_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Gameovers'),
+    "battle_transition" TEXT,
+    "_battle_transition__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battle_transition__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Transitions'),
     "title_bgm_name" TEXT,
     "_title_bgm_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
     "_title_bgm_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('BGM'),
@@ -5243,11 +5314,19 @@ CREATE TABLE "system" (
     "start_x" INTEGER NOT NULL,
     "start_y" INTEGER NOT NULL,
     "test_troop_id" INTEGER REFERENCES "troop" ("id"),
-    "battleback_name" TEXT NOT NULL,
-    "battler_name" TEXT NOT NULL,
+    "battleback_name" TEXT,
+    "_battleback_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battleback_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlebacks'),
+    "battler_name" TEXT,
+    "_battler_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battler_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlers'),
     "battler_hue" INTEGER NOT NULL CHECK ("battler_hue" BETWEEN 0 AND 360),
     "edit_map_id" INTEGER REFERENCES "map" ("id"),
     "_" INTEGER NOT NULL,
+    FOREIGN KEY ("windowskin_name", "_windowskin_name__type", "_windowskin_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("title_name", "_title_name__type", "_title_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("gameover_name", "_gameover_name__type", "_gameover_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battle_transition", "_battle_transition__type", "_battle_transition__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("title_bgm_name", "_title_bgm_name__type", "_title_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("battle_bgm_name", "_battle_bgm_name__type", "_battle_bgm_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("battle_end_me_name", "_battle_end_me_name__type", "_battle_end_me_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
@@ -5263,7 +5342,9 @@ CREATE TABLE "system" (
     FOREIGN KEY ("battle_start_se_name", "_battle_start_se_name__type", "_battle_start_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("escape_se_name", "_escape_se_name__type", "_escape_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
     FOREIGN KEY ("actor_collapse_se_name", "_actor_collapse_se_name__type", "_actor_collapse_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
-    FOREIGN KEY ("enemy_collapse_se_name", "_enemy_collapse_se_name__type", "_enemy_collapse_se_name__subtype") REFERENCES "material" ("name", "type", "subtype")
+    FOREIGN KEY ("enemy_collapse_se_name", "_enemy_collapse_se_name__type", "_enemy_collapse_se_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battleback_name", "_battleback_name__type", "_battleback_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battler_name", "_battler_name__type", "_battler_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "party_member";
@@ -5306,28 +5387,43 @@ DROP TABLE IF EXISTS "tileset";
 CREATE TABLE "tileset" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "tileset_name" TEXT NOT NULL,
-    "panorama_name" TEXT NOT NULL,
+    "tileset_name" TEXT,
+    "_tileset_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_tileset_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Tilesets'),
+    "panorama_name" TEXT,
+    "_panorama_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_panorama_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Panoramas'),
     "panorama_hue" INTEGER NOT NULL CHECK ("panorama_hue" BETWEEN 0 AND 360),
-    "fog_name" TEXT NOT NULL,
+    "fog_name" TEXT,
+    "_fog_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_fog_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Fogs'),
     "fog_hue" INTEGER NOT NULL CHECK ("fog_hue" BETWEEN 0 AND 360),
     "fog_opacity" INTEGER NOT NULL,
     "fog_blend_type" INTEGER NOT NULL,
     "fog_zoom" INTEGER NOT NULL,
     "fog_sx" INTEGER NOT NULL,
     "fog_sy" INTEGER NOT NULL,
-    "battleback_name" TEXT NOT NULL,
+    "battleback_name" TEXT,
+    "_battleback_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_battleback_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlebacks'),
     "passages" BLOB NOT NULL,
     "priorities" BLOB NOT NULL,
-    "terrain_tags" BLOB NOT NULL
+    "terrain_tags" BLOB NOT NULL,
+    FOREIGN KEY ("tileset_name", "_tileset_name__type", "_tileset_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("panorama_name", "_panorama_name__type", "_panorama_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("fog_name", "_fog_name__type", "_fog_name__subtype") REFERENCES "material" ("name", "type", "subtype"),
+    FOREIGN KEY ("battleback_name", "_battleback_name__type", "_battleback_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "tileset_autotile";
 CREATE TABLE "tileset_autotile" (
     "tileset_id" INTEGER NOT NULL REFERENCES "tileset" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "autotile_name" TEXT NOT NULL,
-    PRIMARY KEY ("tileset_id", "index")
+    "autotile_name" TEXT,
+    "_autotile_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_autotile_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Autotiles'),
+    PRIMARY KEY ("tileset_id", "index"),
+    FOREIGN KEY ("autotile_name", "_autotile_name__type", "_autotile_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop";
@@ -5890,10 +5986,13 @@ CREATE TABLE "troop_page_command_change_map_settings_panorama" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Panoramas'),
     "hue" INTEGER NOT NULL CHECK ("hue" BETWEEN 0 AND 360),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_change_map_settings_fog";
@@ -5901,7 +6000,9 @@ CREATE TABLE "troop_page_command_change_map_settings_fog" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Fogs'),
     "hue" INTEGER NOT NULL,
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
@@ -5909,7 +6010,8 @@ CREATE TABLE "troop_page_command_change_map_settings_fog" (
     "sx" INTEGER NOT NULL,
     "sy" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_change_map_settings_battle_back";
@@ -5917,9 +6019,12 @@ CREATE TABLE "troop_page_command_change_map_settings_battle_back" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Battlebacks'),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_change_map_settings";
@@ -6412,12 +6517,15 @@ CREATE TABLE "troop_page_command_set_move_route_move_command_graphic" (
     "troop_page_index" INTEGER NOT NULL,
     "troop_page_command_set_move_route_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index", "troop_page_command_set_move_route_index") REFERENCES "troop_page_command_set_move_route" ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_set_move_route_move_command_change_opacity";
@@ -6555,7 +6663,9 @@ CREATE TABLE "troop_page_command_show_picture" (
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "number" INTEGER NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT,
+    "_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Pictures'),
     "origin" INTEGER NOT NULL,
     "appoint_with_vars" INTEGER NOT NULL CHECK ("appoint_with_vars" in (0, 1)),
     "x" INTEGER NOT NULL,
@@ -6565,7 +6675,8 @@ CREATE TABLE "troop_page_command_show_picture" (
     "opacity" INTEGER NOT NULL,
     "blend_type" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("name", "_name__type", "_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_move_picture";
@@ -7276,12 +7387,15 @@ CREATE TABLE "troop_page_command_continue_set_move_route_graphic" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
-    "character_name" TEXT NOT NULL,
+    "character_name" TEXT,
+    "_character_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_character_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Characters'),
     "character_hue" INTEGER NOT NULL CHECK ("character_hue" BETWEEN 0 AND 360),
     "direction" INTEGER NOT NULL REFERENCES "direction" ("id"),
     "pattern" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
-    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("character_name", "_character_name__type", "_character_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "troop_page_command_continue_set_move_route_change_opacity";
@@ -7389,7 +7503,9 @@ DROP TABLE IF EXISTS "weapon";
 CREATE TABLE "weapon" (
     "id" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "icon_name" TEXT NOT NULL,
+    "icon_name" TEXT,
+    "_icon_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Graphics'),
+    "_icon_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('Icons'),
     "description" TEXT NOT NULL,
     "animation1_id" INTEGER REFERENCES "animation" ("id"),
     "animation2_id" INTEGER REFERENCES "animation" ("id"),
@@ -7400,7 +7516,8 @@ CREATE TABLE "weapon" (
     "str_plus" INTEGER NOT NULL,
     "dex_plus" INTEGER NOT NULL,
     "agi_plus" INTEGER NOT NULL,
-    "int_plus" INTEGER NOT NULL
+    "int_plus" INTEGER NOT NULL,
+    FOREIGN KEY ("icon_name", "_icon_name__type", "_icon_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
 DROP TABLE IF EXISTS "weapon_element";

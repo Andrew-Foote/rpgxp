@@ -9,17 +9,74 @@
 		<h1>Tileset {{ id }} ({{ name }})</h1>
 
 		<section>
-			<h2>Graphic</h2>
+			<h2>Regular tiles</h2>
 
 			{% if extension %}
 				<figure>
-					<a href="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" style="display: block; max-height: 24rem; overflow-y: auto">
-						<img src="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" style="display: block; margin: 0 auto">
+					<map name="tilemap">
+						<area
+						    shape="rect"
+						    coords="0,0,32,32"
+						    href="https://developer.mozilla.org/docs/Web/CSS"
+						    target="_blank"
+						    alt="CSS" />
+					</map>
+					<a href="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" class="figure-img" usemap="#tilemap">
 					</a>
 					<figcaption><b>File name</b>: {{ file_name }}</figcaption>
 				</figure>
 			{% else %}
-				<p>This tileset references a graphic with the file name "{{ file_name }}" but no file with this name exists.</p>
+				<p>This tileset references a graphic with the file name "Tilesets/{{ file_name }}", but no file with this name exists.</p>
+			{% endif %}
+		</section>
+		<section>
+			<h2>Autotiles</h2>
+
+			{% if autotiles %}
+				<div style="text-align: center">
+					{% for autotile in autotiles %}
+						<figure style="display: inline-block; margin: 1rem">
+							<a href="{{ url_base }}/graphics/autotiles/{{ autotile.file_name }}{{ autotile.extension }}">
+								<img src="{{ url_base }}/graphics/autotiles/{{ autotile.file_name }}{{ autotile.extension }}">
+								</img>
+							</a>
+							<figcaption>{{ autotile.index + 1 }}: {{ autotile.file_name }}</figcaption>
+						</figure>
+					{% endfor %}
+				</div>
+			{% else %}
+				<p>There are no autotiles for this tileset.</p>
+			{% endif %}
+		</section>
+		<section>
+			<h2>Panorama</h2>
+			{% if panorama.extension %}
+				<figure>
+					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.file_name }}{{ panorama.extension }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.file_name }}{{ panorama.extension }}" class="figure-img">
+					</a>
+					<figcaption><b>File name</b>: {{ panorama.file_name }}</figcaption>
+				</figure>
+			{% elif panorama.file_name %}
+				<p>This tileset references a graphic with the file name "Panoramas/{{ panorama.file_name }}", but no file with this name exists.</p>
+			{% else %}
+				<p>There is no panorama for this tileset.</p>
+			{% endif %}
+		</section>
+		<section>
+			<h2>Fog</h2>
+			{% if fog.extension %}
+				<figure>
+					<a href="{{ url_base }}/graphics/fogs/{{ fog.file_name }}{{ fog.extension }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/fogs/{{ fog.file_name }}{{ fog.extension }}" class="figure-img">
+					</a>
+					<figcaption><b>File name</b>: {{ fog.file_name }}</figcaption>
+				</figure>
+			{% elif fog.file_name %}
+				<p>This tileset references a graphic with the file name "Fogs/{{ fog.file_name }}", but no file with this name exists.</p>
+			{% else %}
+				<p>There is no fog for this tileset.</p>
 			{% endif %}
 		</section>
 	</section>

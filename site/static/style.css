@@ -111,6 +111,26 @@ figcaption {
 	font-size: small;
 }
 
+.figure-img-container {
+	display: block;
+	max-height: 24rem;
+	overflow-y: auto;
+}
+
+.figure-img {
+	display: block;
+	margin: 0 auto;
+}
+
 .img-p {
 	text-align: center;
+}
+
+pre {
+	margin-left: 1rem;
+	margin-right: 1rem;
+}
+
+pre code {
+	font-size: large;
 }

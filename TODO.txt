@@ -1,6 +1,8 @@
 - Web interface to database (working on)
+    - Scripts page should have link to download a .zip with all the script files
+    - Show hue for tileset fogs/panoramas
+    - Show tile passages/priorities/terrain flags for tilesets
 - On-the-fly rendering for web UI, for convenience when developing
-- Handle Materialbase
 - Profile generate_db_data and remove anything making it unnecesssarily slow
 - Have a way to regenerate schema/data for only one file (e.g. Map001.rxdata),
   leaving anything from other files untouched as much as possible

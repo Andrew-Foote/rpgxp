@@ -1,0 +1,20 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Scripts {% endblock %}
+{% block content %}
+	<section>
+		<h1>Scripts</h1>
+		<p style="text-align: center"><a href="{{ url_base }}/scripts.zip">Download All as ZIP Archive</a></p>
+		<table>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+			</tr>
+			{% for script in scripts %}
+				<tr>
+					<td>{{ script.id }}</td>
+					<td><a href="{{ url_base }}/script/{{ script.name }}.html">{{ script.name }}</a></td>
+				</tr>
+			{% endfor %}
+		</table>
+	</section>
+{% endblock %}

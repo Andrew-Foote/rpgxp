@@ -1,0 +1,15 @@
+Panoramas are always in the background of a map, and fogs are always in the foreground.
+
+They expand to fill the space of the map. If the panorama/fog image's dimensions are less than those of then multiple copies of the image will appear on the image, arranged like a CSS background-image. The arranging starts from the top left corner of the map, so the top left corner of the image is always visible in the top left corner of the map, but at other corners you may not see a matching corner of the image depending on how evenly the image fits into the map's dimensions.
+
+The panorama isn't fixed in one position relative to the map's tiles. When the viewport moves, the panorama moves with it, but only at half the speed.
+
+Stationary fog is fixed in one position, so could be considered part of the map's image (although the editor doesn't show it).
+
+The fog "sx" and "sy" values control its horizontal and vertical speed. A positive value for sy makes the fog move upwards. A positive value for sx makes the fog move right.
+
+Blend type is how the fog combines with the layers below.
+	Normal = fog colour overwrites the previous layer
+	Add = fog colour is added to that of the previous layer
+	(Not sure how this interacts with opacity?)
+	(maybe we compute fog colour as prev layer colour + fog coloru and then alpha-blend the resulting sum with the previous layer?)
