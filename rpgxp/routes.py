@@ -157,10 +157,24 @@ class Route:
 		self, args: dict[str, apsw.SQLiteValue]
 	) -> dict[str, Any]:
 
-		return {
-			param: param_type.parse_arg(args[param])
-			for param, param_type in self.param_types.items()
-		}
+		result: dict[str, Any] = {}
+
+		for param, param_type in self.param_types.items():
+			try:
+				raw_arg = args[param]
+			except KeyError as e:
+				e.add_note(f'Expected a column in the template query result named {param}')
+				e.add_note(f'Only got these columns: {", ".join(args.keys())}')
+				e.add_note(f'Query name is {self.template_query}')
+				raise
+
+			try:
+				result[param] = param_type.parse_arg(raw_arg)
+			except RoutePatternValueError as e:
+				e.add_note(f'Parameter: {param}')
+				raise
+
+		return result
 
 @ft.cache
 def routes() -> list[Route]:
@@ -178,6 +192,19 @@ def routes() -> list[Route]:
 			'encounter_step': int_param(),
 			'encounters': json_param(),
 		}, 'map_ids'),
+		Route('tilesets.html', 'tilesets.j2', 'view_tilesets', {
+			'tilesets': json_param()
+		}),
+		Route('tileset/{id}.html', 'tileset.j2', 'view_tileset', {
+			'id': int_param(),
+			'name': str_param(),
+			'file_name': str_param(),
+			'extension': str_param(optional=True),
+			'autotiles': json_param(),
+			'panorama': json_param(optional=True),
+			'fog': json_param(optional=True),
+			'battleback': json_param(optional=True),
+		}, 'tileset_ids'),
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
 			'common_events': json_param(),
 		}),

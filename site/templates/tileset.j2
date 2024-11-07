@@ -1,0 +1,26 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Tileset {{ id }} ({{ name }}) {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/tilesets.html">Tilesets</a>
+	</div>
+
+	<section>
+		<h1>Tileset {{ id }} ({{ name }})</h1>
+
+		<section>
+			<h2>Graphic</h2>
+
+			{% if extension %}
+				<figure>
+					<a href="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" style="display: block; max-height: 24rem; overflow-y: auto">
+						<img src="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" style="display: block; margin: 0 auto">
+					</a>
+					<figcaption><b>File name</b>: {{ file_name }}</figcaption>
+				</figure>
+			{% else %}
+				<p>This tileset references a graphic with the file name "{{ file_name }}" but no file with this name exists.</p>
+			{% endif %}
+		</section>
+	</section>
+{% endblock %}

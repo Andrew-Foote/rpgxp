@@ -58,19 +58,23 @@ def run() -> None:
         for url_args in possible_url_args:
             url = route.url(**dict(zip(url_params, url_args)))
             filesystem_url = settings.site_root / url
-            template_args: dict[str, Any]
+            template_args: dict[str, Any] = {}
 
-            if route.template_query is None:
-                template_args = {}
-            else:
+            if route.template_query is not None:
                 template_query_result = db.run_named_query(
                     connection, route.template_query, url_args
                 )
 
-                template_params, _ = zip(
-                    *template_query_result.get_description()
-                )
+                try:
+                    query_desc = template_query_result.get_description()
+                except apsw.ExecutionCompleteError as e:
+                    e.add_note(
+                        'This means the template query has returned 0 rows')
+                    e.add_note(f'Template query name: {route.template_query}')
+                    e.add_note(f'URL arguments: {str(url_args)}')
+                    raise
 
+                template_params, _ = zip(*query_desc)
                 template_arg_values = db.row(template_query_result)
                 
                 template_args = route.format_template_args(

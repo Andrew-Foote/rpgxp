@@ -1,0 +1,19 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Tilesets {% endblock %}
+{% block content %}
+	<section>
+		<h1>Tilesets</h1>
+		<table>
+			<tr>
+				<th>ID</th>
+				<th>Name</th>
+			</tr>
+			{% for t in tilesets %}
+				<tr>
+					<td><a href="{{ url_base }}/tileset/{{ t.id }}.html">{{ t.id }}</td>
+					<td>{{ t.name }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</section>
+{% endblock %}
