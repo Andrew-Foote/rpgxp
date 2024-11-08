@@ -1,1 +1,1 @@
-select id from switch;
+SELECT id FROM switch

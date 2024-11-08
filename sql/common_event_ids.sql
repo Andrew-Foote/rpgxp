@@ -1,1 +1,1 @@
-select id from common_event;
+SELECT id FROM common_event

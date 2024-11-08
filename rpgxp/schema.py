@@ -1473,7 +1473,7 @@ TILESET_SCHEMA = RPGObjSchema('Tileset', 'RPG::Tileset', [
     RPGField('panorama_name', MaterialRefSchema('Graphics', 'Panoramas')),
     hue_field('panorama_hue'),
     RPGField('fog_name', MaterialRefSchema('Graphics', 'Fogs')),
-    hue_field('fog_hue'),
+hue_field('fog_hue'),
     *int_fields('fog_opacity fog_blend_type fog_zoom fog_sx fog_sy'),
     RPGField('battleback_name', MaterialRefSchema('Graphics', 'Battlebacks')),
     RPGField('passages', NDArraySchema(1)),
@@ -1594,7 +1594,7 @@ STATES_SCHEMA: ListSchema = ListSchema(
 
 TILESETS_SCHEMA: ListSchema = ListSchema(
     'tileset', TILESET_SCHEMA, 
-    first_item=FirstItem.NULL, index=MatchIndexToField('id_')
+    first_item=FirstItem.NULL, index=MatchIndexToField('id_'),
 )
 
 TROOPS_SCHEMA: ListSchema = ListSchema(

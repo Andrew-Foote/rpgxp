@@ -182,6 +182,8 @@ class Route:
 				result[param] = param_type.parse_arg(raw_arg)
 			except RoutePatternValueError as e:
 				e.add_note(f'Parameter: {param}')
+				e.add_note(f'Query name is {self.template_query}')
+				e.add_note(f'Raw arguments: {args}')
 				raise
 
 		return result
@@ -208,12 +210,13 @@ def routes() -> list[Route]:
 		Route('tileset/{id}.html', 'tileset.j2', 'view_tileset', {
 			'id': int_param(),
 			'name': str_param(),
-			'file_name': str_param(),
-			'extension': str_param(optional=True),
+			'filename': str_param(),
+			'file_ext': str_param(optional=True),
 			'autotiles': json_param(),
 			'panorama': json_param(optional=True),
 			'fog': json_param(optional=True),
 			'battleback': json_param(optional=True),
+			'maps': json_param(),
 		}, 'tileset_ids'),
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
 			'common_events': json_param(),

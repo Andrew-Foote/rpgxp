@@ -8,10 +8,20 @@
 	<section>
 		<h1>Tileset {{ id }} ({{ name }})</h1>
 
+		{% if maps %}
+			<p>
+				<strong>Used on these maps</strong>:
+				{% for map in maps %}
+					<a href="{{ url_base }}/map/{{ map.id }}.html">{{ map.id }} ({{ map.name }})</a>{% if not loop.last %},{% endif %}
+				{% endfor %}
+		{% else %}
+			<p class="warning">This tileset is not used on any maps.</p>
+		{% endif %}
+
 		<section>
 			<h2>Regular tiles</h2>
 
-			{% if extension %}
+			{% if file_ext %}
 				<figure>
 					<map name="tilemap">
 						<area
@@ -21,13 +31,13 @@
 						    target="_blank"
 						    alt="CSS" />
 					</map>
-					<a href="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/tilesets/{{ file_name }}{{ extension }}" class="figure-img" usemap="#tilemap">
+					<a href="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img" usemap="#tilemap">
 					</a>
-					<figcaption><b>File name</b>: {{ file_name }}</figcaption>
+					<figcaption><b>File name</b>: {{ filename }}</figcaption>
 				</figure>
 			{% else %}
-				<p>This tileset references a graphic with the file name "Tilesets/{{ file_name }}", but no file with this name exists.</p>
+				<p class="warning">This tileset references a graphic with the file name "Tilesets/{{ filename }}", but no file with this name exists.</p>
 			{% endif %}
 		</section>
 		<section>
@@ -37,11 +47,11 @@
 				<div style="text-align: center">
 					{% for autotile in autotiles %}
 						<figure style="display: inline-block; margin: 1rem">
-							<a href="{{ url_base }}/graphics/autotiles/{{ autotile.file_name }}{{ autotile.extension }}">
-								<img src="{{ url_base }}/graphics/autotiles/{{ autotile.file_name }}{{ autotile.extension }}">
+							<a href="{{ url_base }}/graphics/autotiles/{{ autotile.filename }}{{ autotile.file_ext }}">
+								<img src="{{ url_base }}/graphics/autotiles/{{ autotile.filename }}{{ autotile.file_ext }}">
 								</img>
 							</a>
-							<figcaption>{{ autotile.index + 1 }}: {{ autotile.file_name }}</figcaption>
+							<figcaption>{{ autotile.index + 1 }}: {{ autotile.filename }}</figcaption>
 						</figure>
 					{% endfor %}
 				</div>
@@ -51,30 +61,30 @@
 		</section>
 		<section>
 			<h2>Panorama</h2>
-			{% if panorama.extension %}
+			{% if panorama.file_ext %}
 				<figure>
-					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.file_name }}{{ panorama.extension }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.file_name }}{{ panorama.extension }}" class="figure-img">
+					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}{{ panorama.file_ext }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}{{ panorama.file_ext }}" class="figure-img">
 					</a>
-					<figcaption><b>File name</b>: {{ panorama.file_name }}</figcaption>
+					<figcaption><b>File name</b>: {{ panorama.filename }}</figcaption>
 				</figure>
-			{% elif panorama.file_name %}
-				<p>This tileset references a graphic with the file name "Panoramas/{{ panorama.file_name }}", but no file with this name exists.</p>
+			{% elif panorama.filename %}
+				<p class="warning">This tileset references a graphic with the file name "Panoramas/{{ panorama.filename }}", but no file with this name exists.</p>
 			{% else %}
 				<p>There is no panorama for this tileset.</p>
 			{% endif %}
 		</section>
 		<section>
 			<h2>Fog</h2>
-			{% if fog.extension %}
+			{% if fog.file_ext %}
 				<figure>
-					<a href="{{ url_base }}/graphics/fogs/{{ fog.file_name }}{{ fog.extension }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/fogs/{{ fog.file_name }}{{ fog.extension }}" class="figure-img">
+					<a href="{{ url_base }}/graphics/fogs/{{ fog.filename }}{{ fog.file_ext }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/fogs/{{ fog.filename }}{{ fog.file_ext }}" class="figure-img">
 					</a>
-					<figcaption><b>File name</b>: {{ fog.file_name }}</figcaption>
+					<figcaption><b>File name</b>: {{ fog.filename }}</figcaption>
 				</figure>
-			{% elif fog.file_name %}
-				<p>This tileset references a graphic with the file name "Fogs/{{ fog.file_name }}", but no file with this name exists.</p>
+			{% elif fog.filename %}
+				<p class="warning">This tileset references a graphic with the file name "Fogs/{{ fog.filename }}", but no file with this name exists.</p>
 			{% else %}
 				<p>There is no fog for this tileset.</p>
 			{% endif %}

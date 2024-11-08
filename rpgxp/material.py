@@ -11,7 +11,8 @@ DROP TABLE IF EXISTS material_subtype;
 CREATE TABLE IF NOT EXISTS material_subtype (
     type TEXT REFERENCES material_type (name),
     name TEXT,
-    PRIMARY KEY (type, name)
+    PRIMARY KEY (type, name),
+    FOREIGN KEY (type) REFERENCES material_type (name)
 ) STRICT;
 
 INSERT INTO material_subtype (type, name) VALUES
@@ -40,6 +41,7 @@ CREATE TABLE material (
     subtype TEXT,
     name TEXT,
     PRIMARY KEY (type, subtype, name),
+    FOREIGN KEY (type) REFERENCES material_type (name),
     FOREIGN KEY (type, subtype) REFERENCES material_subtype (type, name)
 ) STRICT;
 
@@ -61,7 +63,8 @@ CREATE TABLE material_file (
     source TEXT REFERENCES material_source (name),
     extension TEXT,
     PRIMARY KEY (type, subtype, name, source, extension),
-    FOREIGN KEY (type, subtype) references material_subtype (type, name),
+    FOREIGN KEY (type) REFERENCES material_type (name),
+    FOREIGN KEY (type, subtype) REFERENCES material_subtype (type, name),
     FOREIGN KEY (type, subtype, name)
         REFERENCES material (type, subtype, name)
 ) STRICT;

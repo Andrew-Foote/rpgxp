@@ -134,3 +134,8 @@ pre {
 pre code {
 	font-size: large;
 }
+
+.warning {
+	color: red;
+	font-weight: bold;
+}

@@ -1,1 +1,1 @@
-SELECT s.name FROM script s
+SELECT name FROM script

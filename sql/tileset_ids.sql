@@ -1,1 +1,1 @@
-SELECT id FROM tileset
+SELECT id FROM tileset_v

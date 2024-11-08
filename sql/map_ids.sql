@@ -1,1 +1,1 @@
-select id from map
+SELECT id FROM map

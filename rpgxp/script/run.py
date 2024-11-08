@@ -1,6 +1,6 @@
 import importlib
 import subprocess
-from rpgxp import material, settings
+from rpgxp import db, material, settings
 from rpgxp.script import foreign_key_report
 
 def run(*, modules_list: list[str], quick: bool):
@@ -44,6 +44,11 @@ def run(*, modules_list: list[str], quick: bool):
 		module = importlib.import_module('rpgxp.script.foreign_key_report')
 		module.run()
 
+	if 'views' in modules:
+		print("Creating database views...")
+		dbh = db.connect()
+		db.run_named_query(dbh, 'views')
+
 	if 'site' in modules:
 		print("Generating web UI...")
 		module = importlib.import_module('rpgxp.generate_site')
@@ -79,7 +84,7 @@ if __name__ == '__main__':
 
     arg_parser.add_argument('-m', '--modules', nargs='*', help=(
     	'Modules to run'
-    ), default='class type schema data fk site maps serve'.split()
+    ), default='class type schema data fk views site maps serve'.split()
     )
     
     arg_parser.add_argument('-q', '--quick', action='store_true', help=(
