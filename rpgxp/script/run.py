@@ -46,8 +46,7 @@ def run(*, modules_list: list[str], quick: bool):
 
 	if 'views' in modules:
 		print("Creating database views...")
-		dbh = db.connect()
-		db.run_named_query(dbh, 'views')
+		db.run_named_query('views')
 
 	if 'site' in modules:
 		print("Generating web UI...")

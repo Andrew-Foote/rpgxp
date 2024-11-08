@@ -78,6 +78,43 @@ DROP VIEW IF EXISTS material_best_file;
 CREATE VIEW material_best_file (
     type, subtype, name, source, extension, full_name
 ) AS
+SELECT * FROM material_best_file__materialized;
+
+-- SELECT
+--     m.type, m.subtype, m.name, m.source, m.extension, m.name || m.extension
+-- FROM material_file m
+-- JOIN material_source s on s.name = m.source
+-- WHERE NOT EXISTS (
+--     SELECT * FROM material_file m2
+--     JOIN material_source s2 on s2.name = m2.source
+--     WHERE m2.type = m.type AND m2.subtype = m.subtype AND m2.name = m.name
+--     AND (
+--         s2.priority > s.priority
+--         OR (s2.priority = s.priority AND m2.extension < m.extension)
+--     )
+-- );
+
+-- DROP TABLE IF EXISTS material_best_file;
+-- CREATE TABLE material_best_file (
+--     type TEXT references material_type (name),
+--     subtype TEXT,
+--     name TEXT,
+--     source TEXT REFERENCES material_source (name),
+--     extension TEXT,
+--     PRIMARY KEY (type, subtype, name),
+--     FOREIGN KEY (type) REFERENCES material_type (name),
+--     FOREIGN KEY (type, subtype) REFERENCES material_subtype (type, name),
+--     FOREIGN KEY (type, subtype, name)
+--         REFERENCES material (type, subtype, name),
+--     FOREIGN KEY (type, subtype, name, source, extension)
+--         REFERENCES material_file (type, subtype, name, source, extension)
+-- ) STRICT;
+
+
+'''
+
+MATERIALIZED_VIEWS = '''DROP TABLE IF EXISTS material_best_file__materialized;
+CREATE TABLE material_best_file__materialized AS
 SELECT
     m.type, m.subtype, m.name, m.source, m.extension, m.name || m.extension
 FROM material_file m
@@ -91,6 +128,9 @@ WHERE NOT EXISTS (
         OR (s2.priority = s.priority AND m2.extension < m.extension)
     )
 );
+
+CREATE INDEX material_best_file_idx_type_subtype_name
+    ON material_best_file__materialized (type, subtype, name);
 '''
 
 def insert_material(dbh: apsw.Connection, root: Path, source: str) -> None:
@@ -146,6 +186,8 @@ def generate_db_data():
             insert_material(dbh, rtp_root, 'rtp')
 
         insert_material(dbh, settings.game_root, 'game')
+
+    dbh.execute(MATERIALIZED_VIEWS)
 
 def copy_static_files():
     rtp_root = settings.rtp_root

@@ -97,11 +97,14 @@ def run_script(
     return dbh.execute(script, bindings)
 
 def run_named_query(
-    dbh: apsw.Connection,
     query_name: str,
-    bindings: apsw.Bindings | None=None
+    bindings: apsw.Bindings | None=None,
+    *, dbh: apsw.Connection | None=None
 ) -> apsw.Cursor:
     
+    if dbh is None:
+        dbh = connect()
+
     script_path = settings.project_root / f'sql/{query_name}.sql'
     return run_script(dbh, script_path, bindings)
 

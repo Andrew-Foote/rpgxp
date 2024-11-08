@@ -1,5 +1,23 @@
 {% extends 'layout/base.j2' %}
 {% block title %} Tileset {{ id }} ({{ name }}) {% endblock %}
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+	const scrollbars = document.querySelectorAll('[data-scrollbar-for]');
+	console.log('script loaded');
+	console.log(scrollbars);
+
+	for (const scrollbar of scrollbars) {
+		const scrollable = document.querySelector(scrollbar.dataset.scrollbarFor);
+		console.log(scrollable.scrollTop);
+
+		scrollable.addEventListener('scroll', () => {
+			console.log(scrollable.scrollTop);
+		});
+	}
+});
+</script>
+{% endblock %}
 {% block content %}
 	<div class="backlinks">
 		<a href="{{ url_base }}/tilesets.html">Tilesets</a>
@@ -23,17 +41,13 @@
 
 			{% if file_ext %}
 				<figure>
-					<map name="tilemap">
-						<area
-						    shape="rect"
-						    coords="0,0,32,32"
-						    href="https://developer.mozilla.org/docs/Web/CSS"
-						    target="_blank"
-						    alt="CSS" />
-					</map>
-					<a href="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img" usemap="#tilemap">
-					</a>
+					<div style="display: flex; justify-content: space-between">
+						<div></div>
+						<a href="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img-container" id="tileset-img">
+							<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img" usemap="#tilemap">
+						</a>
+						<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" style="height: 24rem" data-scrollbar-for="#tileset-img">
+					</div>
 					<figcaption><b>File name</b>: {{ filename }}</figcaption>
 				</figure>
 			{% else %}

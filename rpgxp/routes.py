@@ -26,6 +26,25 @@ class BasicParamType(Enum):
 	STR = 4
 	JSON = 5
 
+class ContentType(Enum):
+	HTML = 0
+	RUBY = 1
+	ZIP = 2
+
+	@property
+	def binary(self) -> bool:
+		return self == ContentType.ZIP
+
+	@property
+	def mime_type(self) -> str:
+		match self:
+			case ContentType.HTML:
+				return 'text/html'
+			case ContentType.RUBY:
+				return 'application/x-ruby'
+			case ContentType.ZIP:
+				return 'application/zip'
+
 @dataclass
 class ParamType:
 	members: set[BasicParamType]
@@ -95,7 +114,7 @@ class Route:
 	# interpreted as a file system path relative to the `query` subdirectory of
 	# the project root. It is expected that there will be a file at this path,
 	# and its content will be used as the source code for the query.
-	template_query: str | None=None
+	template_query: str | None = None
 
 	param_types: dict[str, ParamType]=field(default_factory=lambda: {})
 
@@ -108,7 +127,7 @@ class Route:
 	# generate the template argument values.
 	#
 	# Should be set to None when the URL contains no pattern variables.
-	url_query: str | None=None
+	url_query: str | None = None
 
 	# Indicates whether the rendered template output generated from this route
 	# should be treated as binary or not. The rendered template output given by
@@ -120,7 +139,9 @@ class Route:
 	# content of the file.
 	binary: bool=False
 
-	def url(self, **args: apsw.SQLiteValue) -> str:
+	content_type: ContentType = ContentType.HTML
+
+	def url(self, **args: str) -> str:
 		result_chars: list[str] = []
 		var_chars: list[str] = []
 		parser_state: PatternParserState = PatternParserState.START
@@ -154,7 +175,7 @@ class Route:
 								f'{var_name}'
 							)
 
-						result_chars.extend(str(var_value))
+						result_chars.extend(var_value)
 						var_chars.clear()
 					else:
 						var_chars.append(char)

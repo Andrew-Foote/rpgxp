@@ -9,3 +9,6 @@
 - Maybe use APSW's row tracer thing to generate objects from rows rather than
  unpacking tuples all the time
 - We could get the game title from the Game.ini file
+- View materialization
+  - If we want to materialize an existing view we should still keep that view around and just make it "redirect" to a new one
+  - We need to ensure the data is fully populated before materializing a view

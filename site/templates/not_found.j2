@@ -1,0 +1,12 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Page not found {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/">Home page</a>
+	</div>
+
+	<section>
+		<h1>Page not found</h1>
+		<p>The page <code>{{ url }}</code> could not be found.</p>
+	</section>
+{% endblock %}
