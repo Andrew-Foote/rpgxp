@@ -1,0 +1,1 @@
+select 'Graphics' as type, :subtype as subtype, :name as name

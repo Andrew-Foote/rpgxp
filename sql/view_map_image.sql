@@ -1,0 +1,1 @@
+select cast(:id as integer) as id

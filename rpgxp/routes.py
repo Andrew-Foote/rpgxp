@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 import functools as ft
+import mimetypes
 import json
-from typing import Any, assert_never, Self
+from typing import Any, assert_never, Iterator, Self
 import apsw
 
 class RouteError(Exception):
@@ -26,24 +27,50 @@ class BasicParamType(Enum):
 	STR = 4
 	JSON = 5
 
+class UnidentifiableMimeTypeError(Exception):
+    pass
+
 class ContentType(Enum):
-	HTML = 0
-	RUBY = 1
-	ZIP = 2
+	HTML = 1
+	PNG = 2
+	RUBY = 3
+	ZIP = 4
+	VARIABLE_BINARY = 5
 
 	@property
 	def binary(self) -> bool:
-		return self == ContentType.ZIP
+		match self:
+			case (
+				ContentType.PNG | ContentType.ZIP | ContentType.VARIABLE_BINARY
+			):
+				return True
+			case ContentType.HTML | ContentType.RUBY:
+				return False
+			case _:
+				assert_never(self)
 
-	@property
-	def mime_type(self) -> str:
+	def headers(self, path: str) -> Iterator[tuple[str, str]]:
 		match self:
 			case ContentType.HTML:
-				return 'text/html'
+				yield ('Content-Type', 'text/html; charset=utf-8')
+			case ContentType.PNG:
+				yield ('Content-Type', 'image/png')
 			case ContentType.RUBY:
-				return 'application/x-ruby'
+				yield ('Content-Type', 'application/x-ruby; charset=utf-8')
 			case ContentType.ZIP:
-				return 'application/zip'
+				yield ('Content-Type', 'application/zip')
+			case ContentType.VARIABLE_BINARY:
+				type_, encoding = mimetypes.guess_type(path)
+
+				if type_ is None:
+					raise UnidentifiableMimeTypeError
+
+				yield ('Content-Type', type_)
+
+				if encoding is not None:
+					yield ('Content-Encoding', encoding)
+			case _:
+				assert_never(self)
 
 @dataclass
 class ParamType:
@@ -129,16 +156,6 @@ class Route:
 	# Should be set to None when the URL contains no pattern variables.
 	url_query: str | None = None
 
-	# Indicates whether the rendered template output generated from this route
-	# should be treated as binary or not. The rendered template output given by
-	# Jinja2 is always a string, but if this field is set to True, the file to
-	# which the output is written will be opened in binary mode, and the output
-	# will be encoded as UTF-8 with surrogate escaping. So if the template was
-	# rendered by generating some binary data and then decoding it as UTF-8
-	# with surrogate escaping, the binary data will be reproduced in the
-	# content of the file.
-	binary: bool=False
-
 	content_type: ContentType = ContentType.HTML
 
 	def url(self, **args: str) -> str:
@@ -212,6 +229,18 @@ class Route:
 @ft.cache
 def routes() -> list[Route]:
 	return [
+		Route(
+			'graphics/{subtype}/{name}', 'material.j2', 'view_graphic',
+			{
+				'type': str_param(),
+				'subtype': str_param(),
+				'name': str_param()
+			},
+			'graphics', content_type=ContentType.VARIABLE_BINARY
+		),
+		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
+			'id': int_param(),
+		}, 'map_ids', content_type=ContentType.PNG),
 		Route('index.html', 'index.j2'),
 		Route('maps.html', 'maps.j2', 'view_maps', {'maps': json_param()}),
 		Route('map/{id}.html', 'map.j2', 'view_map', {
@@ -263,8 +292,8 @@ def routes() -> list[Route]:
 		}, 'script_names'),
 		Route('script/raw/{name}.rb', 'raw_script.j2', 'view_raw_script', {
 			'content': str_param(),
-		}, 'script_names'),
+		}, 'script_names', content_type=ContentType.RUBY),
 		Route('scripts.zip', 'scripts_zip.j2', 'get_scripts_for_archive', {
 			'scripts': json_param()
-		}, binary=True),
+		}, content_type=ContentType.ZIP),
 	]

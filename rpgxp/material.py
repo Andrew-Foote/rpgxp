@@ -190,7 +190,6 @@ def generate_db_data():
     dbh.execute(MATERIALIZED_VIEWS)
 
 def copy_static_files():
-    rtp_root = settings.rtp_root
     dbh = db.connect()
 
     for type_, subtype, name, source, extension in dbh.execute(

@@ -40,9 +40,6 @@ def copy_static_files() -> None:
 def run() -> None:
     copy_static_files()
 
-    connection = db.connect()
-    project_root = settings.project_root
-
     for route in routes():
         print(f'Generating route {route.url_pattern}...')
         url_params: tuple[str, ...]
@@ -57,7 +54,7 @@ def run() -> None:
             possible_url_args = url_query_result.fetchall()
 
         for url_args in possible_url_args:
-            coerced_url_args = tuple(map(str, url_args))
+            coerced_url_args = dict(zip(url_params, map(str, url_args)))
             template_args = site.get_template_args(route, coerced_url_args)
 
             url = route.url(**dict(zip(url_params, coerced_url_args)))
@@ -68,7 +65,7 @@ def run() -> None:
                     route.template,
                     str(filesystem_url),
                     template_args,
-                    binary=route.binary
+                    binary=route.content_type.binary
                 )
             except jinja2.TemplateError as e:
                 e.add_note(route.template)

@@ -174,15 +174,14 @@ def autotiles_from_map_id(map_id: int) -> Iterator[dict[int, Image]]:
         for autotile_image in result.values():
             autotile_image.close()
 
-@contextmanager
-def map_image_from_id(map_id: int) -> Iterator[Image]:
+def map_image_from_id(map_id: int) -> Image:
     map_data = map_data_from_id(map_id)
 
     with (
         tileset_from_map_id(map_id) as tileset,
         autotiles_from_map_id(map_id) as autotiles
     ):
-        yield map_image_from_data(map_data, tileset, autotiles)
+        return map_image_from_data(map_data, tileset, autotiles)
 
 def save_test_case(
     name: str, map_data: np.ndarray, tileset: Image,

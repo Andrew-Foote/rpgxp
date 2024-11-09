@@ -17,10 +17,12 @@ def static_root() -> Path:
 
 @ft.cache
 def static_file_paths() -> frozenset[str]:
-    return frozenset(
-        str(path.relative_to(static_root()))
-        for path in static_root().rglob('*')
-    )
+    return frozenset([
+        *(
+            str(path.relative_to(static_root()))
+            for path in static_root().rglob('*')
+        ),
+    ])
 
 @dataclass
 class Response:
@@ -61,20 +63,20 @@ def respond_static(path: str, *, head_only: bool) -> Response:
 class NoMatchingRouteError(Exception):
     pass
 
-def match_route(path: str) -> tuple[Route, tuple[str, ...]]:
+def match_route(path: str) -> tuple[Route, dict[str, str]]:
     print(f'Path: {path}')
 
     for route in routes():
         if path == '' and route.url_pattern == 'index.html':
-            return route, ()
+            return route, {}
 
-        print('Trying match against ', route.url_pattern)
-        pattern = re.sub(r'\{.*?\}', '(.*?)', route.url_pattern)
-        print('Pattern as regex: ', pattern)
+        # print('Trying match against ', route.url_pattern)
+        pattern = re.sub(r'\{(.*?)\}', r'(?P<\1>.*)', route.url_pattern)
+        # print('Pattern as regex: ', pattern)
         m = re.match(pattern, path)
 
         if m is not None:
-            return route, m.groups()
+            return route, m.groupdict()
 
     raise NoMatchingRouteError
 
@@ -86,29 +88,34 @@ def respond_dynamic(path: str, *, head_only: bool=False) -> Response:
         headers = [('Content-Type', 'text/html; charset=utf-8')]
         template = 'not_found.j2'
         template_args = {'url': path}
+        binary = False
     else:
-        status = '200 OK'
-
-        # maybe we should specify the content type in the route rather than
-        # guessing it
-
+        print(route)
         content_type = route.content_type
-        content_type_header_value = content_type.mime_type
 
-        if not content_type.binary:
-            content_type_header_value += '; charset=utf-8'
-
-        headers = [('Content-Type', content_type_header_value)]
+        status = '200 OK'
+        headers = [*content_type.headers(path)]
         template = route.template
         template_args = site.get_template_args(route, url_args)
+        binary = content_type.binary
 
-    content = site.render_template(template, template_args).encode('utf-8')
-    headers.append(('Content-Length', str(len(content))))
+    try:
+        content = site.render_template(template, template_args)
+    except Exception as e:
+        e.add_note(f'Template: {template}')
+        e.add_note(f'Template args: {template_args}')
+        e.add_note(f'URL args: {url_args}')
+        raise
+
+    encoding = ('utf-8', 'surrogateescape') if binary else ('utf-8',)
+    encoded_content = content.encode(*encoding)
+
+    headers.append(('Content-Length', str(len(encoded_content))))
 
     if head_only:
-        content = b''
+        content = ''
 
-    return Response(status, headers, content)
+    return Response(status, headers, encoded_content)
 
 ACCEPTED_METHODS = ('GET', 'HEAD')
 
