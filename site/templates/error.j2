@@ -1,5 +1,12 @@
 {% extends 'layout/base.j2' %}
 {% block title %} Error {% endblock %}
+{% block links %}
+	<link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/panda-syntax-light.min.css">
+{% endblock %}
+{% block script %}
+	<script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
+	<script>hljs.highlightAll();</script>
+{% endblock %}
 {% block content %}
 	<div class="backlinks">
 		<a href="{{ url_base }}/">Home page</a>
@@ -11,7 +18,7 @@
 		in the website code.</p>
 		<section>
 			<h2>Traceback</h2> 
-			<pre>{{ traceback }}</pre> 
+			<pre><code class="python">{{ traceback }}</code></pre> 
 		</section>
 	</section>
 {% endblock %}

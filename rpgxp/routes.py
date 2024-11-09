@@ -325,4 +325,32 @@ def routes() -> list[Route]:
 			'members': json_param(),
 			'maps': json_param(),
 		}, 'troop_ids'),
+
+		# enemies
+		Route('enemies.html', 'enemies.j2', 'view_enemies', {
+			'enemies': json_param(),
+		}),
+		Route('enemy/{id}.html', 'enemy.j2', 'view_enemy', {
+			'id': int_param(),
+			'name': str_param(),
+			'battler': json_param(optional=True),
+			'stats': json_param(),
+			'battle_animation': json_param(optional=True),
+			'target_animation': json_param(optional=True),
+			'element_effects': json_param(),
+			'state_effects': json_param(), 
+			'exp': int_param(),
+			'gold': int_param(),
+			'treasure_prob': int_param(),
+			'treasure': json_param(optional=True),
+			'troops': json_param(),
+			'actions': json_param(),
+		}),
+		Route('enemy/{id}.png', 'material_with_hue.j2', 'view_enemy_image', {
+			'source': str_param(), 
+			'type': str_param(), 
+			'subtype': str_param(),
+			'name': str_param(),
+			'hue': int_param(),
+		}, 'enemy_ids_with_images', content_type=ContentType.PNG),
 	]

@@ -3,7 +3,11 @@
 <ul>
 	{% for child in tree %}
 		<li>
-			<a href="#" class="tree-collapse">[&minus;]</a>
+			{% if child.children %}
+				<a href="#" class="tree-collapse">[&minus;]</a>
+			{% else %}
+				[&nbsp;]
+			{% endif %}
 			<a href="{{ url_base }}/map/{{ child.label.id }}.html">
 				{{ child.label.id }}
 				({{ child.label.name }})

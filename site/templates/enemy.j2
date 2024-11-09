@@ -1,0 +1,183 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Enemy {{ id }} ({{ name }}) {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/enemies.html">Enemies</a>
+	</div>
+
+	<section>		
+		<h1>Enemy {{ id }} ({{ name }})</h1>
+        {% if battler.filename %}
+            <figure>
+                <a
+                    href="{{ url_base }}/enemy/{{ id }}.png"
+                    class="figure-img-container"
+                >
+                    <img
+                        src="{{ url_base }}/enemy/{{ id }}.png"
+                        class="figure-img"
+                    >
+                </a>
+                <figcaption><b>File name</b>: {{ battler.filename }}</figcaption>
+            </figure>
+        {% elif battler.file_stem %}
+            <p class="warning">This enemy's image is supposed to be a battler
+            graphic with the name "{{ battler.file_stem }}" (excluding the file
+            extension); however, no matching file exists.</p>
+        {% else %}
+            This enemy has no battler graphic.
+        {% endif %}
+        <dl class="tabular">
+			<div class="row">
+				<div class="col">
+					<dt>Max HP</dt>
+					<dd>{{ stats.maxhp }}
+					</div>
+				<div class="col">
+					<dt>Max SP</dt>
+					<dd>{{ stats.maxsp }}</dd>
+				</div>
+			</div>
+            <div class="row">
+                <div class="col">
+                    <dt>Strength</dt>
+                    <dd>{{ stats.str }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Dexterity</dt>
+                    <dd>{{ stats.dex }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Agility</dt>
+                    <dd>{{ stats.agi }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Intelligence</dt>
+                    <dd>{{ stats.int }}</dd>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <dt>Attack power</dt>
+                    <dd>{{ stats.atk }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Physical defense</dt>
+                    <dd>{{ stats.pdef }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Magic defense</dt>
+                    <dd>{{ stats.mdef }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Evasion</dt>
+                    <dd>{{ stats.eva }}</dd>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <dt>EXP yield</dt>
+                    <dd>{{ exp }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Gold yield</dt>
+                    <dd>{{ gold }}</dd>
+                </div>
+                <div class="col">
+                    <dt>Treasure probability</dt>
+                    <dd>{{ treasure_prob }}%</dd>
+                </div>
+                <div class="col">
+                    <dt>Treasure</dt>
+                    <dd>
+                        {% if treasure is none %}
+                            None
+                        {% elif treasure.type == 'item' %}
+                            <a href="{{ url_base }}/item/{{ treasure.id }}">
+                                Item {{ treasure.id }} ({{ treasure.name }})
+                            </a>
+                        {% elif treasure.type == 'weapon' %}
+                            <a href="{{ url_base }}/weapon/{{ treasure.id }}">
+                                Weapon {{ treasure.id }} ({{ treasure.name }})
+                            </a>
+                        {% elif treasure.type == 'armor' %}
+                            <a href="{{ url_base }}/armor/{{ treasure.id }}">
+                                Armor {{ treasure.id }} ({{ treasure.name }})
+                            </a>
+                        {% endif %}    
+                    </dd>
+                </div>
+            </div>
+		</dl>
+        <section>
+            <h2>Actions</h2>
+            <table>
+                <tr>
+                    <th>Action</th>
+                    <th>Conditions</th>
+                    <th>Rating</th>
+                </tr>
+                {% for action in actions %}
+                    <tr>
+                        <td>
+                            {% if action.kind == 'BASIC' %}
+                                {{ action.skill_name }}
+                            {% elif action.kind == 'SKILL' %}
+                                <a href="{{ url_base }}/skill/{{ action.skill_id }}.html">
+                                    {{ action.skill_name }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if action.conditions %}
+                                {% for condition in action.conditions %}
+                                    {% if condition.type == 'turn' %}
+                                        {% if condition.a == 0 %}
+                                            {% if condition.b == 0 %}
+                                                Never
+                                            {% else %}
+                                                On any {{ condition.b | ordinal }}
+                                                turn
+                                            {% endif %}
+                                        {% elif condition.b == 0 %}
+                                            On turn {{ condition.a }}
+                                        {% else %}
+                                            On turn {{ condition.a }}, or any
+                                            {{ condition.b | ordinal }} turn after
+                                        {% endif %}
+                                    {% elif condition.type == 'hp' %}
+                                        HP is {{ condition.hp }}% or less
+                                    {% elif condition.type == 'level' %}
+                                        At least one party member is level
+                                        {{ condition.level }} or above
+                                    {% elif condition.type == 'switch' %}
+                                        <a href="{{ url_base }}/switch/{{ condition.id }}.html">
+                                            Switch {{ condition.id }}
+                                            ({{ condition.name }}) is on
+                                        </a>
+                                    {% endif %}
+                                    {% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </td>
+                        <td>{{ action.rating }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </section>
+        <section>
+            <h2>Appearances</h2>
+            {% if troops %}
+                <p>
+                    <strong>Appears in these troops</strong>:
+                    {% for troop in troops %}
+                        <a href="{{ url_base }}/troop/{{ troop.id }}.html">{{ troop.id }} ({{ troop.name }})</a>{% if not loop.last %},{% endif %}
+                    {% endfor %}
+            {% else %}
+                <p class="warning">This enemy does not appear in any troops.</p>
+            {% endif %}
+        </section>
+	</section>
+{% endblock %}

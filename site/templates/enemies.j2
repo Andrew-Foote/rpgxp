@@ -1,0 +1,36 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Enemies {% endblock %}
+{% block content %}
+	<section>		
+		<h1>Enemies</h1>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Graphic</th>
+            </tr>
+            {% for enemy in enemies %}
+                <tr>
+                    <td>
+                        <a href="{{ url_base }}/enemy/{{ enemy.id }}.html">
+                            {{ enemy.id }}
+                        </a>
+                    </td>
+                    <td>{{ enemy.name }}</td>
+                    <td>
+                        {% if enemy.battler.filename %}
+                            <img
+                                src="{{ url_base }}/enemy/{{ enemy.id }}.png"
+                                height="64px"
+                                style="margin: 0 auto; display: block"
+                            >
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </section>
+{% endblock %}

@@ -3,8 +3,20 @@ import subprocess
 from rpgxp import db, material, settings
 from rpgxp.script import foreign_key_report
 
+RECOGNIZED_MODULES = {
+    'class', 'type', 'schema', 'material.schema', 'data', 'material.data',
+    'fk', 'views', 'site', 'static', 'material.static', 'maps', 'serve',
+    'dserve'
+}
+
 def run(*, modules_list: list[str], quick: bool):
 	modules = set(modules_list)
+	unrecognized_modules = modules - RECOGNIZED_MODULES
+
+	if unrecognized_modules:
+		raise ValueError(
+			f'unrecognized modules: {", ".join(unrecognized_modules)}'
+		)
 
 	game_data_root = settings.game_data_root
 	db_root = settings.db_root
@@ -68,6 +80,11 @@ def run(*, modules_list: list[str], quick: bool):
 	if 'serve' in modules:
 		print('Serving web UI...')
 		module = importlib.import_module('rpgxp.serve')
+		module.run()
+
+	if 'dserve' in modules:
+		print('Serving web UI (dynamically)...')
+		module = importlib.import_module('rpgxp.dserve')
 		module.run()
 
 if __name__ == '__main__':

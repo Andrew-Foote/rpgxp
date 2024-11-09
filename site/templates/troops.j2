@@ -12,7 +12,11 @@
             </tr>
             {% for troop in troops %}
                 <tr>
-                    <td><a href="{{ url_base }}/troop/{{ troop.id }}.html">{{ troop.id }}</a></td>
+                    <td>
+                        <a href="{{ url_base }}/troop/{{ troop.id }}.html">
+                            {{ troop.id }}
+                        </a>
+                    </td>
                     <td>{{ troop.name }}</td>
                     <td>
                         {% for member in troop.members %}

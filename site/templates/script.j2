@@ -1,8 +1,8 @@
 {% extends 'layout/base.j2' %}
+{% block title %} Script "{{ name }}" {% endblock %}
 {% block links %}
 	<link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/panda-syntax-light.min.css">
 {% endblock %}
-{% block title %} Script "{{ name }}" {% endblock %}
 {% block script %}
 	<script src="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/highlight.min.js"></script>
 	<script>hljs.highlightAll();</script>

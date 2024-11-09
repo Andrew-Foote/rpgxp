@@ -1691,7 +1691,6 @@ WEAPONS_SCHEMA: ListSchema = ListSchema(
 )
 
 FILES: list[FileSchema] = [
-    SingleFileSchema('Troops.rxdata', TROOPS_SCHEMA),
     SingleFileSchema('Actors.rxdata', ACTORS_SCHEMA),
     SingleFileSchema('Animations.rxdata', ANIMATIONS_SCHEMA),
     SingleFileSchema('Armors.rxdata', ARMORS_SCHEMA),
@@ -1706,5 +1705,6 @@ FILES: list[FileSchema] = [
     SingleFileSchema('States.rxdata', STATES_SCHEMA),
     SingleFileSchema('System.rxdata', SYSTEM_SCHEMA),
     SingleFileSchema('Tilesets.rxdata', TILESETS_SCHEMA),
+    SingleFileSchema('Troops.rxdata', TROOPS_SCHEMA),
     SingleFileSchema('Weapons.rxdata', WEAPONS_SCHEMA),
 ]
