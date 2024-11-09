@@ -193,14 +193,72 @@ class EventCommand_ConditionalBranch_Timer(EventCommand_ConditionalBranch):
     bound_type: BoundType
 
 @dataclass(frozen=True)
-class EventCommand_ConditionalBranch_Actor(EventCommand_ConditionalBranch):
+class EventCommand_ConditionalBranch_Actor(EventCommand_ConditionalBranch, ABC):
     code = 111
     subcode = 4
+    actor_id: Optional[int]
+    infracode: ClassVar[int]
 
 @dataclass(frozen=True)
-class EventCommand_ConditionalBranch_Enemy(EventCommand_ConditionalBranch):
+class EventCommand_ConditionalBranch_Actor_InParty(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 0
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Actor_Name(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 1
+    value: str
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Actor_Skill(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 2
+    skill_id: Optional[int]
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Actor_Weapon(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 3
+    weapon_id: Optional[int]
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Actor_Armor(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 4
+    armor_id: Optional[int]
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Actor_State(EventCommand_ConditionalBranch_Actor):
+    code = 111
+    subcode = 4
+    infracode = 5
+    state_id: Optional[int]
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Enemy(EventCommand_ConditionalBranch, ABC):
     code = 111
     subcode = 5
+    enemy_id: Optional[int]
+    infracode: ClassVar[int]
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Enemy_Appear(EventCommand_ConditionalBranch_Enemy):
+    code = 111
+    subcode = 5
+    infracode = 0
+
+@dataclass(frozen=True)
+class EventCommand_ConditionalBranch_Enemy_State(EventCommand_ConditionalBranch_Enemy):
+    code = 111
+    subcode = 5
+    infracode = 1
+    state_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_ConditionalBranch_Character(EventCommand_ConditionalBranch):
@@ -220,16 +278,19 @@ class EventCommand_ConditionalBranch_Gold(EventCommand_ConditionalBranch):
 class EventCommand_ConditionalBranch_Item(EventCommand_ConditionalBranch):
     code = 111
     subcode = 8
+    item_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_ConditionalBranch_Weapon(EventCommand_ConditionalBranch):
     code = 111
     subcode = 9
+    weapon_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_ConditionalBranch_Armor(EventCommand_ConditionalBranch):
     code = 111
     subcode = 10
+    armor_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_ConditionalBranch_Button(EventCommand_ConditionalBranch):
@@ -351,13 +412,59 @@ class EventCommand_ChangeGold(EventCommand):
     amount: int
 
 @dataclass(frozen=True)
+class EventCommand_ChangeItems(EventCommand):
+    code = 126
+    item_id: Optional[int]
+    operation: DiffType
+    operand_type: ConstOrVar
+    operand: int
+
+@dataclass(frozen=True)
+class EventCommand_ChangeWeapons(EventCommand):
+    code = 127
+    weapon_id: Optional[int]
+    operation: DiffType
+    operand_type: ConstOrVar
+    operand: int
+
+@dataclass(frozen=True)
+class EventCommand_ChangeArmor(EventCommand):
+    code = 128
+    armor_id: Optional[int]
+    operation: DiffType
+    operand_type: ConstOrVar
+    operand: int
+
+@dataclass(frozen=True)
+class EventCommand_ChangePartyMember(EventCommand):
+    code = 129
+    actor_id: Optional[int]
+    add_or_remove: AddOrRemove
+    initialize: bool
+
+@dataclass(frozen=True)
 class EventCommand_ChangeBattleBGM(EventCommand):
     code = 132
     audio: AudioFile
 
 @dataclass(frozen=True)
+class EventCommand_ChangeBattleEndME(EventCommand):
+    code = 133
+    audio: AudioFile
+
+@dataclass(frozen=True)
+class EventCommand_ChangeSaveAccess(EventCommand):
+    code = 134
+    enabled: bool
+
+@dataclass(frozen=True)
 class EventCommand_ChangeMenuAccess(EventCommand):
     code = 135
+    enabled: bool
+
+@dataclass(frozen=True)
+class EventCommand_ChangeEncounter(EventCommand):
+    code = 136
     enabled: bool
 
 @dataclass(frozen=True)
@@ -580,9 +687,32 @@ class EventCommand_BattleProcessing(EventCommand):
     can_continue_when_loser: bool
 
 @dataclass(frozen=True)
+class EventCommand_ShopProcessing(EventCommand):
+    code = 302
+    goods: int
+    price: int
+
+@dataclass(frozen=True)
+class EventCommand_NameInputProcessing(EventCommand):
+    code = 303
+    actor_id: Optional[int]
+    maxlen: int
+
+@dataclass(frozen=True)
 class EventCommand_RecoverAll(EventCommand):
     code = 314
     actor_id: Optional[int]
+
+@dataclass(frozen=True)
+class EventCommand_EnemyAppearance(EventCommand):
+    code = 335
+    enemy_index: int
+
+@dataclass(frozen=True)
+class EventCommand_EnemyTransform(EventCommand):
+    code = 336
+    enemy_index: int
+    new_enemy_id: Optional[int]
 
 @dataclass(frozen=True)
 class EventCommand_AbortBattle(EventCommand):
@@ -665,6 +795,12 @@ class EventCommand_IfLose(EventCommand):
 @dataclass(frozen=True)
 class EventCommand_BattleProcessingEnd(EventCommand):
     code = 604
+
+@dataclass(frozen=True)
+class EventCommand_ContinueShopProcessing(EventCommand):
+    code = 605
+    goods: int
+    price: int
 
 @dataclass(frozen=True)
 class EventCommand_ContinueScript(EventCommand):

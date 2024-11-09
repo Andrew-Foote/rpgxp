@@ -67,13 +67,23 @@ def fetch_rows(
 
     return dbh.execute(query, bindings).fetchall()
 
+class BadQueryResultError(Exception):
+    pass
+
 def fetch_row(
     query: str, bindings: apsw.Bindings | None=None,
     *, dbh: apsw.Connection | None=None
 ) -> tuple[apsw.SQLiteValue, ...]:
 
     rows = fetch_rows(query, bindings, dbh=dbh)
-    assert len(rows) == 1
+
+    if len(rows) != 1:
+        e = BadQueryResultError(f'got {len(rows)} rows from query, expected 1')
+        e.add_note(f'query: {query}')
+        e.add_note(f'bindings: {bindings}')
+        e.add_note(f'result: {rows}')
+        raise e
+
     return rows[0]
 
 def fetch_value(

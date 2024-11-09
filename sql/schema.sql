@@ -410,10 +410,74 @@ CREATE TABLE "common_event_command_conditional_branch_timer" (
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_in_party";
+CREATE TABLE "common_event_command_conditional_branch_actor_in_party" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_name";
+CREATE TABLE "common_event_command_conditional_branch_actor_name" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "value" TEXT NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_skill";
+CREATE TABLE "common_event_command_conditional_branch_actor_skill" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "skill_id" INTEGER REFERENCES "skill" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_weapon";
+CREATE TABLE "common_event_command_conditional_branch_actor_weapon" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_armor";
+CREATE TABLE "common_event_command_conditional_branch_actor_armor" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor_state";
+CREATE TABLE "common_event_command_conditional_branch_actor_state" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "common_event_command_conditional_branch_actor";
 CREATE TABLE "common_event_command_conditional_branch_actor" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "infracode" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_enemy_appear";
+CREATE TABLE "common_event_command_conditional_branch_enemy_appear" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_conditional_branch_enemy_state";
+CREATE TABLE "common_event_command_conditional_branch_enemy_state" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -421,6 +485,8 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_enemy";
 CREATE TABLE "common_event_command_conditional_branch_enemy" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_id" INTEGER REFERENCES "enemy" ("id"),
+    "infracode" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -459,6 +525,7 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_item";
 CREATE TABLE "common_event_command_conditional_branch_item" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -466,6 +533,7 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_weapon";
 CREATE TABLE "common_event_command_conditional_branch_weapon" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -473,6 +541,7 @@ DROP TABLE IF EXISTS "common_event_command_conditional_branch_armor";
 CREATE TABLE "common_event_command_conditional_branch_armor" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -696,6 +765,69 @@ CREATE TABLE "common_event_command_change_gold" (
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "const_or_var";
+CREATE TABLE "const_or_var" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "const_or_var" ("id", "name") VALUES
+    (0, 'CONST'),
+    (1, 'VAR');
+
+DROP TABLE IF EXISTS "common_event_command_change_items";
+CREATE TABLE "common_event_command_change_items" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_weapons";
+CREATE TABLE "common_event_command_change_weapons" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_armor";
+CREATE TABLE "common_event_command_change_armor" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "add_or_remove";
+CREATE TABLE "add_or_remove" (
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL
+) STRICT;
+
+INSERT INTO "add_or_remove" ("id", "name") VALUES
+    (0, 'ADD'),
+    (1, 'REMOVE');
+
+DROP TABLE IF EXISTS "common_event_command_change_party_member";
+CREATE TABLE "common_event_command_change_party_member" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "add_or_remove" INTEGER NOT NULL REFERENCES "add_or_remove" ("id"),
+    "initialize" INTEGER NOT NULL CHECK ("initialize" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "common_event_command_change_battle_bgm";
 CREATE TABLE "common_event_command_change_battle_bgm" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
@@ -709,8 +841,37 @@ CREATE TABLE "common_event_command_change_battle_bgm" (
     FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
+DROP TABLE IF EXISTS "common_event_command_change_battle_end_me";
+CREATE TABLE "common_event_command_change_battle_end_me" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_save_access";
+CREATE TABLE "common_event_command_change_save_access" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "common_event_command_change_menu_access";
 CREATE TABLE "common_event_command_change_menu_access" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_change_encounter";
+CREATE TABLE "common_event_command_change_encounter" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
@@ -1578,11 +1739,46 @@ CREATE TABLE "common_event_command_battle_processing" (
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "common_event_command_shop_processing";
+CREATE TABLE "common_event_command_shop_processing" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_name_input_processing";
+CREATE TABLE "common_event_command_name_input_processing" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "maxlen" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "common_event_command_recover_all";
 CREATE TABLE "common_event_command_recover_all" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_enemy_appearance";
+CREATE TABLE "common_event_command_enemy_appearance" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_enemy_transform";
+CREATE TABLE "common_event_command_enemy_transform" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    "new_enemy_id" INTEGER REFERENCES "enemy" ("id"),
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -2067,6 +2263,15 @@ DROP TABLE IF EXISTS "common_event_command_battle_processing_end";
 CREATE TABLE "common_event_command_battle_processing_end" (
     "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("common_event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "common_event_command_continue_shop_processing";
+CREATE TABLE "common_event_command_continue_shop_processing" (
+    "common_event_id" INTEGER NOT NULL REFERENCES "common_event" ("id"),
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
     PRIMARY KEY ("common_event_id", "index")
 ) STRICT;
 
@@ -2984,12 +3189,100 @@ CREATE TABLE "event_page_command_conditional_branch_timer" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_in_party";
+CREATE TABLE "event_page_command_conditional_branch_actor_in_party" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_name";
+CREATE TABLE "event_page_command_conditional_branch_actor_name" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "value" TEXT NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_skill";
+CREATE TABLE "event_page_command_conditional_branch_actor_skill" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "skill_id" INTEGER REFERENCES "skill" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_weapon";
+CREATE TABLE "event_page_command_conditional_branch_actor_weapon" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_armor";
+CREATE TABLE "event_page_command_conditional_branch_actor_armor" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor_state";
+CREATE TABLE "event_page_command_conditional_branch_actor_state" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_conditional_branch_actor";
 CREATE TABLE "event_page_command_conditional_branch_actor" (
     "map_id" INTEGER NOT NULL,
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "infracode" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_enemy_appear";
+CREATE TABLE "event_page_command_conditional_branch_enemy_appear" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_conditional_branch_enemy_state";
+CREATE TABLE "event_page_command_conditional_branch_enemy_state" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3000,6 +3293,8 @@ CREATE TABLE "event_page_command_conditional_branch_enemy" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_id" INTEGER REFERENCES "enemy" ("id"),
+    "infracode" INTEGER NOT NULL,
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3034,6 +3329,7 @@ CREATE TABLE "event_page_command_conditional_branch_item" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3044,6 +3340,7 @@ CREATE TABLE "event_page_command_conditional_branch_weapon" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3054,6 +3351,7 @@ CREATE TABLE "event_page_command_conditional_branch_armor" (
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -3305,6 +3603,61 @@ CREATE TABLE "event_page_command_change_gold" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_change_items";
+CREATE TABLE "event_page_command_change_items" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_weapons";
+CREATE TABLE "event_page_command_change_weapons" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_armor";
+CREATE TABLE "event_page_command_change_armor" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_party_member";
+CREATE TABLE "event_page_command_change_party_member" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "add_or_remove" INTEGER NOT NULL REFERENCES "add_or_remove" ("id"),
+    "initialize" INTEGER NOT NULL CHECK ("initialize" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_change_battle_bgm";
 CREATE TABLE "event_page_command_change_battle_bgm" (
     "map_id" INTEGER NOT NULL,
@@ -3321,8 +3674,46 @@ CREATE TABLE "event_page_command_change_battle_bgm" (
     FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_change_battle_end_me";
+CREATE TABLE "event_page_command_change_battle_end_me" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_save_access";
+CREATE TABLE "event_page_command_change_save_access" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_change_menu_access";
 CREATE TABLE "event_page_command_change_menu_access" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_change_encounter";
+CREATE TABLE "event_page_command_change_encounter" (
     "map_id" INTEGER NOT NULL,
     "event_id" INTEGER NOT NULL,
     "event_page_index" INTEGER NOT NULL,
@@ -4338,6 +4729,30 @@ CREATE TABLE "event_page_command_battle_processing" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_shop_processing";
+CREATE TABLE "event_page_command_shop_processing" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_name_input_processing";
+CREATE TABLE "event_page_command_name_input_processing" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "maxlen" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_recover_all";
 CREATE TABLE "event_page_command_recover_all" (
     "map_id" INTEGER NOT NULL,
@@ -4345,6 +4760,29 @@ CREATE TABLE "event_page_command_recover_all" (
     "event_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_enemy_appearance";
+CREATE TABLE "event_page_command_enemy_appearance" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "event_page_command_enemy_transform";
+CREATE TABLE "event_page_command_enemy_transform" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    "new_enemy_id" INTEGER REFERENCES "enemy" ("id"),
     PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
@@ -5028,6 +5466,18 @@ CREATE TABLE "event_page_command_battle_processing_end" (
     FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "event_page_command_continue_shop_processing";
+CREATE TABLE "event_page_command_continue_shop_processing" (
+    "map_id" INTEGER NOT NULL,
+    "event_id" INTEGER NOT NULL,
+    "event_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
+    PRIMARY KEY ("map_id", "event_id", "event_page_index", "index"),
+    FOREIGN KEY ("map_id", "event_id", "event_page_index") REFERENCES "event_page" ("map_id", "event_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "event_page_command_continue_script";
 CREATE TABLE "event_page_command_continue_script" (
     "map_id" INTEGER NOT NULL,
@@ -5623,11 +6073,91 @@ CREATE TABLE "troop_page_command_conditional_branch_timer" (
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_in_party";
+CREATE TABLE "troop_page_command_conditional_branch_actor_in_party" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_name";
+CREATE TABLE "troop_page_command_conditional_branch_actor_name" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "value" TEXT NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_skill";
+CREATE TABLE "troop_page_command_conditional_branch_actor_skill" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "skill_id" INTEGER REFERENCES "skill" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_weapon";
+CREATE TABLE "troop_page_command_conditional_branch_actor_weapon" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_armor";
+CREATE TABLE "troop_page_command_conditional_branch_actor_armor" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor_state";
+CREATE TABLE "troop_page_command_conditional_branch_actor_state" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "troop_page_command_conditional_branch_actor";
 CREATE TABLE "troop_page_command_conditional_branch_actor" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "infracode" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_enemy_appear";
+CREATE TABLE "troop_page_command_conditional_branch_enemy_appear" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_conditional_branch_enemy_state";
+CREATE TABLE "troop_page_command_conditional_branch_enemy_state" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "state_id" INTEGER REFERENCES "state" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5637,6 +6167,8 @@ CREATE TABLE "troop_page_command_conditional_branch_enemy" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_id" INTEGER REFERENCES "enemy" ("id"),
+    "infracode" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5668,6 +6200,7 @@ CREATE TABLE "troop_page_command_conditional_branch_item" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5677,6 +6210,7 @@ CREATE TABLE "troop_page_command_conditional_branch_weapon" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5686,6 +6220,7 @@ CREATE TABLE "troop_page_command_conditional_branch_armor" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -5915,6 +6450,57 @@ CREATE TABLE "troop_page_command_change_gold" (
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "troop_page_command_change_items";
+CREATE TABLE "troop_page_command_change_items" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "item_id" INTEGER REFERENCES "item" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_weapons";
+CREATE TABLE "troop_page_command_change_weapons" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "weapon_id" INTEGER REFERENCES "weapon" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_armor";
+CREATE TABLE "troop_page_command_change_armor" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "armor_id" INTEGER REFERENCES "armor" ("id"),
+    "operation" INTEGER NOT NULL REFERENCES "diff_type" ("id"),
+    "operand_type" INTEGER NOT NULL REFERENCES "const_or_var" ("id"),
+    "operand" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_party_member";
+CREATE TABLE "troop_page_command_change_party_member" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "add_or_remove" INTEGER NOT NULL REFERENCES "add_or_remove" ("id"),
+    "initialize" INTEGER NOT NULL CHECK ("initialize" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "troop_page_command_change_battle_bgm";
 CREATE TABLE "troop_page_command_change_battle_bgm" (
     "troop_id" INTEGER NOT NULL,
@@ -5930,8 +6516,43 @@ CREATE TABLE "troop_page_command_change_battle_bgm" (
     FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
 ) STRICT;
 
+DROP TABLE IF EXISTS "troop_page_command_change_battle_end_me";
+CREATE TABLE "troop_page_command_change_battle_end_me" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "audio_name" TEXT,
+    "_audio_name__type" TEXT NOT NULL GENERATED ALWAYS AS ('Audio'),
+    "_audio_name__subtype" TEXT NOT NULL GENERATED ALWAYS AS ('ME'),
+    "audio_volume" INTEGER NOT NULL,
+    "audio_pitch" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index"),
+    FOREIGN KEY ("audio_name", "_audio_name__type", "_audio_name__subtype") REFERENCES "material" ("name", "type", "subtype")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_save_access";
+CREATE TABLE "troop_page_command_change_save_access" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "troop_page_command_change_menu_access";
 CREATE TABLE "troop_page_command_change_menu_access" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enabled" INTEGER NOT NULL CHECK ("enabled" in (0, 1)),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_change_encounter";
+CREATE TABLE "troop_page_command_change_encounter" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
@@ -6865,12 +7486,55 @@ CREATE TABLE "troop_page_command_battle_processing" (
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
 
+DROP TABLE IF EXISTS "troop_page_command_shop_processing";
+CREATE TABLE "troop_page_command_shop_processing" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_name_input_processing";
+CREATE TABLE "troop_page_command_name_input_processing" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "actor_id" INTEGER REFERENCES "actor" ("id"),
+    "maxlen" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
 DROP TABLE IF EXISTS "troop_page_command_recover_all";
 CREATE TABLE "troop_page_command_recover_all" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
     "actor_id" INTEGER REFERENCES "actor" ("id"),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_enemy_appearance";
+CREATE TABLE "troop_page_command_enemy_appearance" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_enemy_transform";
+CREATE TABLE "troop_page_command_enemy_transform" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "enemy_index" INTEGER NOT NULL,
+    "new_enemy_id" INTEGER REFERENCES "enemy" ("id"),
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;
@@ -7485,6 +8149,17 @@ CREATE TABLE "troop_page_command_battle_processing_end" (
     "troop_id" INTEGER NOT NULL,
     "troop_page_index" INTEGER NOT NULL,
     "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    PRIMARY KEY ("troop_id", "troop_page_index", "index"),
+    FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
+) STRICT;
+
+DROP TABLE IF EXISTS "troop_page_command_continue_shop_processing";
+CREATE TABLE "troop_page_command_continue_shop_processing" (
+    "troop_id" INTEGER NOT NULL,
+    "troop_page_index" INTEGER NOT NULL,
+    "index" INTEGER NOT NULL CHECK ("index" >= 0),
+    "goods" INTEGER NOT NULL,
+    "price" INTEGER NOT NULL,
     PRIMARY KEY ("troop_id", "troop_page_index", "index"),
     FOREIGN KEY ("troop_id", "troop_page_index") REFERENCES "troop_page" ("troop_id", "index")
 ) STRICT;

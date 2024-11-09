@@ -57,8 +57,9 @@ def run() -> None:
             coerced_url_args = dict(zip(url_params, map(str, url_args)))
             template_args = site.get_template_args(route, coerced_url_args)
 
-            url = route.url(**dict(zip(url_params, coerced_url_args)))
+            url = route.url(**coerced_url_args)
             filesystem_url = settings.site_root / url
+            #print(f'Generating {filesystem_url}...')
 
             try:
                 render_template_to_file(

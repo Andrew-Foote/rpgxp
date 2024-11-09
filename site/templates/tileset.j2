@@ -39,7 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		<section>
 			<h2>Regular tiles</h2>
 
-			{% if file_ext %}
+			{% if filename is none %}
+				<p>This is a dummy tileset with no associated tiles.</p>
+			{% elif file_ext %}
 				<figure>
 					<div style="display: flex; justify-content: space-between">
 						<div></div>

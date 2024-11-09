@@ -67,14 +67,22 @@
 		<section>
 			<h2>Tiles</h2>
 
-			<figure>
-				<a href="{{ url_base }}/map/{{ id }}.png">
-					<img src="{{ url_base }}/map/{{ id }}.png" style="display: block; margin: 0 auto; max-height: 24rem; max-width: 100%; overflow-y: auto">
-				</a>
-				<figcaption>
-					Click the image for a closer view.
-				</figcaption>
-			</figure>
+			{% if has_tiles %}
+				<figure>
+					<a href="{{ url_base }}/map/{{ id }}.png">
+						<img
+							src="{{ url_base }}/map/{{ id }}.png"
+							class="figure-img big-img"
+						>
+					</a>
+					<figcaption>
+						Click the image for a closer view.
+					</figcaption>
+				</figure>
+			{% else %}
+				<p>This map has no tiles, since its tileset is a dummy tileset.
+				</p>
+			{% endif %}
 		</section>
 		<section>
 			<h2>Encounters</h2>
@@ -82,13 +90,25 @@
 				<section>
 					<h3>Rate</h3>
 
-					<p>The "encounter steps" value stored against this map is <strong>{{ encounter_step }}.</strong> By default, this means that the average number of steps the player must take before an encounter is initiated is {{ encounter_step }}. More precisely, the number of steps is calculated by generating two uniformly-distributed random numbers between 0 and {{ encounter_step - 1 }}, and adding 1. This means the number of steps may be as low as 1 or as high as {{ 2 * encounter_step + 1 }}.</p>
+					<p>The "encounter steps" value stored against this map is
+					<strong>{{ encounter_step }}.</strong> By default, this
+					means that the average number of steps the player must take
+					before an encounter is initiated is {{ encounter_step }}.
+					More precisely, the number of steps is calculated by 
+					generating two uniformly-distributed random numbers between 
+					0 and {{ encounter_step - 1 }}, and adding 1. This means the
+					number of steps may be as low as 1 or as high as
+					{{ 2 * encounter_step + 1 }}.</p>
 				</section>
 				<section>
 					<h3>Troops</h3>
 					<ol>
 						{% for encounter in encounters %}
-							<li><a href="{{ url_base }}/troop/{{ encounter.troop_id }}.html">{{ encounter.troop_id }}</a> ({{ encounter.troop_name }})</li>
+							<li>
+								<a href="{{ url_base }}/troop/{{ encounter.troop_id }}.html">
+									{{ encounter.troop_name }}
+								</a>
+							</li>
 						{% endfor %}
 					</ol>
 				</section>

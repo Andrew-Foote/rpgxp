@@ -927,8 +927,34 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('bound_type', EnumSchema(BoundType))
             ]),
             # don't know field layouts for these two
-            SimpleVariant(4, 'Actor', []),
-            SimpleVariant(5, 'Enemy', []),
+            ComplexVariant(4, 'Actor', [
+                Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
+                Field('infracode', IntSchema()),
+            ], 'infracode', [
+                SimpleVariant(0, 'InParty', []),
+                SimpleVariant(1, 'Name', [Field('value', StrSchema())]),
+                SimpleVariant(2, 'Skill', [
+                    Field('skill_id', FKSchema(lambda: SKILLS_SCHEMA))
+                ]),
+                SimpleVariant(3, 'Weapon', [
+                    Field('weapon_id', FKSchema(lambda: WEAPONS_SCHEMA)),
+                ]),
+                SimpleVariant(4, 'Armor', [
+                    Field('armor_id', FKSchema(lambda: ARMORS_SCHEMA)),
+                ]),
+                SimpleVariant(5, 'State', [
+                    Field('state_id', FKSchema(lambda: STATES_SCHEMA)),
+                ])
+            ]),
+            ComplexVariant(5, 'Enemy', [
+                Field('enemy_id', FKSchema(lambda: ENEMIES_SCHEMA)),
+                Field('infracode', IntSchema()),
+            ], 'infracode', [
+                SimpleVariant(0, 'Appear', []),
+                SimpleVariant(1, 'State', [
+                    Field('state_id', FKSchema(lambda: STATES_SCHEMA)),
+                ])
+            ]),
             # branch based on a character sprite's direction
             SimpleVariant(6, 'Character', [
                 # -1 = player, 0 = current event, otherwise an event id
@@ -939,9 +965,15 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
                 Field('amount', IntSchema()),
                 Field('bound_type', EnumSchema(BoundType)),
             ]),
-            SimpleVariant(8, 'Item', []),
-            SimpleVariant(9, 'Weapon', []),
-            SimpleVariant(10, 'Armor', []),
+            SimpleVariant(8, 'Item', [
+                Field('item_id', FKSchema(lambda: ITEMS_SCHEMA)),
+            ]),
+            SimpleVariant(9, 'Weapon', [
+                Field('weapon_id', FKSchema(lambda: WEAPONS_SCHEMA)),
+            ]),
+            SimpleVariant(10, 'Armor', [
+                Field('armor_id', FKSchema(lambda: ARMORS_SCHEMA)),
+            ]),
             SimpleVariant(11, 'Button', [Field('button', IntSchema())]),
             SimpleVariant(12, 'Script', [Field('expr', StrSchema())]),
         ]),
@@ -1001,11 +1033,43 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('with_variable', IntBoolSchema()),
             Field('amount', IntSchema()),
         ]),
+        SimpleVariant(126, 'ChangeItems', [
+            Field('item_id', FKSchema(lambda: ITEMS_SCHEMA)),
+            Field('operation', EnumSchema(DiffType)),
+            Field('operand_type', EnumSchema(ConstOrVar)),
+            Field('operand', IntSchema()),
+        ]),
+        SimpleVariant(127, 'ChangeWeapons', [
+            Field('weapon_id', FKSchema(lambda: WEAPONS_SCHEMA)),
+            Field('operation', EnumSchema(DiffType)),
+            Field('operand_type', EnumSchema(ConstOrVar)),
+            Field('operand', IntSchema()),
+        ]),
+        SimpleVariant(128, 'ChangeArmor', [
+            Field('armor_id', FKSchema(lambda: ARMORS_SCHEMA)),
+            Field('operation', EnumSchema(DiffType)),
+            Field('operand_type', EnumSchema(ConstOrVar)),
+            Field('operand', IntSchema()),
+        ]),
+        SimpleVariant(129, 'ChangePartyMember', [
+            Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
+            Field('add_or_remove', EnumSchema(AddOrRemove)),
+            Field('initialize', IntBoolSchema()),
+        ]),
         SimpleVariant(132, 'ChangeBattleBGM', [
             Field('audio', audio_schema('BGM')),
         ]),
+        SimpleVariant(133, 'ChangeBattleEndME', [
+            Field('audio', audio_schema('ME')),
+        ]),
+        SimpleVariant(134, 'ChangeSaveAccess', [
+            Field('enabled', IntBoolSchema()),
+        ]),
         SimpleVariant(135, 'ChangeMenuAccess', [
-            Field('enabled', IntBoolSchema())
+            Field('enabled', IntBoolSchema()),
+        ]),
+        SimpleVariant(136, 'ChangeEncounter', [
+            Field('enabled', IntBoolSchema()),
         ]),
         SimpleVariant(201, 'TransferPlayer', [
             Field('with_variables', IntBoolSchema()),
@@ -1130,9 +1194,24 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
             Field('can_escape', BoolSchema()),
             Field('can_continue_when_loser', BoolSchema()),
         ]),
+        SimpleVariant(302, 'ShopProcessing', [
+            Field('goods', IntSchema()),
+            Field('price', IntSchema()),
+        ]),
+        SimpleVariant(303, 'NameInputProcessing', [
+            Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
+            Field('maxlen', IntSchema()),
+        ]),
         SimpleVariant(314, 'RecoverAll', [
             # 0 for all party
             Field('actor_id', FKSchema(lambda: ACTORS_SCHEMA)),
+        ]),
+        SimpleVariant(335, 'EnemyAppearance', [
+            Field('enemy_index', IntSchema()),
+        ]),
+        SimpleVariant(336, 'EnemyTransform', [
+            Field('enemy_index', IntSchema()),
+            Field('new_enemy_id', FKSchema(lambda: ENEMIES_SCHEMA)),
         ]),
         SimpleVariant(340, 'AbortBattle', []),
         SimpleVariant(351, 'CallMenuScreen', []),
@@ -1162,6 +1241,10 @@ EVENT_COMMAND_SCHEMA = RPGVariantObjSchema(
         SimpleVariant(602, 'IfEscape', []),
         SimpleVariant(603, 'IfLose', []),
         SimpleVariant(604, 'BattleProcessingEnd', []),
+        SimpleVariant(605, 'ContinueShopProcessing', [
+            Field('goods', IntSchema()),
+            Field('price', IntSchema()),
+        ]),
         SimpleVariant(655, 'ContinueScript', [
             Field('line', StrSchema()),
         ]),
@@ -1608,6 +1691,7 @@ WEAPONS_SCHEMA: ListSchema = ListSchema(
 )
 
 FILES: list[FileSchema] = [
+    SingleFileSchema('Troops.rxdata', TROOPS_SCHEMA),
     SingleFileSchema('Actors.rxdata', ACTORS_SCHEMA),
     SingleFileSchema('Animations.rxdata', ANIMATIONS_SCHEMA),
     SingleFileSchema('Armors.rxdata', ARMORS_SCHEMA),
@@ -1622,6 +1706,5 @@ FILES: list[FileSchema] = [
     SingleFileSchema('States.rxdata', STATES_SCHEMA),
     SingleFileSchema('System.rxdata', SYSTEM_SCHEMA),
     SingleFileSchema('Tilesets.rxdata', TILESETS_SCHEMA),
-    SingleFileSchema('Troops.rxdata', TROOPS_SCHEMA),
     SingleFileSchema('Weapons.rxdata', WEAPONS_SCHEMA),
 ]

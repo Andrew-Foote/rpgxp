@@ -90,7 +90,6 @@ def respond_dynamic(path: str, *, head_only: bool=False) -> Response:
         template_args = {'url': path}
         binary = False
     else:
-        print(route)
         content_type = route.content_type
 
         status = '200 OK'

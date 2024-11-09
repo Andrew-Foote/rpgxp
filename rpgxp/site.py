@@ -7,7 +7,7 @@ import apsw
 import jinja2
 from PIL.Image import Image
 
-from rpgxp import db, settings, tile
+from rpgxp import db, material, settings, tile
 from rpgxp.routes import Route
 
 NamedStr = TypedDict('NamedStr', {
@@ -45,6 +45,7 @@ jinja_env.globals |= {
     'zip_archive': zip_archive,
     'map_image_from_id': tile.map_image_from_id,
     'image_content': image_content,
+    'root_for_source': material.root_for_source,
 }
 
 def render_template(template_path: str, template_args: dict[str, Any]) -> str:

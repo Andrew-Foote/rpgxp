@@ -21,8 +21,6 @@ def parse_bool(node: marshal.Node) -> bool:
 		case marshal.False_():
 			result = False
 		case _:
-			breakpoint()
-
 			raise ParseError(
 				'expected node of type True_ or False_, got '
 				f'{type(content).__name__}'

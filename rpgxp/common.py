@@ -224,3 +224,11 @@ class TroopPageSpan(Enum):
     BATTLE = 0
     TURN = 1
     MOMENT = 2
+
+class AddOrRemove(Enum):
+    ADD = 0
+    REMOVE = 1
+
+class ConstOrVar(Enum):
+    CONST = 0
+    VAR = 1

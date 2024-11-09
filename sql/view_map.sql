@@ -21,6 +21,7 @@ select
 		'id', tileset.id,
 		'name', tileset.name
 	) as tileset,
+	tileset.tileset_name is not null as has_tiles,
 	case when m.autoplay_bgm then (
 		select json_object(
 			'name', m.bgm_name,

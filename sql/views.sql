@@ -21,5 +21,4 @@ LEFT JOIN material_best_file pmat ON pmat.type = 'Graphics'
 LEFT JOIN material_best_file fmat ON fmat.type = 'Graphics'
 	AND fmat.subtype = 'Fogs' AND fmat.name = t.fog_name
 LEFT JOIN material_best_file bmat ON bmat.type = 'Graphics'
-	AND bmat.subtype = 'Battlebacks' AND bmat.name = t.battleback_name
-WHERE t.name != '';
+	AND bmat.subtype = 'Battlebacks' AND bmat.name = t.battleback_name;

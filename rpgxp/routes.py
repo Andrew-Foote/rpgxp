@@ -21,11 +21,12 @@ class PatternParserState(Enum):
 
 class BasicParamType(Enum):
 	NONE = 0
-	INT = 1
-	FLOAT = 2
-	BYTES = 3
-	STR = 4
-	JSON = 5
+	BOOL = 1
+	INT = 2
+	FLOAT = 3
+	BYTES = 4
+	STR = 5
+	JSON = 6
 
 class UnidentifiableMimeTypeError(Exception):
     pass
@@ -85,6 +86,9 @@ class ParamType:
 				case BasicParamType.NONE:
 					if raw_arg is None:
 						return None
+				case BasicParamType.BOOL:
+					if isinstance(raw_arg, int):
+						return bool(raw_arg)
 				case BasicParamType.INT:
 					if isinstance(raw_arg, int):
 						return raw_arg
@@ -106,6 +110,9 @@ class ParamType:
 		raise RoutePatternValueError(
 			f'{raw_arg!r} cannot be parsed as any of {self.members}'
 		)
+
+def bool_param() -> ParamType:
+	return ParamType({BasicParamType.BOOL})
 
 def int_param(*, optional: bool=False) -> ParamType:
 	return ParamType({BasicParamType.INT} | (
@@ -229,18 +236,6 @@ class Route:
 @ft.cache
 def routes() -> list[Route]:
 	return [
-		Route(
-			'graphics/{subtype}/{name}', 'material.j2', 'view_graphic',
-			{
-				'type': str_param(),
-				'subtype': str_param(),
-				'name': str_param()
-			},
-			'graphics', content_type=ContentType.VARIABLE_BINARY
-		),
-		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
-			'id': int_param(),
-		}, 'map_ids', content_type=ContentType.PNG),
 		Route('index.html', 'index.j2'),
 		Route('maps.html', 'maps.j2', 'view_maps', {'maps': json_param()}),
 		Route('map/{id}.html', 'map.j2', 'view_map', {
@@ -249,6 +244,7 @@ def routes() -> list[Route]:
 			'parent': json_param(optional=True),
 			'children': json_param(),
 			'tileset': json_param(),
+			'has_tiles': bool_param(),
 			'bgm': json_param(optional=True),
 			'bgs': json_param(optional=True),
 			'encounter_step': int_param(),
@@ -260,7 +256,7 @@ def routes() -> list[Route]:
 		Route('tileset/{id}.html', 'tileset.j2', 'view_tileset', {
 			'id': int_param(),
 			'name': str_param(),
-			'filename': str_param(),
+			'filename': str_param(optional=True),
 			'file_ext': str_param(optional=True),
 			'autotiles': json_param(),
 			'panorama': json_param(optional=True),
@@ -296,4 +292,19 @@ def routes() -> list[Route]:
 		Route('scripts.zip', 'scripts_zip.j2', 'get_scripts_for_archive', {
 			'scripts': json_param()
 		}, content_type=ContentType.ZIP),
+
+		# these routes can take quite a while to render for a typical game
+		Route(
+			'graphics/{subtype}/{name}', 'material.j2', 'view_graphic',
+			{
+				'source': str_param(),
+				'type': str_param(),
+				'subtype': str_param(),
+				'name': str_param()
+			},
+			'graphics', content_type=ContentType.VARIABLE_BINARY
+		),
+		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
+			'id': int_param(),
+		}, 'map_ids_with_images', content_type=ContentType.PNG),
 	]
