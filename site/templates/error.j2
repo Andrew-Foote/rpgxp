@@ -1,0 +1,17 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Error {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/">Home page</a>
+	</div>
+
+	<section>
+		<h1>Error</h1>
+		<p>The page <code>{{ url }}</code> could not be viewed due to an error
+		in the website code.</p>
+		<section>
+			<h2>Traceback</h2> 
+			<pre>{{ traceback }}</pre> 
+		</section>
+	</section>
+{% endblock %}

@@ -3,6 +3,7 @@ import functools as ft
 import mimetypes
 from pathlib import Path
 import re
+import traceback
 from typing import Iterator
 
 from wsgiref.types import WSGIEnvironment, StartResponse
@@ -95,16 +96,48 @@ def respond_dynamic(path: str, *, head_only: bool=False) -> Response:
         status = '200 OK'
         headers = [*content_type.headers(path)]
         template = route.template
-        template_args = site.get_template_args(route, url_args)
-        binary = content_type.binary
+
+        try:
+            template_args = site.get_template_args(route, url_args)
+        except Exception as e:
+            e.add_note(
+                f'Occured when determing template arguments for "{template}"'
+            )
+            
+            e.add_note(f'URL arguments: {url_args}')
+
+            status = '500 Internal Server Error'
+            headers = [('Content-Type', 'text/html; charset=utf-8')]
+            template = 'error.j2'
+            
+            template_args = {
+                'url': path,
+                'traceback': "\n".join(traceback.format_exception(e))
+            }
+            
+            binary = False
+        else:
+            binary = content_type.binary
 
     try:
         content = site.render_template(template, template_args)
     except Exception as e:
-        e.add_note(f'Template: {template}')
-        e.add_note(f'Template args: {template_args}')
-        e.add_note(f'URL args: {url_args}')
-        raise
+        e.add_note(f'Occured when rendering template "{template}"')
+        e.add_note(f'Template arguments: {template_args}')
+        e.add_note(f'URL arguments: {url_args}')
+
+        status = '500 Internal Server Error'
+        headers = [('Content-Type', 'text/html; charset=utf-8')]
+        template = 'error.j2'
+        
+        template_args = {
+            'url': path,
+            'traceback': "\n".join(traceback.format_exception(e))
+        }
+        
+        binary = False
+
+        content = site.render_template(template, template_args)
 
     encoding = ('utf-8', 'surrogateescape') if binary else ('utf-8',)
     encoded_content = content.encode(*encoding)

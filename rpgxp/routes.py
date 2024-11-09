@@ -237,6 +237,8 @@ class Route:
 def routes() -> list[Route]:
 	return [
 		Route('index.html', 'index.j2'),
+
+		# maps
 		Route('maps.html', 'maps.j2', 'view_maps', {'maps': json_param()}),
 		Route('map/{id}.html', 'map.j2', 'view_map', {
 			'id': int_param(),
@@ -250,6 +252,8 @@ def routes() -> list[Route]:
 			'encounter_step': int_param(),
 			'encounters': json_param(),
 		}, 'map_ids'),
+
+		# tilesets
 		Route('tilesets.html', 'tilesets.j2', 'view_tilesets', {
 			'tilesets': json_param()
 		}),
@@ -264,6 +268,8 @@ def routes() -> list[Route]:
 			'battleback': json_param(optional=True),
 			'maps': json_param(),
 		}, 'tileset_ids'),
+
+		# common events
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
 			'common_events': json_param(),
 		}),
@@ -272,12 +278,16 @@ def routes() -> list[Route]:
 			'name': str_param(),
 			'trigger': json_param(optional=True),
 		}, 'common_event_ids'),
+
+		# switches
 		Route('switches.html', 'switches.j2', 'view_switches', {
 			'switches': json_param(),
 		}),
 		Route('switch/{id}.html', 'switch.j2', 'view_switch', {
 			'switch': json_param(),
 		}, 'switch_ids'),
+
+		# scripts
 		Route('scripts.html', 'scripts.j2', 'view_scripts', {
 			'scripts': json_param(),
 		}),
@@ -293,18 +303,26 @@ def routes() -> list[Route]:
 			'scripts': json_param()
 		}, content_type=ContentType.ZIP),
 
-		# these routes can take quite a while to render for a typical game
-		Route(
-			'graphics/{subtype}/{name}', 'material.j2', 'view_graphic',
-			{
-				'source': str_param(),
-				'type': str_param(),
-				'subtype': str_param(),
-				'name': str_param()
-			},
-			'graphics', content_type=ContentType.VARIABLE_BINARY
-		),
+		# graphics
+		Route('graphics/{subtype}/{name}', 'material.j2', 'view_graphic', {
+			'source': str_param(),
+			'type': str_param(),
+			'subtype': str_param(),
+			'name': str_param()
+		},
+		'graphics', content_type=ContentType.VARIABLE_BINARY),
 		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
 			'id': int_param(),
 		}, 'map_ids_with_images', content_type=ContentType.PNG),
+
+		# troops
+		Route('troops.html', 'troops.j2', 'view_troops', {
+			'troops': json_param(),
+		}),
+		Route('troop/{id}.html', 'troop.j2', 'view_troop', {
+			'id': int_param(),
+			'name': str_param(),
+			'members': json_param(),
+			'maps': json_param(),
+		}, 'troop_ids'),
 	]

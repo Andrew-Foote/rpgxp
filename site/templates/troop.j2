@@ -1,0 +1,52 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Troop {{ id }} ({{ name }}) {% endblock %}
+{% block content %}
+	<div class="backlinks">
+		<a href="{{ url_base }}/troops.html">Troops</a>
+	</div>
+
+	<section>		
+		<h1>Troop {{ id }} ({{ name }})</h1>
+        <section>
+            <h2>Usage</h2>
+            {% if maps %}
+                <p>
+                    <strong>Used on these maps</strong>:
+                    {% for map in maps %}
+                        <a href="{{ url_base }}/map/{{ map.id }}.html">{{ map.id }} ({{ map.name }})</a>{% if not loop.last %},{% endif %}
+                    {% endfor %}
+            {% else %}
+                <p class="warning">This troop is not used on any maps.</p>
+            {% endif %}
+        </section>
+		<section>
+			<h2>Members</h2>
+			{% if members %}
+                <table>
+                    <tr>
+                        <th>Enemy</th>
+                        <th>Coordinates</th>
+                        <th>Hidden?</th>
+                        <th>Immortal?</th>
+                    </tr>
+                    {% for member in members %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_base }}/enemy/{{ member.enemy_id }}.html">
+                                    {{ member.enemy_name }}
+                                </a>
+                            </td>
+                            <td>{{ member.x }}, {{ member.y }}</td>
+                            <td>{{ 'Yes' if member.hidden else 'No' }}</td>
+                            <td>{{ 'Yes' if member.immortal else 'No' }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>Either this troop has no members, or its members are
+                determined in a non-standard way specific to this particular
+                game.</p>
+            {% endif %}
+		</section>
+	</section>
+{% endblock %}

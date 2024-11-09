@@ -1,0 +1,26 @@
+{% extends 'layout/base.j2' %}
+{% block title %} Troops {% endblock %}
+{% block content %}
+	<section>		
+		<h1>Troops</h1>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Members</th>
+            </tr>
+            {% for troop in troops %}
+                <tr>
+                    <td><a href="{{ url_base }}/troop/{{ troop.id }}.html">{{ troop.id }}</a></td>
+                    <td>{{ troop.name }}</td>
+                    <td>
+                        {% for member in troop.members %}
+                            <a href="{{ url_base }}/enemy/{{ member.enemy_id }}.html">{{ member.enemy_name }} (#{{ member.enemy_id }})</a>{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </section>
+{% endblock %}

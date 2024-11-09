@@ -106,7 +106,7 @@
 						{% for encounter in encounters %}
 							<li>
 								<a href="{{ url_base }}/troop/{{ encounter.troop_id }}.html">
-									{{ encounter.troop_name }}
+									{{ encounter.troop_name }} (#{{ encounter.troop_id }})
 								</a>
 							</li>
 						{% endfor %}
