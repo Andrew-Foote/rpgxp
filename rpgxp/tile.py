@@ -84,6 +84,9 @@ def map_image_from_data(
                     tile = autotile.tile_from_tile_id(
                         autotile_image, adjusted_tile_id
                     )
+
+                    if x == 8 and y == 16:
+                        print(image_key, adjusted_tile_id)
             case TileType.REGULAR:
                 try:
                     tile = regular_tiles[tile_id - 384]
@@ -92,6 +95,10 @@ def map_image_from_data(
                     continue
             case _:
                 assert_never(tile_type)
+
+        if x == 8 and y == 16:
+            print(tile_id, tile_type)
+            tile.show()
 
         result.paste(tile, (x * TILE_SIZE, y * TILE_SIZE), tile)
             

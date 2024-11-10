@@ -18,7 +18,13 @@
                         class="figure-img"
                     >
                 </a>
-                <figcaption><b>File name</b>: {{ battler.filename }}</figcaption>
+                <figcaption>
+                    <b>File name</b>: {{ battler.filename }}
+                    {% if battler.hue %}
+                        <br>Hue adjusted by {{ battler.hue }}&deg; from
+                        <a href="{{ url_base }}/graphics/battlers/{{ battler.filename }}">original</a>
+                    {% endif %}
+                </figcaption>
             </figure>
         {% elif battler.file_stem %}
             <p class="warning">This enemy's image is supposed to be a battler

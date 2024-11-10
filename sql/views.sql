@@ -1,16 +1,16 @@
 DROP VIEW IF EXISTS tileset_v;
 CREATE VIEW tileset_v (
 	id, name,
-	filename, file_source, file_ext,
-	panorama_name, panorama_source, panorama_ext, panorama_hue,
-	fog_name, fog_source, fog_ext, fog_hue,
+	file_source, filename, file_stem, 
+	panorama_source, panorama_filename, panorama_stem, panorama_hue,
+	fog_source, fog_filename, fog_stem, fog_hue,
 	fog_opacity, fog_blend_type, fog_zoom, fog_sx, fog_sy,
 	battleback_name, battleback_source, battleback_ext
 ) AS SELECT
 	t.id, t.name,
-	t.tileset_name, tmat.source, tmat.extension,
-	t.panorama_name, pmat.source, pmat.extension, t.panorama_hue,
-	t.fog_name, fmat.source, fmat.extension, t.fog_hue,
+	tmat.source, tmat.full_name, t.tileset_name,
+	pmat.source, pmat.full_name, t.panorama_name, t.panorama_hue,
+	fmat.source, fmat.full_name, t.fog_name, t.fog_hue,
 	t.fog_opacity, t.fog_blend_type, t.fog_zoom, t.fog_sx, t.fog_sy,
 	t.battleback_name, bmat.source, bmat.extension
 FROM tileset t

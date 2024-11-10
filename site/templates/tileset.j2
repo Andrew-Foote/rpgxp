@@ -1,18 +1,67 @@
 {% extends 'layout/base.j2' %}
 {% block title %} Tileset {{ id }} ({{ name }}) {% endblock %}
+{% block style %}
+#tileset-img-scroll-indicator {
+	display: none;
+	position: absolute;
+	border: 1px solid black;
+}
+{% endblock %}
 {% block script %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-	const scrollbars = document.querySelectorAll('[data-scrollbar-for]');
-	console.log('script loaded');
-	console.log(scrollbars);
+function updateScrollable(scrollable) {
+	const scrollbar = document.querySelector(scrollable.dataset.scrollbar);
+	const indicator = document.querySelector(scrollable.dataset.scrollIndicator);
 
-	for (const scrollbar of scrollbars) {
-		const scrollable = document.querySelector(scrollbar.dataset.scrollbarFor);
-		console.log(scrollable.scrollTop);
+	const offsetProportion = scrollable.scrollTop / scrollable.scrollHeight;
+	const indicatorOffset = offsetProportion * scrollbar.offsetHeight;
+
+	const visibleProportion = scrollable.offsetHeight / scrollable.scrollHeight;
+	const indicatorHeight = visibleProportion * scrollbar.offsetHeight;
+
+	indicator.style.display = 'block';
+	indicator.style.top = scrollbar.offsetTop + indicatorOffset + 'px';
+	indicator.style.left = scrollbar.offsetLeft + 'px';
+	indicator.style.width = scrollbar.offsetWidth + 'px';
+	indicator.style.height = indicatorHeight + 'px';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+	const scrollables = document.querySelectorAll('[data-scrollbar]');
+
+	for (const scrollable of scrollables) {
+		const scrollbar = document.querySelector(scrollable.dataset.scrollbar);
+		const indicator = document.querySelector(scrollable.dataset.scrollIndicator);
+
+		//updateScrollable(scrollable);
 
 		scrollable.addEventListener('scroll', () => {
-			console.log(scrollable.scrollTop);
+			updateScrollable(scrollable);
+		});
+
+		let userIsMovingScrollIndicator = false;
+
+		scrollbar.addEventListener('mousedown', (event) => {
+			console.log('got mousedown');
+			const offsetProportion = event.offsetY / scrollbar.offsetHeight;
+			scrollable.scroll(0, offsetProportion * scrollable.scrollHeight);
+			updateScrollable(scrollable);
+			userIsMovingScrollIndicator = true;
+		});
+
+		scrollbar.addEventListener('mousemove', (event) => {
+			console.log('got mousemove');
+			if (!userIsMovingScrollIndicator) return;
+			console.log('and it blunks');
+
+			const offsetProportion = event.offsetY / scrollbar.offsetHeight;
+			scrollable.scroll(0, offsetProportion * scrollable.scrollHeight);
+			updateScrollable(scrollable);
+		});
+
+		window.addEventListener('mouseup', (event) => {
+			console.log('got mouseup');
+			userIsMovingScrollIndicator = false;
 		});
 	}
 });
@@ -39,21 +88,37 @@ document.addEventListener('DOMContentLoaded', () => {
 		<section>
 			<h2>Regular tiles</h2>
 
-			{% if filename is none %}
-				<p>This is a dummy tileset with no associated tiles.</p>
-			{% elif file_ext %}
+			{% if filename %}
 				<figure>
 					<div style="display: flex; justify-content: space-between">
 						<div></div>
-						<a href="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img-container" id="tileset-img">
-							<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" class="figure-img" usemap="#tilemap">
+						<a
+							href="{{ url_base }}/graphics/tilesets/{{ filename }}"
+							class="figure-img-container" id="tileset-img"
+							data-scrollbar="#tileset-img-scrollbar"
+							data-scroll-indicator="#tileset-img-scroll-indicator"
+						>
+							<img
+								src="{{ url_base }}/graphics/tilesets/{{ filename }}"
+								class="figure-img"
+							>
 						</a>
-						<img src="{{ url_base }}/graphics/tilesets/{{ filename }}{{ file_ext }}" style="height: 24rem" data-scrollbar-for="#tileset-img">
+						<img
+							src="{{ url_base }}/graphics/tilesets/{{ filename }}"
+							style="height: 24rem; width: 2rem; opacity: 50%; user-select: none"
+							id="tileset-img-scrollbar"
+							draggable="false"
+						>
+						<div id="tileset-img-scroll-indicator"></div>
 					</div>
 					<figcaption><b>File name</b>: {{ filename }}</figcaption>
 				</figure>
+			{% elif file_stem %}
+				<p class="warning">This tileset's graphic is supposed to have
+				the name "{{ file_stem }}" (excluding the file extension);
+				however, no matching file exists.</p>
 			{% else %}
-				<p class="warning">This tileset references a graphic with the file name "Tilesets/{{ filename }}", but no file with this name exists.</p>
+				<p>This is a dummy tileset with no associated tiles.</p>
 			{% endif %}
 		</section>
 		<section>
@@ -77,30 +142,46 @@ document.addEventListener('DOMContentLoaded', () => {
 		</section>
 		<section>
 			<h2>Panorama</h2>
-			{% if panorama.file_ext %}
+			{% if panorama.filename %}
 				<figure>
-					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}{{ panorama.file_ext }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}{{ panorama.file_ext }}" class="figure-img">
+					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}" class="figure-img">
 					</a>
-					<figcaption><b>File name</b>: {{ panorama.filename }}</figcaption>
+					<figcaption>
+						<b>File name</b>: {{ panorama.filename }}
+						{% if panorama.hue %}
+							<br>Hue adjusted by {{ panorama.hue }}&deg; from
+							<a href="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}">original</a>
+						{% endif %}
+					</figcaption>
 				</figure>
-			{% elif panorama.filename %}
-				<p class="warning">This tileset references a graphic with the file name "Panoramas/{{ panorama.filename }}", but no file with this name exists.</p>
+			{% elif panorama.file_stem %}
+				<p class="warning">This tileset's panorama is supposed to have
+				the name "{{ panorama.file_stem }}" (excluding the file
+				extension); however, no matching file exists.</p>
 			{% else %}
 				<p>There is no panorama for this tileset.</p>
 			{% endif %}
 		</section>
 		<section>
 			<h2>Fog</h2>
-			{% if fog.file_ext %}
+			{% if fog.filename %}
 				<figure>
-					<a href="{{ url_base }}/graphics/fogs/{{ fog.filename }}{{ fog.file_ext }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/fogs/{{ fog.filename }}{{ fog.file_ext }}" class="figure-img">
+					<a href="{{ url_base }}/graphics/fogs/{{ fog.filename }}" class="figure-img-container">
+						<img src="{{ url_base }}/graphics/fogs/{{ fog.filename }}" class="figure-img">
 					</a>
-					<figcaption><b>File name</b>: {{ fog.filename }}</figcaption>
+					<figcaption>
+						<b>File name</b>: {{ fog.filename }}
+						{% if fog.hue %}
+							<br>Hue adjusted by {{ fog.hue }}&deg; from
+							<a href="{{ url_base }}/graphics/fogs/{{ fog.filename }}">original</a>
+						{% endif %}
+					</figcaption>
 				</figure>
-			{% elif fog.filename %}
-				<p class="warning">This tileset references a graphic with the file name "Fogs/{{ fog.filename }}", but no file with this name exists.</p>
+			{% elif fog.file_stem %}
+				<p class="warning">This tileset's fog is supposed to have
+				the name "{{ fog.file_stem }}" (excluding the file extension);
+				however, no matching file exists.</p>
 			{% else %}
 				<p>There is no fog for this tileset.</p>
 			{% endif %}

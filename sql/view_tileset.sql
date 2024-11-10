@@ -2,7 +2,7 @@ SELECT
 	t.id,
 	t.name,
 	t.filename,
-	t.file_ext,
+	t.file_stem,
 	(
 		SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
 			'index', a."index",
@@ -19,13 +19,13 @@ SELECT
 		) a
 	) autotiles,
 	JSON_OBJECT(
-		'filename', t.panorama_name,
-		'file_ext', t.panorama_ext,
+		'filename', t.panorama_filename,
+		'file_stem', t.panorama_stem,
 		'hue', t.panorama_hue
 	) panorama,
 	JSON_OBJECT(
-		'filename', t.fog_name,
-		'file_ext', t.fog_ext,
+		'filename', t.fog_filename,
+		'file_stem', t.fog_stem,
 		'hue', t.fog_hue,
 		'opacity', t.fog_opacity,
 		'blend_type', t.fog_blend_type,

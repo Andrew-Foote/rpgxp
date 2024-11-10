@@ -2,8 +2,9 @@ SELECT
     'id', e.id,
     'name', e.name,
     JSON_OBJECT(
-        'file_stem', m.name,        
-        'filename', m.full_name
+        'file_stem', e.battler_name,        
+        'filename', m.full_name,
+        'hue', e.battler_hue
     ) battler,
     JSON_OBJECT(
         'maxhp', e.maxhp, 'maxsp', e.maxsp, 'str', e.str, 'dex', e.dex,

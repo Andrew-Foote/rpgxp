@@ -261,7 +261,7 @@ def routes() -> list[Route]:
 			'id': int_param(),
 			'name': str_param(),
 			'filename': str_param(optional=True),
-			'file_ext': str_param(optional=True),
+			'file_stem': str_param(optional=True),
 			'autotiles': json_param(),
 			'panorama': json_param(optional=True),
 			'fog': json_param(optional=True),
