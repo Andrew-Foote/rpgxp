@@ -252,6 +252,9 @@ def routes() -> list[Route]:
 			'encounter_step': int_param(),
 			'encounters': json_param(),
 		}, 'map_ids'),
+		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
+			'id': int_param(),
+		}, 'map_ids_with_images', content_type=ContentType.PNG),
 
 		# tilesets
 		Route('tilesets.html', 'tilesets.j2', 'view_tilesets', {
@@ -268,6 +271,30 @@ def routes() -> list[Route]:
 			'battleback': json_param(optional=True),
 			'maps': json_param(),
 		}, 'tileset_ids'),
+		Route(
+			'tileset/{id}/panorama.png', 'material_with_hue.j2',
+			'view_panorama',
+			{
+				'source': str_param(),
+				'type': str_param(),
+				'subtype': str_param(),
+				'name': str_param(),
+				'hue': int_param()
+			},
+			'tileset_ids_with_panoramas', content_type=ContentType.PNG
+		),
+		Route(
+			'tileset/{id}/fog.png', 'material_with_hue.j2',
+			'view_fog',
+			{
+				'source': str_param(),
+				'type': str_param(),
+				'subtype': str_param(),
+				'name': str_param(),
+				'hue': int_param()
+			},
+			'tileset_ids_with_fogs', content_type=ContentType.PNG
+		),
 
 		# common events
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
@@ -311,9 +338,6 @@ def routes() -> list[Route]:
 			'name': str_param()
 		},
 		'graphics', content_type=ContentType.VARIABLE_BINARY),
-		Route('map/{id}.png', 'map_image.j2', 'view_map_image', {
-			'id': int_param(),
-		}, 'map_ids_with_images', content_type=ContentType.PNG),
 
 		# troops
 		Route('troops.html', 'troops.j2', 'view_troops', {
