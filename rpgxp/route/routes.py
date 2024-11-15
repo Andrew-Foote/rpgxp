@@ -71,11 +71,13 @@ def routes() -> list[Route]:
 		Route('common_events.html', 'common_events.j2', 'view_common_events', {
 			'common_events': json_param(),
 		}),
-		Route('common_event/{id}.html', 'common_event.j2', 'view_common_event', {
-			'id': int_param(),
-			'name': str_param(),
-			'trigger': json_param(optional=True),
-		}, 'common_event_ids'),
+		Route(
+			'common_event/{id}.html', 'common_event.j2', 'view_common_event', {
+                'id': int_param(),
+                'name': str_param(),
+                'trigger': json_param(optional=True),
+            }, 'common_event_ids'
+		),
 
 		# switches
 		Route('switches.html', 'switches.j2', 'view_switches', {
