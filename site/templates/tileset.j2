@@ -144,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			<h2>Panorama</h2>
 			{% if panorama.filename %}
 				<figure>
-					<a href="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/panoramas/{{ panorama.filename }}" class="figure-img">
+					<a href="{{ url_base }}/tileset/{{ id }}/panorama.png" class="figure-img-container">
+						<img src="{{ url_base }}/tileset/{{ id }}/panorama.png" class="figure-img">
 					</a>
 					<figcaption>
 						<b>File name</b>: {{ panorama.filename }}
@@ -167,8 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			<h2>Fog</h2>
 			{% if fog.filename %}
 				<figure>
-					<a href="{{ url_base }}/graphics/fogs/{{ fog.filename }}" class="figure-img-container">
-						<img src="{{ url_base }}/graphics/fogs/{{ fog.filename }}" class="figure-img">
+					<a href="{{ url_base }}/tileset/{{ id }}/fog.png" class="figure-img-container">
+						<img src="{{ url_base }}/tileset/{{ id }}/fog.png" class="figure-img">
 					</a>
 					<figcaption>
 						<b>File name</b>: {{ fog.filename }}

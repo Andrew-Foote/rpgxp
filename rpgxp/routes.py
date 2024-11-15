@@ -369,7 +369,7 @@ def routes() -> list[Route]:
 			'treasure': json_param(optional=True),
 			'troops': json_param(),
 			'actions': json_param(),
-		}),
+		}, 'enemy_ids'),
 		Route('enemy/{id}.png', 'material_with_hue.j2', 'view_enemy_image', {
 			'source': str_param(), 
 			'type': str_param(), 

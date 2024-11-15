@@ -1,5 +1,4 @@
 - Web interface to database (working on)
-    - Show hue for tileset fogs/panoramas
     - Show tile passages/priorities/terrain flags for tilesets
 - Profile generate_db_data and remove anything making it unnecesssarily slow
 - Have a way to regenerate schema/data for only one file (e.g. Map001.rxdata),

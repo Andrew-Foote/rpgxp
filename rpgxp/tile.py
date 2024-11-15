@@ -175,6 +175,7 @@ def autotiles_from_map_id(map_id: int) -> Iterator[dict[int, Image]]:
             autotile_image.close()
 
 def map_image_from_id(map_id: int) -> Image:
+    print(f"Generating image for map {map_id}")
     map_data = map_data_from_id(map_id)
 
     with (

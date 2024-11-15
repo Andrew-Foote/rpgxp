@@ -422,6 +422,12 @@ class AddIndexColumn(IndexBehavior):
 class MatchIndexToField(IndexBehavior):
     match_to: str
 
+# @dataclass(frozen=True)
+# class NDArrayListSchema(RefableSchema):
+#     _table_name: str
+#     dim_names: tuple[str] | tuple[str, str] | tuple[str, str, str]
+#     item_name: str=''
+
 @dataclass(frozen=True)
 class ListSchema(RefableSchema):
     """The schema for a Marshal array.
