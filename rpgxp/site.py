@@ -10,12 +10,7 @@ from PIL.Image import Image
 
 from rpgxp import db, material, settings, tile
 from rpgxp import image as imgmanip
-from rpgxp.routes import Route
-
-NamedStr = TypedDict('NamedStr', {
-    'name': str,
-    'content': str,
-})
+from rpgxp.route.Route import Route
 
 def ordinal(n: int) -> str:
     digits = str(n)
@@ -35,6 +30,11 @@ def image_content(image: Image) -> str:
     stream = io.BytesIO()
     image.save(stream, 'png')
     return stream.getvalue().decode('utf-8', 'surrogateescape')
+
+NamedStr = TypedDict('NamedStr', {
+    'name': str,
+    'content': str,
+})
 
 def zip_archive(members: Iterable[NamedStr]) -> str:
     stream = io.BytesIO()
@@ -68,11 +68,11 @@ jinja_env.globals |= {
     'url_base': '',
     'game_root': settings.game_root,
     'load_binary_file': load_binary_file,
-    'zip_archive': zip_archive,
-    'map_image_from_id': tile.map_image_from_id,
     'image_content': image_content,
+    'zip_archive': zip_archive,
     'root_for_source': material.root_for_source,
     'material': load_material,
+    'map_image_from_id': tile.map_image_from_id,
 }
 
 jinja_env.filters |= {

@@ -10,7 +10,8 @@ from wsgiref.types import WSGIEnvironment, StartResponse
 from wsgiref.simple_server import make_server
 
 from rpgxp import settings, site
-from rpgxp.routes import Route, routes
+from rpgxp.route.Route import Route
+from rpgxp.route.routes import routes
 
 @ft.cache
 def static_root() -> Path:
@@ -71,10 +72,16 @@ def match_route(path: str) -> tuple[Route, dict[str, str]]:
         if path == '' and route.url_pattern == 'index.html':
             return route, {}
 
-        # print('Trying match against ', route.url_pattern)
-        pattern = re.sub(r'\{(.*?)\}', r'(?P<\1>.*)', route.url_pattern)
-        # print('Pattern as regex: ', pattern)
-        m = re.match(pattern, path)
+        pattern = re.sub(r'\{(.*?)\}', r'(?P<\1>.*)', route.url_pattern)    
+        #print('Trying match against ', route.url_pattern)
+        #print('Pattern as regex: ', pattern)
+
+        try:
+            m = re.match(pattern, path)
+        except Exception as e:
+            e.add_note(f'URL pattern: {route.url_pattern}')
+            e.add_note(f'Pattern as regex: {pattern}')
+            raise
 
         if m is not None:
             return route, m.groupdict()

@@ -7,7 +7,7 @@ import zipfile
 import apsw
 import jinja2
 from rpgxp import db, material, settings, site
-from rpgxp.routes import routes
+from rpgxp.route.routes import routes
 
 def render_template_to_file(
     src_path: str, dst_path: str, template_args: dict[str, Any], 
