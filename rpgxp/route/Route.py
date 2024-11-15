@@ -4,6 +4,7 @@ import mimetypes
 import json
 from typing import Any, assert_never, Iterator, Self
 import apsw
+from rpgxp import db
 
 class RouteError(Exception):
 	pass
@@ -261,3 +262,40 @@ class Route:
 				raise
 
 		return result
+
+	def get_template_args(self, url_args: dict[str, str]) -> dict[str, Any]:
+		template_query = self.template_query
+		url_query = self.url_query
+
+		if template_query is None:
+			return {}
+
+		try:
+			query_result = db.run_named_query(template_query, url_args)
+		except Exception as e:
+			if isinstance(e, KeyError):
+				e.add_note(f'No argument given for URL parameter "{e.args[0]}"')
+
+			e.add_note(f'URL query name: {url_query}')
+			e.add_note(f'Template query name: {template_query}')
+			e.add_note(f'URL arguments: {url_args}')
+			raise
+
+		try:
+			query_desc = query_result.get_description()
+		except apsw.ExecutionCompleteError as e:
+			if isinstance(e, apsw.ExecutionCompleteError):
+				e.add_note(
+					'This means the template query has returned no rows'
+				)
+
+			e.add_note(f'Template query name: {template_query}')
+			e.add_note(f'URL arguments: {str(url_args)}')
+			raise
+
+		template_params, _ = zip(*query_desc)
+		template_arg_values = db.row(query_result)
+		
+		return self.format_template_args(
+			dict(zip(template_params, template_arg_values))
+		)

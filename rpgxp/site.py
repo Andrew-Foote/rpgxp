@@ -1,16 +1,15 @@
+import functools as ft
 import io
 from pathlib import Path
 import zipfile
 from typing import Any, Iterable, TypedDict
 
-import apsw
 import jinja2
 from PIL import Image as pil
 from PIL.Image import Image
 
-from rpgxp import db, material, settings, tile
+from rpgxp import material, settings, tile
 from rpgxp import image as imgmanip
-from rpgxp.route.Route import Route
 
 def ordinal(n: int) -> str:
     digits = str(n)
@@ -83,38 +82,6 @@ def render_template(template_path: str, template_args: dict[str, Any]) -> str:
     template = jinja_env.get_template(template_path)
     return template.render(**template_args)
 
-def get_template_args(route: Route, url_args: dict[str, str]) -> dict[str, Any]:
-    if route.template_query is None:
-        return {}
-
-    try:
-        query_result = db.run_named_query(route.template_query, url_args)
-    except apsw.BindingsError as e:
-        e.add_note("URL parameters don't match the template query parameters")
-        e.add_note(f'URL query name: {route.url_query}')
-        e.add_note(f'URL parameter values: {url_args}')
-        e.add_note(f'Template query name: {route.template_query}')
-        raise
-    except KeyError as e:
-        param = e.args[0]
-        e.add_note(f'URL parameter "{param}" is missing')
-        e.add_note(f'URL query name: {route.url_query}')
-        e.add_note(f'URL parameter values: {url_args}')
-        e.add_note(f'Template query name: {route.template_query}')
-        raise
-
-    try:
-        query_desc = query_result.get_description()
-    except apsw.ExecutionCompleteError as e:
-        e.add_note(
-            'This means the template query has returned 0 rows')
-        e.add_note(f'Template query name: {route.template_query}')
-        e.add_note(f'URL arguments: {str(url_args)}')
-        raise        
-
-    template_params, _ = zip(*query_desc)
-    template_arg_values = db.row(query_result)
-    
-    return route.format_template_args(
-        dict(zip(template_params, template_arg_values))
-    )
+@ft.cache
+def static_root() -> Path:
+    return settings.project_root / 'site' / 'static'

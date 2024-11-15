@@ -1,9 +1,5 @@
-from dataclasses import dataclass
-import io
-from pathlib import Path
 import shutil
-from typing import Any, Iterable, TypedDict
-import zipfile
+from typing import Any
 import apsw
 import jinja2
 from rpgxp import db, material, settings, site
@@ -27,7 +23,7 @@ def render_template_to_file(
             f.write(content)
 
 def copy_static_files() -> None:
-    static_root = settings.project_root / 'site/static'
+    static_root = site.static_root()
 
     for static_path in static_root.rglob('*'):
         dst_path = settings.site_root / static_path.relative_to(static_root)
@@ -55,7 +51,7 @@ def run() -> None:
 
         for url_args in possible_url_args:
             coerced_url_args = dict(zip(url_params, map(str, url_args)))
-            template_args = site.get_template_args(route, coerced_url_args)
+            template_args = route.get_template_args(coerced_url_args)
 
             url = route.url(**coerced_url_args)
             filesystem_url = settings.site_root / url

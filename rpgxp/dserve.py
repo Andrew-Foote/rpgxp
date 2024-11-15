@@ -14,17 +14,12 @@ from rpgxp.route.Route import Route
 from rpgxp.route.routes import routes
 
 @ft.cache
-def static_root() -> Path:
-    return settings.project_root / 'site' / 'static'
-
-@ft.cache
 def static_file_paths() -> frozenset[str]:
-    return frozenset([
-        *(
-            str(path.relative_to(static_root()))
-            for path in static_root().rglob('*')
-        ),
-    ])
+    static_root = site.static_root()
+
+    return frozenset([*(
+        str(path.relative_to(static_root)) for path in static_root.rglob('*')
+    )])
 
 @dataclass
 class Response:
@@ -50,7 +45,7 @@ def respond_static(path: str, *, head_only: bool) -> Response:
     print(f'Responding to static file request for {path}')
     headers: list[tuple[str, str]] = [*guess_type_headers(path)]
 
-    fs_path = static_root() / path.lstrip('/')
+    fs_path = site.static_root() / path.lstrip('/')
     size = fs_path.stat().st_size
     headers.append(('Content-Length', str(size)))
 
@@ -105,7 +100,7 @@ def respond_dynamic(path: str, *, head_only: bool=False) -> Response:
         template = route.template
 
         try:
-            template_args = site.get_template_args(route, url_args)
+            template_args = route.get_template_args(url_args)
         except Exception as e:
             e.add_note(
                 f'Occured when determing template arguments for "{template}"'
