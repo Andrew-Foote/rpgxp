@@ -18,10 +18,6 @@ def run(*, modules_list: list[str], quick: bool):
 			f'unrecognized modules: {", ".join(unrecognized_modules)}'
 		)
 
-	game_data_root = settings.game_data_root
-	db_root = settings.db_root
-	site_root = settings.site_root
-
 	if 'class' in modules:
 		print("Generating classes...")
 		module = importlib.import_module('rpgxp.generate_classes')
@@ -78,13 +74,13 @@ def run(*, modules_list: list[str], quick: bool):
 		module.run()
 
 	if 'serve' in modules:
-		print('Serving web UI...')
-		module = importlib.import_module('rpgxp.site.serve')
+		print('Serving web UI (statically)...')
+		module = importlib.import_module('rpgxp.site.serve_static')
 		module.run()
 
 	if 'dserve' in modules:
 		print('Serving web UI (dynamically)...')
-		module = importlib.import_module('rpgxp.site.dserve')
+		module = importlib.import_module('rpgxp.site.serve_dynamic')
 		module.run()
 
 if __name__ == '__main__':

@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 import functools as ft
 import mimetypes
-from pathlib import Path
 import re
 import traceback
 from typing import Iterator
-
 from wsgiref.types import WSGIEnvironment, StartResponse
 from wsgiref.simple_server import make_server
 
@@ -18,9 +16,9 @@ from rpgxp.site import common as site
 def static_file_paths() -> frozenset[str]:
     static_root = site.static_root()
 
-    return frozenset([*(
+    return frozenset((
         str(path.relative_to(static_root)) for path in static_root.rglob('*')
-    )])
+    ))
 
 @dataclass
 class Response:
