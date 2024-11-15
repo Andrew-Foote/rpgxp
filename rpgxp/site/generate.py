@@ -2,8 +2,9 @@ import shutil
 from typing import Any
 import apsw
 import jinja2
-from rpgxp import db, material, settings, site
+from rpgxp import db, material, settings
 from rpgxp.route.routes import routes
+from rpgxp.site import common as site
 
 def render_template_to_file(
     src_path: str, dst_path: str, template_args: dict[str, Any], 

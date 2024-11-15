@@ -9,9 +9,10 @@ from typing import Iterator
 from wsgiref.types import WSGIEnvironment, StartResponse
 from wsgiref.simple_server import make_server
 
-from rpgxp import settings, site
+from rpgxp import settings
 from rpgxp.route.Route import Route
 from rpgxp.route.routes import routes
+from rpgxp.site import common as site
 
 @ft.cache
 def static_file_paths() -> frozenset[str]:

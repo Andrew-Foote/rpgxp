@@ -62,11 +62,11 @@ def run(*, modules_list: list[str], quick: bool):
 
 	if 'site' in modules:
 		print("Generating web UI...")
-		module = importlib.import_module('rpgxp.generate_site')
+		module = importlib.import_module('rpgxp.site.generate')
 		module.run()
 	elif 'static' in modules:
 		print("Copying static files for web UI...")
-		module = importlib.import_module('rpgxp.generate_site')
+		module = importlib.import_module('rpgxp.site.generate')
 		module.copy_static_files()
 	elif 'material.static' in modules:
 		print("Copying static files for materials...")
@@ -79,12 +79,12 @@ def run(*, modules_list: list[str], quick: bool):
 
 	if 'serve' in modules:
 		print('Serving web UI...')
-		module = importlib.import_module('rpgxp.serve')
+		module = importlib.import_module('rpgxp.site.serve')
 		module.run()
 
 	if 'dserve' in modules:
 		print('Serving web UI (dynamically)...')
-		module = importlib.import_module('rpgxp.dserve')
+		module = importlib.import_module('rpgxp.site.dserve')
 		module.run()
 
 if __name__ == '__main__':
