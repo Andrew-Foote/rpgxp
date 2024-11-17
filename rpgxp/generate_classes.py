@@ -2,18 +2,18 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import Iterable, Iterator, Self, Sequence
 from rpgxp import settings
-from rpgxp import schema
+from rpgxp.schema import Schema, rpgxp_schema
 
-def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.ObjSchema]:
+def obj_subschemas(s: Schema.DataSchema | Schema.FileSchema) -> Iterator[Schema.ObjSchema]:
 	match s:
 		case (
-			schema.BoolSchema() | schema.IntBoolSchema() | schema.IntSchema()
-			| schema.FloatSchema() | schema.StrSchema() | schema.ZlibSchema()
-			| schema.NDArraySchema() | schema.EnumSchema()
-			| schema.MaterialRefSchema() | schema.FKSchema()
+			Schema.BoolSchema() | Schema.IntBoolSchema() | Schema.IntSchema()
+			| Schema.FloatSchema() | Schema.StrSchema() | Schema.ZlibSchema()
+			| Schema.NDArraySchema() | Schema.EnumSchema()
+			| Schema.MaterialRefSchema() | Schema.FKSchema()
 		):
 			pass
-		case schema.RPGVariantObjSchema():
+		case Schema.RPGVariantObjSchema():
 			yield s
 
 			for vfield in s.fields:
@@ -21,69 +21,69 @@ def obj_subschemas(s: schema.DataSchema | schema.FileSchema) -> Iterator[schema.
 
 			for variant in s.variants:
 				yield from variant_subschemas(variant)
-		case schema.ObjSchema():
+		case Schema.ObjSchema():
 			yield s
 
 			for field in s.fields:
 				yield from obj_subschemas(field.schema)
-		case schema.ListSchema(_, item_schema) | schema.SetSchema(_, item_schema):
+		case Schema.ListSchema(_, item_schema) | Schema.SetSchema(_, item_schema):
 			yield from obj_subschemas(item_schema)
-		case schema.DictSchema():
+		case Schema.DictSchema():
 			yield from obj_subschemas(s.key_schema)
 			yield from obj_subschemas(s.value_schema)
-		case schema.SingleFileSchema(_, content_schema):
+		case Schema.SingleFileSchema(_, content_schema):
 			yield from obj_subschemas(content_schema)
-		case schema.MultipleFilesSchema(_, _, _, content_schema):
+		case Schema.MultipleFilesSchema(_, _, _, content_schema):
 			yield from obj_subschemas(content_schema)
 		case _:
 			assert False, type(s)
 
-def variant_subschemas(variant: schema.Variant) -> Iterator[schema.ObjSchema]:
+def variant_subschemas(variant: Schema.Variant) -> Iterator[Schema.ObjSchema]:
 	match variant:
-		case schema.SimpleVariant():
+		case Schema.SimpleVariant():
 			for field in variant.fields:
 				yield from obj_subschemas(field.schema)
-		case schema.ComplexVariant():
+		case Schema.ComplexVariant():
 			for subvariant in variant.variants:
 				yield from variant_subschemas(subvariant)
 
-def schema_to_type(s: schema.DataSchema) -> str:
+def schema_to_type(s: Schema.DataSchema) -> str:
 	match s:
-		case schema.BoolSchema() | schema.IntBoolSchema():
+		case Schema.BoolSchema() | Schema.IntBoolSchema():
 			return 'bool'
-		case schema.IntSchema():
+		case Schema.IntSchema():
 			return 'int'
-		case schema.FloatSchema():
+		case Schema.FloatSchema():
 			return 'float'
 		case (
-			schema.StrSchema() | schema.ZlibSchema()
-			| schema.MaterialRefSchema()
+			Schema.StrSchema() | Schema.ZlibSchema()
+			| Schema.MaterialRefSchema()
 		):
 			return 'str'
-		case schema.NDArraySchema():
+		case Schema.NDArraySchema():
 			return 'np.ndarray'
-		case schema.EnumSchema(enum_class):
+		case Schema.EnumSchema(enum_class):
 			return enum_class.__name__
-		case schema.FKSchema(foreign_schema_thunk, nullable):
+		case Schema.FKSchema(foreign_schema_thunk, nullable):
 			result = schema_to_type(foreign_schema_thunk().pk_schema())
 
 			if nullable:
 				result = f'Optional[{result}]'
 
 			return result
-		case schema.ObjSchema():
+		case Schema.ObjSchema():
 			return s.class_name
-		case schema.ListSchema(_, item_schema):
+		case Schema.ListSchema(_, item_schema):
 			return f'list[{schema_to_type(item_schema)}]'
-		case schema.SetSchema(_, item_schema):
+		case Schema.SetSchema(_, item_schema):
 			return f'set[{schema_to_type(item_schema)}]'
-		case schema.DictSchema():
+		case Schema.DictSchema():
 			key_type = schema_to_type(s.key_schema)
 			value_type = schema_to_type(s.value_schema)
 			return f'dict[{key_type}, {value_type}]'
-		case schema.SingleFileSchema(_, content_schema):
+		case Schema.SingleFileSchema(_, content_schema):
 			return schema_to_type(content_schema)
-		case schema.MultipleFilesSchema(_, _, keys, content_schema):
+		case Schema.MultipleFilesSchema(_, _, keys, content_schema):
 			key_type_args = ', '.join('str' for _ in keys)
 			key_type = f'tuple[{key_type_args}]'
 			value_type = schema_to_type(content_schema)
@@ -128,10 +128,10 @@ class ClassDecl:
 		])
 
 	@classmethod
-	def from_schema(cls, obj_schema: schema.ObjSchema) -> Iterator[ClassDecl]:
-		if isinstance(obj_schema, schema.RPGVariantObjSchema):
+	def from_schema(cls, obj_schema: Schema.ObjSchema) -> Iterator[ClassDecl]:
+		if isinstance(obj_schema, Schema.RPGVariantObjSchema):
 			fields = [
-				schema.Field(field.name, field.schema)
+				Schema.Field(field.name, field.schema)
 				for field in obj_schema.fields
 			]
 
@@ -150,9 +150,9 @@ class ClassDecl:
 
 def class_decls_from_variant_schema(
 	class_name: str,
-	fields: list[schema.Field],
+	fields: list[Schema.Field],
 	discriminant_name: str,
-	variants: Iterable[schema.Variant],
+	variants: Iterable[Schema.Variant],
 	var_assignments: list[ClassMember] | None=None,
 	parent_name: str | None=None
 ) -> Iterator[ClassDecl]:
@@ -195,7 +195,7 @@ def class_decls_from_variant_schema(
 		]
 
 		match variant:
-			case schema.SimpleVariant(_, _, fields):
+			case Schema.SimpleVariant(_, _, fields):
 				class_members = [*new_var_assignments]
 
 				for field in fields:
@@ -203,7 +203,7 @@ def class_decls_from_variant_schema(
 					class_members.append(AttrDecl(field.name, type_))
 
 				yield ClassDecl(subclass_name, class_members, [class_name])
-			case schema.ComplexVariant(
+			case Schema.ComplexVariant(
 				_, _, subfields, subdiscriminant_name, subvariants
 			):
 				yield from class_decls_from_variant_schema(
@@ -224,7 +224,7 @@ def generate_module() -> str:
 	result = Module()
 	classes_declared = set()
 
-	for file_schema in schema.FILES:
+	for file_schema in rpgxp_schema.FILES:
 		for obj_schema in obj_subschemas(file_schema):
 			class_name = obj_schema.class_name
 

@@ -1,6 +1,4 @@
 from enum import Enum, StrEnum
-import struct
-from typing import Self
 
 class SelfSwitch(StrEnum):
     A = 'A'

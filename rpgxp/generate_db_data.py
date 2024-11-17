@@ -7,13 +7,14 @@ import random
 import re
 from typing import Any, Iterator, Self
 import numpy as np
-from rpgxp import db, material, parse, schema, settings, sql
+from rpgxp import db, material, parse, settings, sql
 from rpgxp.generate_db_schema import DBSchema, generate_schema
+from rpgxp.schema import rpgxp_schema, Schema
 from rpgxp.util import camel_case_to_snake
 
 def process_field(
     field_value: Any, col_name: str,
-    field_schema: schema.DataSchema,
+    field_schema: Schema.DataSchema,
     parent_refs: dict[str, Any],
     table_schema: sql.TableSchema,
     db_schema: DBSchema,
@@ -31,22 +32,22 @@ def process_field(
 
     match field_schema:
         case (
-            schema.BoolSchema() | schema.IntBoolSchema() | schema.IntSchema()
-            | schema.FloatSchema() | schema.StrSchema() | schema.ZlibSchema()
+            Schema.BoolSchema() | Schema.IntBoolSchema() | Schema.IntSchema()
+            | Schema.FloatSchema() | Schema.StrSchema() | Schema.ZlibSchema()
         ):
             row_result = {col_name: field_value}
-        case schema.NDArraySchema():
+        case Schema.NDArraySchema():
             stream = io.BytesIO()
             np.save(stream, field_value)
             row_result = {col_name: stream.getvalue()}
-        case schema.EnumSchema(enum_class):
+        case Schema.EnumSchema(enum_class):
             row_result = {col_name: field_value.value}
-        case schema.MaterialRefSchema():
+        case Schema.MaterialRefSchema():
             if field_value == '':
                 field_value = None
 
             row_result = {col_name: field_value}
-        case schema.FKSchema(foreign_schema_thunk, nullable):
+        case Schema.FKSchema(foreign_schema_thunk, nullable):
             foreign_schema = foreign_schema_thunk()
             foreign_pk_schema = foreign_schema.pk_schema()
 
@@ -54,10 +55,10 @@ def process_field(
                 # could add something to configure what values stand for null
                 # but cba
                 match foreign_pk_schema:
-                    case schema.IntSchema():
+                    case Schema.IntSchema():
                         if field_value == 0:
                             field_value = None
-                    case schema.StrSchema():
+                    case Schema.StrSchema():
                         if field_value == '':
                             field_value = None
 
@@ -66,7 +67,7 @@ def process_field(
                 parent_refs, table_schema, db_schema
             )
 
-        case schema.ObjSchema():
+        case Schema.ObjSchema():
             for subfield in field_schema.fields:
                 if (
                     skip_field_name is not None
@@ -86,7 +87,7 @@ def process_field(
                 row_result |= field_row_result
                 script_result += field_script_result
 
-            if isinstance(field_schema, schema.RPGVariantObjSchema):
+            if isinstance(field_schema, Schema.RPGVariantObjSchema):
                 vscript_result = process_variant(
                     field_value, field_schema.discriminant,
                     field_schema.variants,
@@ -94,7 +95,7 @@ def process_field(
                 )
 
                 script_result += vscript_result
-        case schema.TableSchema():
+        case Schema.TableSchema():
             # suppose this is the ListSchema for map events
             # in this case the field value is a list of events
             # the relevant parent refs are { map_id : <mapid> }
@@ -111,8 +112,8 @@ def process_field(
 
 def process_variant(
     obj: Any,
-    discriminant: schema.Field,
-    variants: list[schema.Variant],
+    discriminant: Schema.Field,
+    variants: list[Schema.Variant],
     parent_refs: dict[str, Any],
     table_schema: sql.TableSchema,
     db_schema: DBSchema,
@@ -165,7 +166,7 @@ def process_variant(
         row_result |= field_row_result
         script_result += field_script_result
 
-    if isinstance(variant, schema.ComplexVariant):
+    if isinstance(variant, Schema.ComplexVariant):
         vscript_result = process_variant(
             obj, variant.subdiscriminant, variant.variants,
             new_parent_refs, subtable_schema, db_schema
@@ -188,7 +189,7 @@ def process_variant(
     return sql.Script([insert]) + script_result
 
 def process_table_schema(
-    table_schema: schema.TableSchema, data: Any,
+    table_schema: Schema.TableSchema, data: Any,
     db_schema: DBSchema, parent_refs: dict[str, Any],
     parent_table: sql.TableSchema | None=None
 ) -> sql.Script:
@@ -208,7 +209,7 @@ def process_table_schema(
     rows: list[dict[str, Any]] = []
 
     match table_schema:
-        case schema.ListSchema(
+        case Schema.ListSchema(
             _, item_schema, item_name=item_name,
             first_item=first_item,
             index=index_behavior
@@ -219,13 +220,13 @@ def process_table_schema(
                 row: dict[str, Any] = {}
                 row |= parent_refs
 
-                min_index = 0 if first_item is schema.FirstItem.REGULAR else 1
+                min_index = 0 if first_item is Schema.FirstItem.REGULAR else 1
                 index = raw_index + min_index
 
                 match index_behavior:
-                    case schema.AddIndexColumn(index_col_name):
+                    case Schema.AddIndexColumn(index_col_name):
                         row_result, script_result = process_field(
-                            index, index_col_name, schema.IntSchema(),
+                            index, index_col_name, Schema.IntSchema(),
                             parent_refs, db_table_schema, db_schema
                         )
 
@@ -233,8 +234,8 @@ def process_table_schema(
                         result += script_result
 
                         parent_refs_for_row = parent_refs | {f'{table_name}_{index_col_name}': index}
-                    case schema.MatchIndexToField(pk_field_name):
-                        assert isinstance(item_schema, schema.ObjSchema)
+                    case Schema.MatchIndexToField(pk_field_name):
+                        assert isinstance(item_schema, Schema.ObjSchema)
                         pk_field = item_schema.get_field(pk_field_name)
                         pk_field_name = pk_field.name
                         pk_col_name = pk_field.db_name
@@ -260,7 +261,7 @@ def process_table_schema(
                 result += script_result
                 rows.append(row)
 
-        case schema.SetSchema(_, item_schema, item_name):
+        case Schema.SetSchema(_, item_schema, item_name):
             assert isinstance(data, set)
 
             for item in data:
@@ -277,7 +278,7 @@ def process_table_schema(
 
                 rows.append(row2)
 
-        case schema.DictSchema(_, key_behavior, value_schema, value_name):
+        case Schema.DictSchema(_, key_behavior, value_schema, value_name):
             assert isinstance(data, dict)
             pk_field_name2: str | None=None
 
@@ -286,7 +287,7 @@ def process_table_schema(
                 row3 |= parent_refs
 
                 match key_behavior:
-                    case schema.AddKeyColumn(key_col_name, key_schema):
+                    case Schema.AddKeyColumn(key_col_name, key_schema):
                         row_result, script_result = process_field(
                             key, key_col_name, key_schema, parent_refs,
                             db_table_schema, db_schema
@@ -296,7 +297,7 @@ def process_table_schema(
                         result += script_result
 
                         parent_refs_for_row = parent_refs | {f'{table_name}_{key_col_name}': key}
-                    case schema.MatchKeyToField(pk_field_name):
+                    case Schema.MatchKeyToField(pk_field_name):
                         pk_field = value_schema.get_field(pk_field_name)
                         pk_field_name2 = pk_field.name
                         pk_col_name2 = pk_field.db_name
@@ -323,7 +324,7 @@ def process_table_schema(
 
                 rows.append(row3)
 
-        case schema.RPGSingletonObjSchema(_, _, _, fields):
+        case Schema.RPGSingletonObjSchema(_, _, _, fields):
             assert not parent_refs
             row4: dict[str, Any] = {}
             row4 |= {'id': 0}
@@ -364,19 +365,19 @@ def process_table_schema(
     return result
 
 def process_file_schema(
-    file_schema: schema.FileSchema, *, data_root: Path, db_schema: DBSchema,
+    file_schema: Schema.FileSchema, *, data_root: Path, db_schema: DBSchema,
     quick: bool=False
 ) -> sql.Script:
 
     match file_schema:
-        case schema.SingleFileSchema(filename, content_schema):
+        case Schema.SingleFileSchema(filename, content_schema):
             print(f'processing {filename}')
             parsed_content = parse.parse_filename(filename, data_root)
 
             return process_table_schema(
                 content_schema, parsed_content, db_schema, {}
             )
-        case schema.MultipleFilesSchema(pattern, table_name, keys, content_schema):
+        case Schema.MultipleFilesSchema(pattern, table_name, keys, content_schema):
             db_table_schema = db_schema.get_table(table_name)
 
             result = sql.Script()
@@ -405,11 +406,11 @@ def process_file_schema(
 
                 for key, key_value in zip(keys, key_values):
                     match key.schema:
-                        case schema.BoolSchema():
+                        case Schema.BoolSchema():
                             key_value = bool(key_value)
-                        case schema.IntSchema():
+                        case Schema.IntSchema():
                             key_value = int(key_value)
-                        case schema.FloatSchema():
+                        case Schema.FloatSchema():
                             key_value = float(key_value)
                         case _:
                             raise RuntimeError('bad')
@@ -468,7 +469,7 @@ def generate_script(*, db_schema: DBSchema, quick: bool=False) -> str:
     data_root = settings.game_data_root
     result = sql.Script()
 
-    for file_schema in schema.FILES:
+    for file_schema in rpgxp_schema.FILES:
         result += process_file_schema(
             file_schema, data_root=data_root, db_schema=db_schema, quick=quick
         )

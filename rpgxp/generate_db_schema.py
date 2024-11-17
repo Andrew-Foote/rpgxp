@@ -5,7 +5,8 @@ import functools as ft
 import importlib.resources
 from pathlib import Path
 from typing import Iterator, Self
-from rpgxp import db, material, schema, settings, sql
+from rpgxp import db, material, settings, sql
+from rpgxp.schema import Schema, rpgxp_schema
 from rpgxp.util import camel_case_to_snake
 
 @dataclass
@@ -39,15 +40,15 @@ class DBSchema:
 
         raise ValueError(f'table {name} not found')
 
-    def process_file_schema(self, file_schema: schema.FileSchema) -> None:
+    def process_file_schema(self, file_schema: Schema.FileSchema) -> None:
         match file_schema:
-            case schema.SingleFileSchema(_, content_schema):
+            case Schema.SingleFileSchema(_, content_schema):
                 self.process_table_schema(content_schema)
-            case schema.MultipleFilesSchema(
+            case Schema.MultipleFilesSchema(
                 _, table_name, keys, content_schema
             ):
                 if self.has_table(table_name):
-                    raise schema.SchemaError(f'{table_name} used twice')
+                    raise Schema.SchemaError(f'{table_name} used twice')
 
                 table_schema = sql.TableSchema(table_name)
 
@@ -64,7 +65,7 @@ class DBSchema:
 
     def process_table_schema(
         self,
-        table_schema: schema.TableSchema,
+        table_schema: Schema.TableSchema,
         parent_table: sql.TableSchema | None=None
     ) -> None:
         parent_table_name = '' if parent_table is None else parent_table.name
@@ -74,7 +75,7 @@ class DBSchema:
         })
 
         if self.has_table(table_name):
-            raise schema.SchemaError(f'{table_name} used twice')
+            raise Schema.SchemaError(f'{table_name} used twice')
 
         db_table_schema = sql.TableSchema(table_name)
         self.add_table(db_table_schema)
@@ -105,16 +106,16 @@ class DBSchema:
             ))
 
         match table_schema:
-            case schema.ListSchema(
+            case Schema.ListSchema(
                 _, item_schema, first_item=first_item, item_name=item_name,
                 index=index_behavior
             ):
                 pk_field_name: str | None=None
 
                 match index_behavior:
-                    case schema.AddIndexColumn(index_col_name):
+                    case Schema.AddIndexColumn(index_col_name):
                         min_index = (
-                            0 if first_item is schema.FirstItem.REGULAR
+                            0 if first_item is Schema.FirstItem.REGULAR
                             else 1
                         )
 
@@ -126,8 +127,8 @@ class DBSchema:
                         ])
 
                         pk_col_name = index_col_name
-                    case schema.MatchIndexToField(pk_field_name):
-                        assert isinstance(item_schema, schema.ObjSchema)
+                    case Schema.MatchIndexToField(pk_field_name):
+                        assert isinstance(item_schema, Schema.ObjSchema)
                         pk_field = item_schema.get_field(pk_field_name)
                         pk_field_name = pk_field.name
 
@@ -143,7 +144,7 @@ class DBSchema:
                     skip_field_name=pk_field_name
                 )
 
-            case schema.SetSchema(_, item_schema, item_name):
+            case Schema.SetSchema(_, item_schema, item_name):
                 db_member_schema = self.process_field(
                     db_table_schema, item_name, item_schema
                 )
@@ -151,15 +152,15 @@ class DBSchema:
                 db_member_schema.make_all_pks()
                 db_table_schema += db_member_schema
 
-            case schema.DictSchema(_, key_behavior, value_schema, value_name):
+            case Schema.DictSchema(_, key_behavior, value_schema, value_name):
                 pk_field_name2: str | None=None
 
                 match key_behavior:
-                    case schema.AddKeyColumn(key_col_name, key_schema):
+                    case Schema.AddKeyColumn(key_col_name, key_schema):
                         db_key_schema = self.process_field(
                             db_table_schema, key_col_name, key_schema
                         )
-                    case schema.MatchKeyToField(pk_field_name):
+                    case Schema.MatchKeyToField(pk_field_name):
                         pk_field = value_schema.get_field(pk_field_name)
                         pk_field_name2 = pk_field.name
 
@@ -176,7 +177,7 @@ class DBSchema:
                     db_table_schema, value_name, value_schema, pk_field_name2
                 )
 
-            case schema.RPGSingletonObjSchema(_, _, _, fields):
+            case Schema.RPGSingletonObjSchema(_, _, _, fields):
                 assert parent_table is None
                 db_table_schema.singleton = True
 
@@ -194,7 +195,7 @@ class DBSchema:
                 assert False
 
     def process_row_schema(
-        self, table_schema: sql.TableSchema, row_schema: schema.RowSchema
+        self, table_schema: sql.TableSchema, row_schema: Schema.RowSchema
     ) -> None:
     
         table_schema += self.process_field(table_schema, '', row_schema)
@@ -203,7 +204,7 @@ class DBSchema:
         self,
         table_schema: sql.TableSchema,
         field_name: str,
-        field_schema: schema.DataSchema,
+        field_schema: Schema.DataSchema,
         skip_field_name: str | None=None
     ) -> sql.TableSchema:
 
@@ -216,12 +217,12 @@ class DBSchema:
             field_prefix = field_name + '_'
 
         match field_schema:
-            case schema.BoolSchema() | schema.IntBoolSchema():
+            case Schema.BoolSchema() | Schema.IntBoolSchema():
                 result.members.extend([
                     sql.ColumnSchema(field_name, 'INTEGER'),
                     sql.CheckConstraint(f'"{field_name}" in (0, 1)'),
                 ])
-            case schema.IntSchema(lb, ub):
+            case Schema.IntSchema(lb, ub):
                 result.members.append(sql.ColumnSchema(field_name, 'INTEGER'))
 
                 if lb is not None and ub is not None:
@@ -236,7 +237,7 @@ class DBSchema:
                     result.members.append(sql.CheckConstraint(
                         f'"{field_name}" <= {ub}'
                     ))
-            case schema.FloatSchema(lb, ub):
+            case Schema.FloatSchema(lb, ub):
                 result.members.append(sql.ColumnSchema(field_name, 'REAL'))
 
                 if lb is not None and ub is not None:
@@ -251,11 +252,11 @@ class DBSchema:
                     result.members.append(sql.CheckConstraint(
                         f'"{field_name}" <= {ub}'
                     ))
-            case schema.StrSchema() | schema.ZlibSchema():
+            case Schema.StrSchema() | Schema.ZlibSchema():
                 result.members.append(sql.ColumnSchema(field_name, 'TEXT'))
-            case schema.NDArraySchema():
+            case Schema.NDArraySchema():
                 result.members.append(sql.ColumnSchema(field_name, 'BLOB'))
-            case schema.EnumSchema(enum_class):
+            case Schema.EnumSchema(enum_class):
                 coltype = 'TEXT' if issubclass(enum_class, StrEnum) else 'INTEGER'
                 enum_table_name = camel_case_to_snake(enum_class.__name__)
                 result.members.append(sql.ColumnSchema(field_name, coltype))
@@ -276,7 +277,7 @@ class DBSchema:
                 result.members.append(sql.ForeignKeyConstraint(
                     [field_name], enum_table_name, ['id']
                 ))
-            case schema.MaterialRefSchema(
+            case Schema.MaterialRefSchema(
                 material_type, material_subtype, nullable, enforce
             ):
                 type_column_name = f'_{field_name}__type'
@@ -310,7 +311,7 @@ class DBSchema:
                     result.members.append(sql.CheckConstraint(
                         f'"{field_name}" != \'\''
                     ))
-            case schema.FKSchema(foreign_schema_thunk, nullable):
+            case Schema.FKSchema(foreign_schema_thunk, nullable):
                 foreign_schema = foreign_schema_thunk()
                 foreign_table_name_template = foreign_schema.table_name
 
@@ -336,7 +337,7 @@ class DBSchema:
                         [field_name], foreign_table_name, [pk_db_name]
                     )
                 )
-            case schema.ObjSchema():
+            case Schema.ObjSchema():
                 for subfield2 in field_schema.fields:
                     if skip_field_name is not None and subfield2.name == skip_field_name:
                         continue
@@ -349,12 +350,12 @@ class DBSchema:
 
                     result += field_result
 
-                if isinstance(field_schema, schema.RPGVariantObjSchema):
+                if isinstance(field_schema, Schema.RPGVariantObjSchema):
                     for variant in field_schema.variants:
                         self.process_variant(
                             table_schema, table_schema, variant, field_schema.discriminant
                         )
-            case schema.TableSchema():
+            case Schema.TableSchema():
                 self.process_table_schema(field_schema, table_schema)
             case _:
                 assert False
@@ -362,8 +363,8 @@ class DBSchema:
         return result
 
     def process_variant(
-        self, base_table: sql.TableSchema, parent_table: sql.TableSchema, variant: schema.Variant,
-        discriminant: schema.Field
+        self, base_table: sql.TableSchema, parent_table: sql.TableSchema, variant: Schema.Variant,
+        discriminant: Schema.Field
     ) -> None:
 
         variant_db_name = camel_case_to_snake(variant.name)
@@ -378,7 +379,7 @@ class DBSchema:
                 table_schema, field.db_name, field.schema,
             )
 
-        if isinstance(variant, schema.ComplexVariant):
+        if isinstance(variant, Schema.ComplexVariant):
             for subvariant in variant.variants:
                 self.process_variant(
                     base_table, table_schema, subvariant, variant.subdiscriminant
@@ -389,7 +390,7 @@ class DBSchema:
 def generate_schema() -> DBSchema:
     result = DBSchema()
 
-    for file_schema in schema.FILES:
+    for file_schema in rpgxp_schema.FILES:
         result.process_file_schema(file_schema)
 
     return result

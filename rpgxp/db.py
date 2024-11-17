@@ -5,7 +5,7 @@ from pathlib import Path
 import apsw
 import apsw.bestpractice
 from rpgxp import forest, settings
-from rpgxp.util import Just
+from rpgxp.util import expect1, Just
 
 class TreeAgg:
     """Defines the "tree" aggregate function for the database.
@@ -48,15 +48,6 @@ def connect(db_path: Path | None=None) -> apsw.Connection:
     connection.create_aggregate_function('tree', TreeAgg, numargs=3)
     return connection
 
-def row(cursor: apsw.Cursor) -> tuple[apsw.SQLiteValue, ...]:
-    results = cursor.fetchall()
-    row_count = len(results)
-
-    if row_count != 1:
-        raise RuntimeError(f'got {row_count} rows from query, expected 1')
-
-    return results[0]
-
 def fetch_rows(
     query: str, bindings: apsw.Bindings | None=None,
     *, dbh: apsw.Connection | None=None
@@ -67,9 +58,6 @@ def fetch_rows(
 
     return dbh.execute(query, bindings).fetchall()
 
-class BadQueryResultError(Exception):
-    pass
-
 def fetch_row(
     query: str, bindings: apsw.Bindings | None=None,
     *, dbh: apsw.Connection | None=None
@@ -77,14 +65,14 @@ def fetch_row(
 
     rows = fetch_rows(query, bindings, dbh=dbh)
 
-    if len(rows) != 1:
-        e = BadQueryResultError(f'got {len(rows)} rows from query, expected 1')
+    try:
+        return expect1(rows)
+    except ValueError as e:
+        e.add_note(f'got {len(rows)} rows from query, expected 1')
         e.add_note(f'query: {query}')
         e.add_note(f'bindings: {bindings}')
         e.add_note(f'result: {rows}')
         raise e
-
-    return rows[0]
 
 def fetch_value(
     query: str, bindings: apsw.Bindings | None=None,
@@ -92,8 +80,15 @@ def fetch_value(
 ) -> apsw.SQLiteValue:
 
     row = fetch_row(query, bindings, dbh=dbh)
-    assert len(row) == 1
-    return row[0]
+
+    try:
+        return expect1(row)
+    except ValueError as e:
+        e.add_note(f'got {len(row)} columns from query, expected 1')
+        e.add_note(f'query: {query}')
+        e.add_note(f'bindings: {bindings}')
+        e.add_note(f'result: {row}')
+        raise e
 
 def run_script(
     dbh: apsw.Connection,

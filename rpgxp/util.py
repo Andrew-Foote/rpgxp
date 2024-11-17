@@ -1,8 +1,18 @@
 from dataclasses import dataclass
-import importlib.resources
 from pathlib import Path
 import re
-from typing import Protocol, Self
+from typing import Iterable, Protocol, Self
+
+def expect1[T](iterable: Iterable[T]) -> T:
+	iterator = iter(iterable)
+	result = next(iterator)
+
+	try:
+		extra = next(iterator)
+	except StopIteration:
+		return result
+	else:
+		raise ValueError(f'expected only one value, but got another: {extra}')
 
 class Comparable(Protocol):
     def __lt__(self, other: Self) -> bool:

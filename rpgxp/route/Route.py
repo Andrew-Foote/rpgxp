@@ -5,6 +5,7 @@ import json
 from typing import Any, assert_never, Iterator, Self
 import apsw
 from rpgxp import db
+from rpgxp.util import expect1
 
 class RouteError(Exception):
 	pass
@@ -294,7 +295,7 @@ class Route:
 			raise
 
 		template_params, _ = zip(*query_desc)
-		template_arg_values = db.row(query_result)
+		template_arg_values = expect1(query_result)
 		
 		return self.format_template_args(
 			dict(zip(template_params, template_arg_values))

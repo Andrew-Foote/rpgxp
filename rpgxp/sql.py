@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Iterator, Self
-from rpgxp import schema
 
 class SQLType(Enum):
 	NULL = 0
@@ -142,7 +141,7 @@ class TableSchema:
 
 		if not result:
 			print(self.members)
-			raise schema.SchemaError(f'table {self.name} has no PK')
+			raise ValueError(f'table {self.name} has no PK')
 
 		return result
 
